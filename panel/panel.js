@@ -7,6 +7,33 @@ document.querySelectorAll('form[data-confirm]').forEach(f => f.addEventListener(
 }));
 if (document.body.dataset.autorefresh) {
   // Actualiza la lista cada minuto si la app está abierta
-  setInterval(() => { if (document.visibilityState === 'visible' && document.activeElement.tagName !== 'INPUT') location.reload(); }, 60000);
+  setInterval(() => { if (document.visibilityState === 'visible' && document.activeElement.tagName !== 'INPUT' && !document.body.classList.contains('selecting')) location.reload(); }, 60000);
 }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Modo selección para eliminar varias solicitudes
+const btnSel = document.getElementById('btnSeleccionar');
+if (btnSel) {
+  const checks = [...document.querySelectorAll('.pick input')];
+  const borrar = document.getElementById('btnBorrarSel');
+  const actualizar = () => {
+    const n = checks.filter(c => c.checked).length;
+    borrar.disabled = n === 0;
+    borrar.textContent = n ? `Eliminar (${n})` : 'Eliminar';
+  };
+  const salir = () => { document.body.classList.remove('selecting'); checks.forEach(c => c.checked = false); actualizar(); btnSel.textContent = 'Seleccionar'; };
+  btnSel.addEventListener('click', () => {
+    if (document.body.classList.toggle('selecting')) btnSel.textContent = 'Listo'; else salir();
+  });
+  document.getElementById('btnCancelar').addEventListener('click', salir);
+  document.getElementById('btnTodas').addEventListener('click', () => {
+    const todas = checks.every(c => c.checked);
+    checks.forEach(c => c.checked = !todas); actualizar();
+  });
+  checks.forEach(c => c.addEventListener('change', actualizar));
+  // En modo selección, tocar la tarjeta marca/desmarca
+  document.querySelectorAll('.row').forEach(r => r.addEventListener('click', e => {
+    if (!document.body.classList.contains('selecting') || e.target.closest('.pick')) return;
+    const c = r.querySelector('.pick input'); c.checked = !c.checked; actualizar();
+  }));
+}

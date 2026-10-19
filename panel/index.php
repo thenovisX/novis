@@ -89,9 +89,28 @@ else {
             $db->prepare('UPDATE solicitudes SET notas = ?, actualizado = ? WHERE id = ?')->execute([mb_substr($_POST['notas'] ?? '', 0, 5000), date('c'), $id]);
             volver('id=' . $id . '&guardado=1');
         }
+        $filtroVolver = preg_replace('/[^a-z_]/', '', $_POST['f'] ?? '');
         if ($accion === 'borrar') {
             $db->prepare('DELETE FROM solicitudes WHERE id = ?')->execute([$id]);
-            volver();
+            novis_compactar();
+            volver('borradas=1');
+        }
+        if ($accion === 'borrar_varias') {
+            $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+            if ($ids) {
+                $marcas = implode(',', array_fill(0, count($ids), '?'));
+                $st = $db->prepare("DELETE FROM solicitudes WHERE id IN ($marcas)");
+                $st->execute($ids);
+                novis_compactar();
+            }
+            volver('f=' . $filtroVolver . '&borradas=' . count($ids));
+        }
+        if ($accion === 'vaciar' && in_array($_POST['estado'] ?? '', ['cerrada', 'descartada'], true)) {
+            $st = $db->prepare('DELETE FROM solicitudes WHERE estado = ?');
+            $st->execute([$_POST['estado']]);
+            $n = $st->rowCount();
+            novis_compactar();
+            volver('f=' . $filtroVolver . '&borradas=' . $n);
         }
         volver();
     }
@@ -125,6 +144,8 @@ else {
             $cuenta['todas'] += (int)$r['n'];
         }
         $cuenta['activas'] = $cuenta['nueva'] + $cuenta['en_curso'];
+        $borradas = (int)($_GET['borradas'] ?? 0);
+        $espacio = novis_tamano();
         $semana = (int)$db->query("SELECT COUNT(*) FROM solicitudes WHERE creado >= '" . date('c', strtotime('-7 days')) . "'")->fetchColumn();
     }
 }
@@ -152,7 +173,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=3">
+<link rel="stylesheet" href="panel.css?v=5">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -190,7 +211,10 @@ return [
   <header class="top">
     <div class="top__row">
       <h1>Solicitudes</h1>
-      <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form>
+      <div class="top__actions">
+        <?php if ($lista): ?><button type="button" class="link" id="btnSeleccionar">Seleccionar</button><?php endif; ?>
+        <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form>
+      </div>
     </div>
     <div class="stats">
       <div><strong><?= $cuenta['nueva'] ?></strong><span>nuevas</span></div>
@@ -208,22 +232,46 @@ return [
     </nav>
   </header>
   <main class="list">
+    <?php if ($borradas): ?><p class="toast" role="status"><?= $borradas === 1 ? 'Solicitud eliminada' : $borradas . ' solicitudes eliminadas' ?> · espacio liberado</p><?php endif; ?>
     <?php if (!$lista): ?>
       <div class="empty">
         <p><strong><?= $buscar ? 'Sin resultados' : 'Nada por aquí' ?></strong></p>
         <p class="muted"><?= $buscar ? 'Prueba con otra búsqueda.' : 'Las nuevas solicitudes del formulario aparecerán aquí.' ?></p>
       </div>
     <?php endif; ?>
-    <?php foreach ($lista as $s): ?>
-      <a class="item" href="?id=<?= (int)$s['id'] ?>">
-        <span class="dot dot--<?= e($s['estado']) ?>"></span>
-        <div class="item__main">
-          <div class="item__row"><strong><?= e($s['nombre']) ?></strong><time><?= e(hace($s['creado'])) ?></time></div>
-          <div class="item__sub"><?= e($s['empresa'] ?: $s['email']) ?><?php if ($s['plan'] && $s['plan'] !== 'Aún no lo sé'): ?> · <b><?= e($s['plan']) ?></b><?php endif; ?></div>
-          <p><?= e(mb_strimwidth($s['mensaje'], 0, 110, '…')) ?></p>
+    <form method="post" id="seleccion" data-confirm="¿Eliminar las solicitudes seleccionadas? No se puede deshacer.">
+      <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
+      <input type="hidden" name="accion" value="borrar_varias">
+      <input type="hidden" name="f" value="<?= e($filtro) ?>">
+      <?php foreach ($lista as $s): ?>
+        <div class="row">
+          <label class="pick"><input type="checkbox" name="ids[]" value="<?= (int)$s['id'] ?>" aria-label="Seleccionar a <?= e($s['nombre']) ?>"><span></span></label>
+          <a class="item" href="?id=<?= (int)$s['id'] ?>">
+            <span class="dot dot--<?= e($s['estado']) ?>"></span>
+            <div class="item__main">
+              <div class="item__row"><strong><?= e($s['nombre']) ?></strong><time><?= e(hace($s['creado'])) ?></time></div>
+              <div class="item__sub"><?= e($s['empresa'] ?: $s['email']) ?><?php if ($s['plan'] && $s['plan'] !== 'Aún no lo sé'): ?> · <b><?= e($s['plan']) ?></b><?php endif; ?></div>
+              <p><?= e(mb_strimwidth($s['mensaje'], 0, 110, '…')) ?></p>
+            </div>
+          </a>
         </div>
-      </a>
-    <?php endforeach; ?>
+      <?php endforeach; ?>
+      <div class="selbar" id="selbar">
+        <button type="button" class="btn btn--ghost" id="btnTodas">Todas</button>
+        <button type="submit" class="btn btn--red" id="btnBorrarSel" disabled>Eliminar</button>
+        <button type="button" class="link" id="btnCancelar">Cancelar</button>
+      </div>
+    </form>
+    <?php if (in_array($filtro, ['cerrada', 'descartada'], true) && $cuenta[$filtro] > 0): ?>
+      <form method="post" class="vaciar" data-confirm="¿Eliminar las <?= $cuenta[$filtro] ?> solicitudes <?= $filtro === 'cerrada' ? 'cerradas' : 'descartadas' ?>? No se puede deshacer.">
+        <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
+        <input type="hidden" name="accion" value="vaciar">
+        <input type="hidden" name="estado" value="<?= e($filtro) ?>">
+        <input type="hidden" name="f" value="<?= e($filtro) ?>">
+        <button class="link link--red">Eliminar todas las <?= $filtro === 'cerrada' ? 'cerradas' : 'descartadas' ?> (<?= $cuenta[$filtro] ?>)</button>
+      </form>
+    <?php endif; ?>
+    <p class="space">Espacio usado: <?= e($espacio) ?> · las solicitudes se borran solas a los 2 años</p>
   </main>
 
 <?php elseif ($vista === 'detalle'): ?>
@@ -284,6 +332,6 @@ return [
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=1" defer></script>
+<script src="panel.js?v=2" defer></script>
 </body>
 </html>

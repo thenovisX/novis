@@ -50,6 +50,23 @@ function novis_purgar(): void {
     novis_db()->prepare('DELETE FROM solicitudes WHERE creado < ?')->execute([date('c', strtotime('-2 years'))]);
 }
 
+/** Libera de verdad el espacio en disco tras borrar (SQLite no encoge el archivo por sí solo). */
+function novis_compactar(): void {
+    $db = novis_db();
+    $db->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    $db->exec('VACUUM');
+}
+
+/** Espacio que ocupa la base de datos, en formato legible. */
+function novis_tamano(): string {
+    $base = NOVIS_PRIVATE . '/novis-data/solicitudes.sqlite';
+    $bytes = 0;
+    foreach (['', '-wal', '-shm'] as $suf) if (is_file($base . $suf)) $bytes += filesize($base . $suf);
+    if ($bytes < 1024) return $bytes . ' B';
+    if ($bytes < 1048576) return round($bytes / 1024) . ' KB';
+    return round($bytes / 1048576, 1) . ' MB';
+}
+
 /** Límite simple por IP: devuelve false si se supera $max en $segundos. La IP solo se guarda cifrada (hash). */
 function novis_limite(string $clave, int $max, int $segundos): bool {
     $dir = NOVIS_PRIVATE . '/novis-data';
