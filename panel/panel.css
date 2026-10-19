@@ -31,6 +31,10 @@ pre { background: #f0f0f3; padding: 14px; border-radius: 12px; overflow-x: auto;
 .box { width: 100%; max-width: 360px; background: var(--card); border-radius: 24px; padding: 34px 26px; text-align: center; box-shadow: 0 20px 50px -25px rgba(0,0,0,.25); display: grid; gap: 14px; }
 .box h1 { font-size: 26px; }
 .box p { margin: 0; }
+.fields { display: grid; }
+.fields input:first-child { border-radius: 12px 12px 0 0; border-bottom-width: 0; }
+.fields input:last-child { border-radius: 0 0 12px 12px; }
+.fields input:focus { position: relative; z-index: 1; }
 .box input { font: inherit; padding: 14px 16px; border-radius: 12px; border: 1px solid #d2d2d7; outline: none; text-align: center; }
 .box input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.15); }
 .logo { width: 54px; height: 54px; border-radius: 16px; margin: 0 auto 4px; background: linear-gradient(135deg, #0071e3, #8e5cf7 60%, #ff6b8b); }

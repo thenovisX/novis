@@ -19,6 +19,7 @@ session_start();
 
 $config = novis_config();
 $clave  = (string)($config['panel_password'] ?? '');
+$usuario = (string)($config['panel_user'] ?? '');
 $error  = '';
 $aviso  = '';
 
@@ -37,7 +38,7 @@ function volver(string $q = ''): void {
 }
 
 // ---------- Sin contraseña configurada ----------
-if (strlen($clave) < 8) {
+if (strlen($clave) < 8 || $usuario === '') {
     $vista = 'sin_config';
 }
 // ---------- Login ----------
@@ -51,7 +52,10 @@ elseif (empty($_SESSION['ok'])) {
         $intentos = array_values(array_filter($intentos, fn($t) => $t > time() - 900));
         if (count($intentos) >= 5) {
             $error = 'Demasiados intentos. Espera 15 minutos.';
-        } elseif (hash_equals($clave, (string)($_POST['password'] ?? ''))) {
+        } elseif (
+            hash_equals(mb_strtolower($usuario), mb_strtolower(trim((string)($_POST['usuario'] ?? '')))) &
+            hash_equals($clave, (string)($_POST['password'] ?? ''))
+        ) {
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
             @unlink($f);
@@ -60,7 +64,7 @@ elseif (empty($_SESSION['ok'])) {
             $intentos[] = time();
             @file_put_contents($f, json_encode($intentos), LOCK_EX);
             sleep(1);
-            $error = 'Contraseña incorrecta.';
+            $error = 'Usuario o contraseña incorrectos.';
         }
     }
 }
@@ -148,7 +152,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=1">
+<link rel="stylesheet" href="panel.css?v=2">
 </head>
 <body class="v-<?= e($vista) ?>">
 
@@ -157,10 +161,11 @@ function hace(string $fecha): string {
     <div class="box">
       <span class="logo"></span>
       <h1>Panel sin configurar</h1>
-      <p class="muted">Añade una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>:</p>
+      <p class="muted">Añade un usuario y una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>:</p>
       <pre>&lt;?php
 return [
   'key' =&gt; 'TU_CLAVE_DE_GEMINI',
+  'panel_user' =&gt; 'TU_USUARIO',
   'panel_password' =&gt; 'TU_CONTRASEÑA',
 ];</pre>
     </div>
@@ -171,8 +176,11 @@ return [
     <form class="box" method="post" autocomplete="on">
       <span class="logo"></span>
       <h1>Solicitudes</h1>
-      <p class="muted">Introduce tu contraseña para entrar.</p>
-      <input type="password" name="password" placeholder="Contraseña" autocomplete="current-password" required autofocus>
+      <p class="muted">Introduce tu usuario y contraseña.</p>
+      <div class="fields">
+        <input type="text" name="usuario" placeholder="Usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required autofocus value="<?= e($_POST['usuario'] ?? '') ?>">
+        <input type="password" name="password" placeholder="Contraseña" autocomplete="current-password" required>
+      </div>
       <?php if ($error): ?><p class="error"><?= e($error) ?></p><?php endif; ?>
       <button class="btn" type="submit">Entrar</button>
     </form>
