@@ -396,3 +396,80 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .section--gray .eyebrow { color: #0066cc; }
 .section--dark .eyebrow { color: #2997ff; }
 .legal .eyebrow { color: var(--accent); font-size: 17px; }
+
+/* ===== Dinamismo: efectos al pasar el ratón ===== */
+.step, .plan, .stat, .card, .work__item { will-change: transform; }
+
+/* Aparición escalonada de los elementos de cada fila */
+.steps > .reveal:nth-child(2), .bento > .reveal:nth-child(2), .work > .reveal:nth-child(2), .plans > .reveal:nth-child(2), .stats__grid > .reveal:nth-child(2) { transition-delay: .08s; }
+.steps > .reveal:nth-child(3), .bento > .reveal:nth-child(3), .work > .reveal:nth-child(3), .plans > .reveal:nth-child(3), .stats__grid > .reveal:nth-child(3) { transition-delay: .16s; }
+.steps > .reveal:nth-child(4), .bento > .reveal:nth-child(4), .stats__grid > .reveal:nth-child(4) { transition-delay: .24s; }
+.bento > .reveal:nth-child(5) { transition-delay: .32s; }
+
+/* Pasos del proceso: barra de progreso y número destacado */
+.step { position: relative; overflow: hidden; }
+.step::before {
+  content: ""; position: absolute; left: 0; top: 0; height: 4px; width: 100%;
+  background: linear-gradient(90deg, #0071e3, #8e5cf7, #ff6b8b);
+  transform: scaleX(0); transform-origin: left; transition: transform .5s var(--ease);
+}
+.step__n { display: inline-block; transition: transform .45s var(--ease), color .3s; transform-origin: left center; }
+
+/* Leve flotación de la maqueta del inicio */
+@keyframes flotar { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+.device.is-visible { animation: flotar 6s ease-in-out 1s infinite; }
+
+@media (hover: hover) and (pointer: fine) {
+  /* Pasos: el que señalas crece y los demás se apartan */
+  .steps .step.is-visible { transition: transform .45s var(--ease), box-shadow .45s var(--ease), opacity .45s var(--ease); }
+  .steps .step.is-visible:hover {
+    transform: scale(1.08) translateY(-6px); z-index: 2;
+    box-shadow: 0 30px 60px -20px rgba(0, 40, 120, .28);
+  }
+  .steps:hover .step.is-visible:not(:hover) { transform: scale(.96); opacity: .6; }
+  .step:hover::before { transform: scaleX(1); }
+  .step:hover .step__n {
+    transform: scale(2.2); color: transparent;
+    background: linear-gradient(90deg, #0071e3, #8e5cf7, #ff6b8b); -webkit-background-clip: text; background-clip: text;
+  }
+  .step:hover h3 { margin-top: 30px; }
+  .step h3 { transition: margin .45s var(--ease); }
+
+  /* Servicios */
+  .bento .card.is-visible { transition: transform .45s var(--ease), box-shadow .45s var(--ease); }
+  .bento .card.is-visible:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 30px 60px -25px rgba(0,0,0,.3); }
+  .card .icon { transition: transform .45s var(--ease); }
+  .card:hover .icon { transform: scale(1.15) rotate(-6deg); }
+
+  /* Trabajos */
+  .work .work__item.is-visible { transition: transform .45s var(--ease); }
+  .work .work__item.is-visible:hover { transform: translateY(-8px); }
+  .work__item:hover .work__img { transform: scale(1.04); box-shadow: 0 30px 60px -25px rgba(0,0,0,.35); }
+  .work__img span { transition: transform .45s var(--ease), letter-spacing .45s var(--ease); }
+  .work__item:hover .work__img span { transform: scale(1.12); }
+
+  /* Planes */
+  .plans .plan.is-visible { transition: transform .45s var(--ease), box-shadow .45s var(--ease); }
+  .plans .plan.is-visible:hover { transform: translateY(-10px) scale(1.03); box-shadow: 0 35px 70px -25px rgba(0, 40, 120, .3); }
+  .plans .plan--featured.is-visible:hover { box-shadow: 0 0 0 2px var(--accent), 0 35px 70px -25px rgba(0, 113, 227, .45); }
+  .plan__price strong { display: inline-block; transition: transform .45s var(--ease); transform-origin: left bottom; }
+  .plan:hover .plan__price strong { transform: scale(1.1); }
+
+  /* Cifras */
+  .stat strong { transition: transform .4s var(--ease); }
+  .stat:hover strong {
+    transform: scale(1.12); color: transparent;
+    background: linear-gradient(90deg, #0071e3, #8e5cf7, #ff6b8b); -webkit-background-clip: text; background-clip: text;
+  }
+}
+
+/* En móvil: pequeña respuesta al tocar */
+@media (hover: none) {
+  .step:active, .plan:active, .card:active, .work__item:active { transform: scale(.98) !important; transition: transform .15s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .device.is-visible { animation: none; }
+  .steps .step.is-visible:hover, .steps:hover .step.is-visible:not(:hover), .bento .card.is-visible:hover,
+  .work .work__item.is-visible:hover, .plans .plan.is-visible:hover { transform: none; }
+}
