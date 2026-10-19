@@ -35,15 +35,26 @@ if (!$nombre || !$email || !$mensaje) {
     exit;
 }
 
+// Guardar la solicitud en el panel
+$guardado = false;
+try {
+    require_once __DIR__ . '/lib/novis.php';
+    $st = novis_db()->prepare('INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje) VALUES (?, ?, ?, ?, ?, ?)');
+    $st->execute([date('c'), mb_substr($nombre, 0, 120), mb_substr($empresa, 0, 120), $email, mb_substr($plan, 0, 40), mb_substr($mensaje, 0, 5000)]);
+    $guardado = true;
+} catch (Throwable $err) {
+    error_log('Novis contacto (BD): ' . $err->getMessage());
+}
+
 $asunto = "Nuevo contacto web: $nombre" . ($empresa ? " ($empresa)" : '');
-$cuerpo = "Nombre: $nombre\nEmpresa: $empresa\nEmail: $email\nPlan: $plan\n\nMensaje:\n$mensaje\n";
+$cuerpo = "Nombre: $nombre\nEmpresa: $empresa\nEmail: $email\nPlan: $plan\n\nMensaje:\n$mensaje\n\nVer en el panel: https://thenovis.com/panel/\n";
 $cabeceras = "From: Novis <$remitente>\r\n"
            . "Reply-To: $email\r\n"
            . "Content-Type: text/plain; charset=UTF-8\r\n";
 
 $enviado = mail($destino, '=?UTF-8?B?' . base64_encode($asunto) . '?=', $cuerpo, $cabeceras);
 
-if ($enviado) {
+if ($enviado || $guardado) {
     echo json_encode(['ok' => true]);
 } else {
     http_response_code(500);
