@@ -114,3 +114,31 @@
 
   document.getElementById('year').textContent = new Date().getFullYear();
 })();
+
+// ===== Navegador de la portada: cambia entre los ejemplos =====
+(function () {
+  const sites = [...document.querySelectorAll('.showcase .site')];
+  const botones = [...document.querySelectorAll('.showcase__controls button')];
+  const url = document.getElementById('showcaseUrl');
+  if (!sites.length) return;
+  let actual = 0, temporizador = null, visible = true, manual = false;
+  const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function mostrar(i) {
+    actual = (i + sites.length) % sites.length;
+    sites.forEach((s, n) => { s.classList.toggle('is-active', n === actual); s.setAttribute('aria-hidden', String(n !== actual)); });
+    botones.forEach((b, n) => { b.classList.toggle('is-active', n === actual); b.setAttribute('aria-pressed', String(n === actual)); });
+    url.textContent = sites[actual].dataset.url;
+  }
+  function programar() {
+    clearInterval(temporizador);
+    if (reducir || manual || !visible) return;
+    temporizador = setInterval(() => mostrar(actual + 1), 4500);
+  }
+  botones.forEach((b, n) => b.addEventListener('click', () => { manual = true; mostrar(n); programar(); }));
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; programar(); }).observe(document.querySelector('.showcase'));
+  }
+  document.addEventListener('visibilitychange', () => { visible = document.visibilityState === 'visible'; programar(); });
+  programar();
+})();

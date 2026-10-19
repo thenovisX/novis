@@ -183,7 +183,7 @@ function hace(string $fecha): string {
       <span class="logo"></span>
       <h1>Panel sin configurar</h1>
       <p class="muted">Añade un usuario y una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>:</p>
-      <pre>&lt;?php
+      <pre tabindex="0">&lt;?php
 return [
   'key' =&gt; 'TU_CLAVE_DE_GEMINI',
   'panel_user' =&gt; 'TU_USUARIO',
