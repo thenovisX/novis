@@ -31,12 +31,9 @@ A partir de ahí, cada `git push` a `main` actualiza la web sola.
 
 ## Configurar el formulario
 
-Edita las dos variables al principio de `contact.php`:
-
-- `$destino`: el email donde quieres recibir los mensajes.
-- `$remitente`: un email creado en tu dominio de Hostinger (p. ej. `no-reply@tudominio.com`).
-
-Los mensajes llegan a `hola@thenovis.com`. Crea en Hostinger el buzón `no-reply@thenovis.com` (o cambia `$remitente` por uno que exista en tu dominio).
+Los mensajes llegan a `hola@thenovis.com` (variable `$destino` en `contact.php`).
+Los emails se envían por SMTP con el buzón `hola@thenovis.com` (smtp.hostinger.com:465)
+usando `smtp_user` y `smtp_password` de la configuración privada.
 
 ## Configuración privada (`gemini-config.php`, fuera de `public_html`)
 
@@ -46,6 +43,8 @@ return [
   'key' => 'CLAVE_GEMINI',          // con facturación activada (obligatorio para usuarios de la UE)
   'panel_user' => 'USUARIO',
   'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres
+  'smtp_user' => 'hola@thenovis.com',
+  'smtp_password' => 'CONTRASEÑA_DEL_BUZÓN', // la del email en Hostinger
 ];
 ```
 

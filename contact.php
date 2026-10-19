@@ -3,9 +3,8 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // ====== CONFIGURA AQUÍ ======
-$destino   = 'hola@thenovis.com';       // Email donde quieres recibir los mensajes
-$remitente = 'no-reply@thenovis.com';   // Debe ser un email de TU dominio en Hostinger
-$respuesta = 'hola@thenovis.com';       // Desde dónde se envía la confirmación al cliente
+$destino = 'hola@thenovis.com';   // Email donde quieres recibir los mensajes
+// Los emails se envían desde el buzón configurado en gemini-config.php (smtp_user / smtp_password).
 // ============================
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -36,7 +35,7 @@ if (empty($_POST['acepto'])) {
     exit;
 }
 
-require_once __DIR__ . '/lib/novis.php';
+require_once __DIR__ . '/lib/correo.php';
 if (!novis_limite('form', 5, 3600)) {
     http_response_code(429);
     echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
@@ -62,16 +61,13 @@ try {
 
 $asunto = "Nuevo contacto web: $nombre" . ($empresa ? " ($empresa)" : '');
 $cuerpo = "Nombre: $nombre\nEmpresa: $empresa\nEmail: $email\nPlan: $plan\n\nMensaje:\n$mensaje\n\nVer en el panel: https://thenovis.com/panel/\n";
-$cabeceras = "From: Novis <$remitente>\r\n"
-           . "Reply-To: $email\r\n"
-           . "Content-Type: text/plain; charset=UTF-8\r\n";
-
-$enviado = mail($destino, '=?UTF-8?B?' . base64_encode($asunto) . '?=', $cuerpo, $cabeceras);
+$enviado = novis_mail($destino, $asunto, $cuerpo, null, $email);
+if (!$enviado) error_log('Novis contacto: no se pudo enviar el aviso a ' . $destino);
 
 if ($enviado || $guardado) {
     // Confirmación automática al cliente
     try {
-        novis_confirmacion($email, $nombre, $plan, $respuesta);
+        novis_confirmacion($email, $nombre, $plan);
     } catch (Throwable $err) {
         error_log('Novis confirmación: ' . $err->getMessage());
     }
@@ -87,7 +83,7 @@ if ($enviado || $guardado) {
  * NO se incluye el mensaje escrito por el usuario: solo el nombre (limpio y corto)
  * y el plan elegido de una lista cerrada.
  */
-function novis_confirmacion(string $para, string $nombre, string $plan, string $desde): bool {
+function novis_confirmacion(string $para, string $nombre, string $plan): bool {
     $nombre = preg_replace('/[^\p{L}\s\'\-]/u', '', $nombre);
     $nombre = trim(mb_substr(preg_split('/\s+/', trim($nombre))[0] ?? '', 0, 30));
     $saludo = $nombre !== '' ? "Hola, $nombre:" : 'Hola:';
@@ -130,18 +126,6 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
       . '<a href="https://thenovis.com/privacidad.html" style="color:#0066cc">Política de privacidad</a>'
       . '</td></tr></table></td></tr></table></body></html>';
 
-    $limite = 'novis_' . bin2hex(random_bytes(12));
-    $cuerpo = "--$limite\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"
-            . chunk_split(base64_encode($texto))
-            . "--$limite\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"
-            . chunk_split(base64_encode($html))
-            . "--$limite--\r\n";
-    $cabeceras = "From: Novis <$desde>\r\n"
-               . "Reply-To: Novis <$desde>\r\n"
-               . "MIME-Version: 1.0\r\n"
-               . "Auto-Submitted: auto-replied\r\n"
-               . "X-Auto-Response-Suppress: All\r\n"
-               . "Content-Type: multipart/alternative; boundary=\"$limite\"\r\n";
-    $asunto = '=?UTF-8?B?' . base64_encode('Hemos recibido tu solicitud · Novis') . '?=';
-    return mail($para, $asunto, $cuerpo, $cabeceras, '-f' . $desde);
+    return novis_mail($para, 'Hemos recibido tu solicitud · Novis', $texto, $html, null,
+        ['Auto-Submitted' => 'auto-replied', 'X-Auto-Response-Suppress' => 'All']);
 }
