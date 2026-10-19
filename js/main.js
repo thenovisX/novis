@@ -73,13 +73,20 @@
     e.preventDefault();
     let valid = true;
     form.querySelectorAll('[required]').forEach(input => {
-      const ok = input.type === 'email'
-        ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim())
+      const ok = input.type === 'checkbox' ? input.checked
+        : input.type === 'email' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim())
         : input.value.trim().length > 0;
       input.parentElement.classList.toggle('is-invalid', !ok);
+      input.setAttribute('aria-invalid', String(!ok));
       if (!ok) valid = false;
     });
-    if (!valid) { setStatus('Revisa los campos marcados.', 'err'); return; }
+    if (!valid) {
+      const acepto = form.querySelector('[name="acepto"]');
+      setStatus(acepto && !acepto.checked ? 'Debes aceptar la política de privacidad.' : 'Revisa los campos marcados.', 'err');
+      const primero = form.querySelector('[aria-invalid="true"]');
+      if (primero) primero.focus();
+      return;
+    }
 
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = 'Enviando…'; setStatus('');
@@ -101,7 +108,9 @@
   });
 
   form.querySelectorAll('input, textarea').forEach(i =>
-    i.addEventListener('input', () => i.parentElement.classList.remove('is-invalid')));
+    i.addEventListener(i.type === 'checkbox' ? 'change' : 'input', () => {
+      i.parentElement.classList.remove('is-invalid'); i.removeAttribute('aria-invalid');
+    }));
 
   document.getElementById('year').textContent = new Date().getFullYear();
 })();

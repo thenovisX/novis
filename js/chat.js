@@ -1,7 +1,7 @@
 // ===== Novis — asistente virtual =====
 (function () {
   const historial = [];
-  const SALUDO = '¡Hola! Soy el asistente de Novis. ¿En qué te puedo ayudar con tu web?';
+  const SALUDO = '¡Hola! Soy el asistente virtual de Novis, una inteligencia artificial. Puedo resolver dudas sobre nuestros servicios y precios. ¿En qué te ayudo?';
   const SUGERENCIAS = ['¿Cuánto cuesta una web?', '¿Cuánto tardáis?', '¿Hacéis tiendas online?'];
 
   const raiz = document.createElement('div');
@@ -10,11 +10,12 @@
     <div class="chat__panel" id="chatPanel" role="dialog" aria-label="Asistente de Novis" aria-hidden="true">
       <header class="chat__head">
         <span class="chat__avatar"></span>
-        <div><strong>Asistente Novis</strong><small>Responde al momento</small></div>
+        <div><strong>Asistente Novis</strong><small>Asistente con inteligencia artificial</small></div>
         <button class="chat__close" type="button" aria-label="Cerrar chat">×</button>
       </header>
       <div class="chat__body" id="chatBody" aria-live="polite"></div>
       <div class="chat__chips" id="chatChips"></div>
+      <p class="chat__note">Respuestas generadas por IA; pueden contener errores. No compartas datos personales. <a href="privacidad.html#chat">Privacidad</a></p>
       <form class="chat__form" id="chatForm" autocomplete="off">
         <input type="text" id="chatInput" placeholder="Escribe tu pregunta…" maxlength="800" aria-label="Tu mensaje">
         <button type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>

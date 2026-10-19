@@ -39,7 +39,34 @@ function novis_db(): PDO {
         notas TEXT DEFAULT "",
         actualizado TEXT
     )');
+    // Columna con la fecha en que el usuario aceptó la política de privacidad
+    $cols = array_column($db->query('PRAGMA table_info(solicitudes)')->fetchAll(), 'name');
+    if (!in_array('consentimiento', $cols, true)) $db->exec('ALTER TABLE solicitudes ADD COLUMN consentimiento TEXT');
     return $db;
+}
+
+/** RGPD: borra solicitudes con más de 2 años (plazo indicado en la política de privacidad). */
+function novis_purgar(): void {
+    novis_db()->prepare('DELETE FROM solicitudes WHERE creado < ?')->execute([date('c', strtotime('-2 years'))]);
+}
+
+/** Límite simple por IP: devuelve false si se supera $max en $segundos. La IP solo se guarda cifrada (hash). */
+function novis_limite(string $clave, int $max, int $segundos): bool {
+    $dir = NOVIS_PRIVATE . '/novis-data';
+    if (!is_dir($dir)) @mkdir($dir, 0700, true);
+    $f = $dir . '/lim-' . $clave . '-' . hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? 'x') . 'novis') . '.json';
+    $t = is_readable($f) ? (json_decode((string)@file_get_contents($f), true) ?: []) : [];
+    $t = array_values(array_filter($t, fn($x) => $x > time() - $segundos));
+    // Limpieza: borra registros de más de 1 hora (política de privacidad)
+    if (mt_rand(1, 20) === 1) {
+        foreach (glob($dir . '/{lim,intentos}-*.json', GLOB_BRACE) ?: [] as $viejo) {
+            if (filemtime($viejo) < time() - 3600) @unlink($viejo);
+        }
+    }
+    if (count($t) >= $max) return false;
+    $t[] = time();
+    @file_put_contents($f, json_encode($t), LOCK_EX);
+    return true;
 }
 
 function e($v): string {

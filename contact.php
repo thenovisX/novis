@@ -29,6 +29,19 @@ $email   = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
 $plan    = limpiar($_POST['plan'] ?? '');
 $mensaje = trim(strip_tags($_POST['mensaje'] ?? ''));
 
+if (empty($_POST['acepto'])) {
+    http_response_code(422);
+    echo json_encode(['ok' => false, 'error' => 'Debes aceptar la política de privacidad']);
+    exit;
+}
+
+require_once __DIR__ . '/lib/novis.php';
+if (!novis_limite('form', 5, 3600)) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
+    exit;
+}
+
 if (!$nombre || !$email || !$mensaje) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'error' => 'Faltan campos obligatorios']);
@@ -38,9 +51,9 @@ if (!$nombre || !$email || !$mensaje) {
 // Guardar la solicitud en el panel
 $guardado = false;
 try {
-    require_once __DIR__ . '/lib/novis.php';
-    $st = novis_db()->prepare('INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje) VALUES (?, ?, ?, ?, ?, ?)');
-    $st->execute([date('c'), mb_substr($nombre, 0, 120), mb_substr($empresa, 0, 120), $email, mb_substr($plan, 0, 40), mb_substr($mensaje, 0, 5000)]);
+    $st = novis_db()->prepare('INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje, consentimiento) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $st->execute([date('c'), mb_substr($nombre, 0, 120), mb_substr($empresa, 0, 120), $email, mb_substr($plan, 0, 40), mb_substr($mensaje, 0, 5000), date('c')]);
+    novis_purgar();
     $guardado = true;
 } catch (Throwable $err) {
     error_log('Novis contacto (BD): ' . $err->getMessage());

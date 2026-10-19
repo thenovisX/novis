@@ -1,11 +1,32 @@
+# ===== Novis — configuración del servidor =====
+Options -Indexes
+ServerSignature Off
+
 # Forzar HTTPS
 RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
 
+# Bloquear archivos internos (repositorio Git, documentación, ejemplos)
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.(gitignore|htaccess|env)
+RedirectMatch 404 /(README\.md|gemini-config\.example\.php)$
+
+# Cabeceras de seguridad
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+  Header unset X-Powered-By
+</IfModule>
+
 # Compresión
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml application/manifest+json
 </IfModule>
 
 # Caché del navegador
@@ -14,4 +35,8 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
   ExpiresByType text/css "access plus 1 week"
   ExpiresByType application/javascript "access plus 1 week"
   ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
+
+AddType font/woff2 .woff2
+AddType application/manifest+json .webmanifest

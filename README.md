@@ -37,3 +37,22 @@ Edita las dos variables al principio de `contact.php`:
 - `$remitente`: un email creado en tu dominio de Hostinger (p. ej. `no-reply@tudominio.com`).
 
 Los mensajes llegan a `sales@thenovis.com`. Crea en Hostinger el buzón `no-reply@thenovis.com` (o cambia `$remitente` por uno que exista en tu dominio).
+
+## Configuración privada (`gemini-config.php`, fuera de `public_html`)
+
+```php
+<?php
+return [
+  'key' => 'CLAVE_GEMINI',          // con facturación activada (obligatorio para usuarios de la UE)
+  'panel_user' => 'USUARIO',
+  'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres
+];
+```
+
+## Cumplimiento legal
+
+- Páginas: `aviso-legal.html`, `privacidad.html`, `cookies.html`, `accesibilidad.html`.
+- Rellenar los datos marcados como `[PENDIENTE]` (titular, NIF, domicilio) en aviso legal y privacidad.
+- Formulario con consentimiento expreso; las solicitudes se borran solas a los 2 años.
+- Sin cookies de terceros ni Google Fonts externas: no hace falta banner de cookies.
+- Chat identificado como IA (Reglamento UE de IA, art. 50).

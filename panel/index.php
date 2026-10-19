@@ -154,7 +154,7 @@ function hace(string $fecha): string {
 <meta name="theme-color" content="#f5f5f7">
 <link rel="stylesheet" href="panel.css?v=2">
 </head>
-<body class="v-<?= e($vista) ?>">
+<body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
 <?php if ($vista === 'sin_config'): ?>
   <main class="center">
@@ -239,6 +239,7 @@ return [
         <dt>Email</dt><dd><a href="mailto:<?= e($sol['email']) ?>"><?= e($sol['email']) ?></a></dd>
         <dt>Plan</dt><dd><?= e($sol['plan'] ?: '—') ?></dd>
         <dt>Recibida</dt><dd><?= e(date('d/m/Y H:i', strtotime($sol['creado']))) ?></dd>
+        <dt>Privacidad</dt><dd><?= !empty($sol['consentimiento']) ? 'Aceptada el ' . e(date('d/m/Y H:i', strtotime($sol['consentimiento']))) : '—' ?></dd>
       </dl>
       <div class="actions">
         <a class="btn" href="mailto:<?= e($sol['email']) ?>?subject=<?= rawurlencode('Tu proyecto web con Novis') ?>&body=<?= rawurlencode('Hola ' . $sol['nombre'] . ",\n\nGracias por contactar con Novis. ") ?>">Responder</a>
@@ -275,7 +276,7 @@ return [
       </form>
     </section>
 
-    <form method="post" class="danger" onsubmit="return confirm('¿Eliminar esta solicitud? No se puede deshacer.')">
+    <form method="post" class="danger" data-confirm="¿Eliminar esta solicitud? No se puede deshacer.">
       <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
       <input type="hidden" name="id" value="<?= (int)$sol['id'] ?>">
       <button name="accion" value="borrar" class="link link--red">Eliminar solicitud</button>
@@ -283,15 +284,6 @@ return [
   </main>
 <?php endif; ?>
 
-<script>
-document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copiado ✓'; setTimeout(() => b.textContent = 'Copiar email', 1500); } catch (e) {}
-}));
-<?php if ($vista === 'lista'): ?>
-// Actualiza la lista cada minuto si la app está abierta
-setInterval(() => { if (document.visibilityState === 'visible' && document.activeElement.tagName !== 'INPUT') location.reload(); }, 60000);
-<?php endif; ?>
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-</script>
+<script src="panel.js?v=1" defer></script>
 </body>
 </html>
