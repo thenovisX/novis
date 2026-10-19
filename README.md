@@ -36,7 +36,7 @@ Edita las dos variables al principio de `contact.php`:
 - `$destino`: el email donde quieres recibir los mensajes.
 - `$remitente`: un email creado en tu dominio de Hostinger (p. ej. `no-reply@tudominio.com`).
 
-Los mensajes llegan a `sales@thenovis.com`. Crea en Hostinger el buzón `no-reply@thenovis.com` (o cambia `$remitente` por uno que exista en tu dominio).
+Los mensajes llegan a `hola@thenovis.com`. Crea en Hostinger el buzón `no-reply@thenovis.com` (o cambia `$remitente` por uno que exista en tu dominio).
 
 ## Configuración privada (`gemini-config.php`, fuera de `public_html`)
 

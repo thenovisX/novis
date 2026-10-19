@@ -101,7 +101,7 @@
         throw new Error(data.error || 'error');
       }
     } catch (err) {
-      setStatus('No se pudo enviar. Escríbenos a sales@thenovis.com', 'err');
+      setStatus('No se pudo enviar. Escríbenos a hola@thenovis.com', 'err');
     } finally {
       btn.disabled = false; btn.textContent = 'Enviar mensaje';
     }

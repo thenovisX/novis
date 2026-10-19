@@ -30,7 +30,7 @@ if (!$clave) responder(['error' => 'El asistente no está configurado todavía.'
 // --- Límite de uso por visitante ---
 require_once __DIR__ . '/lib/novis.php';
 if (!novis_limite('chat', $MAX_POR_HORA, 3600)) {
-    responder(['reply' => 'Has enviado muchos mensajes seguidos. Si quieres, escríbenos a sales@thenovis.com o usa el formulario de contacto y te respondemos en menos de 24 horas.']);
+    responder(['reply' => 'Has enviado muchos mensajes seguidos. Si quieres, escríbenos a hola@thenovis.com o usa el formulario de contacto y te respondemos en menos de 24 horas.']);
 }
 
 // --- Leer la conversación ---
@@ -51,7 +51,7 @@ if (!$contenidos || end($contenidos)['role'] !== 'user') responder(['error' => '
 $instrucciones = <<<TXT
 Eres el asistente virtual de Novis, un estudio de diseño y desarrollo web para empresas con sede en Vigo (Galicia, España). Web: thenovis.com.
 
-TU OBJETIVO: resolver dudas de forma breve y amable y, cuando el cliente muestre interés, animarle a pedir presupuesto mediante el formulario de contacto de esta página o escribiendo a sales@thenovis.com.
+TU OBJETIVO: resolver dudas de forma breve y amable y, cuando el cliente muestre interés, animarle a pedir presupuesto mediante el formulario de contacto de esta página o escribiendo a hola@thenovis.com.
 
 ESTILO:
 - Responde en el idioma en el que te escriban (español, gallego, inglés…).
@@ -78,7 +78,7 @@ PLAZOS: una web sencilla suele estar lista en una semana; proyectos más grandes
 PAGO: 50% al aprobar el diseño y 50% al publicar la web.
 DOMINIO Y HOSTING: si el cliente no los tiene, le ayudamos a contratarlos y lo dejamos todo configurado.
 CAMBIOS: explicamos cómo hacer cambios básicos; también podemos hacerlos nosotros con mantenimiento.
-CONTACTO: formulario de esta página o sales@thenovis.com. Respondemos en menos de 24 horas. Todavía no hay teléfono público.
+CONTACTO: formulario de esta página o hola@thenovis.com. Respondemos en menos de 24 horas. Todavía no hay teléfono público.
 
 REGLAS:
 - No inventes información que no esté aquí (precios cerrados, descuentos, fechas exactas, clientes, teléfonos o redes sociales). Si no lo sabes, di que el equipo se lo confirmará y remite al formulario o al email.
@@ -116,7 +116,7 @@ $texto = trim($texto);
 
 if ($codigo !== 200 || $texto === '') {
     error_log('Novis chat: HTTP ' . $codigo . ' ' . substr((string)$respuesta, 0, 300));
-    responder(['reply' => 'Ahora mismo no puedo responder. Escríbenos a sales@thenovis.com o usa el formulario y te contestamos en menos de 24 horas.']);
+    responder(['reply' => 'Ahora mismo no puedo responder. Escríbenos a hola@thenovis.com o usa el formulario y te contestamos en menos de 24 horas.']);
 }
 
 responder(['reply' => $texto]);

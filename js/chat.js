@@ -92,7 +92,7 @@
       const data = await res.json();
       respuesta = data.reply || data.error;
     } catch (e) { /* sin conexión */ }
-    respuesta = respuesta || 'Ahora mismo no puedo responder. Escríbenos a sales@thenovis.com.';
+    respuesta = respuesta || 'Ahora mismo no puedo responder. Escríbenos a hola@thenovis.com.';
 
     escribiendo.classList.remove('chat__msg--typing');
     escribiendo.innerHTML = formatear(respuesta);

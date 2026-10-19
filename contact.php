@@ -3,7 +3,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // ====== CONFIGURA AQUÍ ======
-$destino   = 'sales@thenovis.com';       // Email donde quieres recibir los mensajes
+$destino   = 'hola@thenovis.com';       // Email donde quieres recibir los mensajes
 $remitente = 'no-reply@thenovis.com';   // Debe ser un email de TU dominio en Hostinger
 // ============================
 
