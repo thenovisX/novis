@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Novis — Diseño y desarrollo web para empresas</title>
+  <meta name="description" content="Novis crea páginas web elegantes, rápidas y profesionales para empresas. Diseño a medida, entrega rápida y soporte cercano.">
+  <meta name="theme-color" content="#ffffff">
+  <meta property="og:title" content="Novis — Webs que hacen crecer tu negocio">
+  <meta property="og:description" content="Diseño y desarrollo web a medida para empresas.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navegación -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#inicio" class="logo" aria-label="Novis, inicio">
+        <span class="logo__mark"></span>novis
+      </a>
+      <nav class="nav__links" id="menu" aria-label="Principal">
+        <a href="#servicios">Servicios</a>
+        <a href="#proceso">Proceso</a>
+        <a href="#trabajos">Trabajos</a>
+        <a href="#planes">Planes</a>
+        <a href="#faq">Preguntas</a>
+        <a href="#contacto" class="btn btn--small">Contactar</a>
+      </nav>
+      <button class="nav__toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+      <p class="eyebrow reveal">Diseño y desarrollo web</p>
+      <h1 class="hero__title reveal">Tu empresa,<br><span class="gradient">en su mejor versión.</span></h1>
+      <p class="hero__sub reveal">Creamos páginas web elegantes, rápidas y pensadas para convertir visitas en clientes. Sin complicaciones.</p>
+      <div class="hero__cta reveal">
+        <a href="#contacto" class="btn">Pide tu presupuesto</a>
+        <a href="#trabajos" class="link-arrow">Ver trabajos</a>
+      </div>
+
+      <div class="device reveal" aria-hidden="true">
+        <div class="device__bar"><i></i><i></i><i></i><span>tuempresa.com</span></div>
+        <div class="device__screen">
+          <div class="mock-nav"><b></b><span></span><span></span><span></span></div>
+          <div class="mock-hero">
+            <div class="mock-line w60"></div>
+            <div class="mock-line w40"></div>
+            <div class="mock-btn"></div>
+          </div>
+          <div class="mock-grid"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cifras -->
+    <section class="stats">
+      <div class="stats__grid">
+        <div class="stat reveal"><strong data-count="7">0</strong><span>días de entrega media</span></div>
+        <div class="stat reveal"><strong data-count="100" data-suffix="%">0</strong><span>adaptadas a móvil</span></div>
+        <div class="stat reveal"><strong data-count="95" data-suffix="+">0</strong><span>puntuación de velocidad</span></div>
+        <div class="stat reveal"><strong>24h</strong><span>tiempo de respuesta</span></div>
+      </div>
+    </section>
+
+    <!-- Servicios -->
+    <section class="section" id="servicios">
+      <div class="section__head">
+        <p class="eyebrow reveal">Servicios</p>
+        <h2 class="reveal">Todo lo que tu web necesita.<br><span class="muted">Nada que no.</span></h2>
+      </div>
+
+      <div class="bento">
+        <article class="card card--wide card--dark reveal">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 5h18v12H3zM8 21h8M12 17v4"/></svg></div>
+          <h3>Webs corporativas</h3>
+          <p>Una presencia online que transmite confianza desde el primer segundo. Diseño a medida, nada de plantillas genéricas.</p>
+        </article>
+        <article class="card reveal">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M6 6h15l-2 9H8L6 3H3M9 20a1 1 0 100-2 1 1 0 000 2zM18 20a1 1 0 100-2 1 1 0 000 2z"/></svg></div>
+          <h3>Tiendas online</h3>
+          <p>Vende 24/7 con un catálogo claro y un proceso de compra sencillo.</p>
+        </article>
+        <article class="card reveal">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg></div>
+          <h3>Landing pages</h3>
+          <p>Páginas enfocadas en un objetivo: captar clientes para tu campaña.</p>
+        </article>
+        <article class="card reveal">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M11 4a7 7 0 105 12l4 4M11 8v6M8 11h6"/></svg></div>
+          <h3>SEO y velocidad</h3>
+          <p>Optimizadas para Google y para cargar en un abrir y cerrar de ojos.</p>
+        </article>
+        <article class="card card--wide card--soft reveal">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z M9 12l2 2 4-4"/></svg></div>
+          <h3>Mantenimiento y soporte</h3>
+          <p>Nos encargamos de actualizaciones, copias de seguridad y cambios para que tú solo te preocupes de tu negocio.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Proceso -->
+    <section class="section section--gray" id="proceso">
+      <div class="section__head">
+        <p class="eyebrow reveal">Proceso</p>
+        <h2 class="reveal">De la idea a online,<br><span class="muted">en cuatro pasos.</span></h2>
+      </div>
+      <ol class="steps">
+        <li class="step reveal"><span class="step__n">01</span><h3>Hablamos</h3><p>Nos cuentas tu negocio, tus objetivos y lo que te gusta. Sin compromiso.</p></li>
+        <li class="step reveal"><span class="step__n">02</span><h3>Diseñamos</h3><p>Te presentamos una propuesta visual y la ajustamos hasta que te encante.</p></li>
+        <li class="step reveal"><span class="step__n">03</span><h3>Construimos</h3><p>Desarrollamos la web, rápida, segura y perfecta en cualquier pantalla.</p></li>
+        <li class="step reveal"><span class="step__n">04</span><h3>Lanzamos</h3><p>Publicamos tu web y te acompañamos después con soporte cercano.</p></li>
+      </ol>
+    </section>
+
+    <!-- Trabajos -->
+    <section class="section" id="trabajos">
+      <div class="section__head">
+        <p class="eyebrow reveal">Trabajos</p>
+        <h2 class="reveal">Diseño que se nota.</h2>
+      </div>
+      <div class="work">
+        <article class="work__item reveal">
+          <div class="work__img" style="--a:#f5e6d8;--b:#c98b5e"><span>Cerámica</span></div>
+          <h3>Taller de cerámica</h3><p>Web con clases, tienda y galería.</p>
+        </article>
+        <article class="work__item reveal">
+          <div class="work__img" style="--a:#dfe9f5;--b:#3d6fb6"><span>Clínica</span></div>
+          <h3>Clínica dental</h3><p>Reserva de citas y servicios.</p>
+        </article>
+        <article class="work__item reveal">
+          <div class="work__img" style="--a:#e4f2e7;--b:#3f8a57"><span>Restaurante</span></div>
+          <h3>Restaurante</h3><p>Carta digital y reservas.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Planes -->
+    <section class="section section--gray" id="planes">
+      <div class="section__head">
+        <p class="eyebrow reveal">Planes</p>
+        <h2 class="reveal">Elige cómo empezar.</h2>
+        <p class="section__sub reveal">Precios orientativos. Cada proyecto se presupuesta a medida.</p>
+      </div>
+      <div class="plans">
+        <article class="plan reveal">
+          <h3>Esencial</h3>
+          <p class="plan__desc">Para empezar con buen pie.</p>
+          <p class="plan__price">desde <strong>390 €</strong></p>
+          <ul>
+            <li>Web de una página</li>
+            <li>Diseño adaptado a móvil</li>
+            <li>Formulario de contacto</li>
+            <li>SEO básico</li>
+          </ul>
+          <a href="#contacto" class="btn btn--ghost" data-plan="Esencial">Lo quiero</a>
+        </article>
+        <article class="plan plan--featured reveal">
+          <span class="badge">Más elegido</span>
+          <h3>Profesional</h3>
+          <p class="plan__desc">La web completa de tu empresa.</p>
+          <p class="plan__price">desde <strong>790 €</strong></p>
+          <ul>
+            <li>Hasta 6 secciones</li>
+            <li>Diseño 100% a medida</li>
+            <li>Blog o noticias</li>
+            <li>SEO avanzado y analítica</li>
+            <li>1 mes de soporte incluido</li>
+          </ul>
+          <a href="#contacto" class="btn" data-plan="Profesional">Lo quiero</a>
+        </article>
+        <article class="plan reveal">
+          <h3>Tienda</h3>
+          <p class="plan__desc">Para vender online.</p>
+          <p class="plan__price">desde <strong>1.290 €</strong></p>
+          <ul>
+            <li>Catálogo de productos</li>
+            <li>Pagos seguros</li>
+            <li>Gestión de pedidos</li>
+            <li>Formación incluida</li>
+          </ul>
+          <a href="#contacto" class="btn btn--ghost" data-plan="Tienda">Lo quiero</a>
+        </article>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="section__head">
+        <p class="eyebrow reveal">Preguntas frecuentes</p>
+        <h2 class="reveal">¿Dudas? Normal.</h2>
+      </div>
+      <div class="faq">
+        <details class="reveal"><summary>¿Cuánto tarda en estar lista mi web?</summary><p>Una web sencilla suele estar lista en una semana. Proyectos más grandes, entre dos y cuatro semanas.</p></details>
+        <details class="reveal"><summary>¿Necesito tener dominio y hosting?</summary><p>No te preocupes. Si no lo tienes, te ayudamos a contratarlo y lo dejamos todo configurado.</p></details>
+        <details class="reveal"><summary>¿Podré hacer cambios yo mismo?</summary><p>Sí. Te explicamos cómo hacer los cambios básicos y, si lo prefieres, los hacemos nosotros con el plan de mantenimiento.</p></details>
+        <details class="reveal"><summary>¿Se verá bien en el móvil?</summary><p>Siempre. Todas nuestras webs se diseñan pensando primero en el móvil.</p></details>
+        <details class="reveal"><summary>¿Cómo es el pago?</summary><p>50% al aprobar el diseño y 50% al publicar la web. Sin sorpresas.</p></details>
+      </div>
+    </section>
+
+    <!-- Contacto -->
+    <section class="section section--dark" id="contacto">
+      <div class="contact">
+        <div class="contact__intro">
+          <p class="eyebrow reveal">Contacto</p>
+          <h2 class="reveal">Hablemos de<br>tu próxima web.</h2>
+          <p class="reveal">Cuéntanos tu proyecto y te respondemos en menos de 24 horas con una propuesta.</p>
+          <ul class="contact__info reveal">
+            <li><span>Email</span><a href="mailto:hola@novis.es">hola@novis.es</a></li>
+            <li><span>Ubicación</span>Vigo, Galicia</li>
+          </ul>
+        </div>
+
+        <form class="form reveal" id="contactForm" action="contact.php" method="post" novalidate>
+          <div class="field">
+            <input type="text" id="nombre" name="nombre" placeholder=" " required autocomplete="name">
+            <label for="nombre">Nombre</label>
+          </div>
+          <div class="field">
+            <input type="text" id="empresa" name="empresa" placeholder=" " autocomplete="organization">
+            <label for="empresa">Empresa</label>
+          </div>
+          <div class="field">
+            <input type="email" id="email" name="email" placeholder=" " required autocomplete="email">
+            <label for="email">Email</label>
+          </div>
+          <div class="field">
+            <select id="plan" name="plan">
+              <option value="Aún no lo sé">Aún no lo sé</option>
+              <option value="Esencial">Esencial</option>
+              <option value="Profesional">Profesional</option>
+              <option value="Tienda">Tienda</option>
+            </select>
+            <label for="plan" class="label--fixed">Plan de interés</label>
+          </div>
+          <div class="field field--full">
+            <textarea id="mensaje" name="mensaje" rows="4" placeholder=" " required></textarea>
+            <label for="mensaje">Cuéntanos tu proyecto</label>
+          </div>
+          <!-- Campo trampa anti-spam -->
+          <input type="text" name="web" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button type="submit" class="btn btn--light field--full">Enviar mensaje</button>
+          <p class="form__status field--full" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <a href="#inicio" class="logo"><span class="logo__mark"></span>novis</a>
+      <nav aria-label="Pie">
+        <a href="#servicios">Servicios</a>
+        <a href="#planes">Planes</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <p>© <span id="year">2026</span> Novis. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>
