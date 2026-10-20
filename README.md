@@ -45,8 +45,26 @@ return [
   'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres
   'smtp_user' => 'hola@thenovis.com',
   'smtp_password' => 'CONTRASEÑA_DEL_BUZÓN', // la del email en Hostinger
+  // Pagos con Stripe
+  'stripe_secret' => 'sk_live_...',          // o sk_test_... para pruebas
+  'stripe_webhook_secret' => 'whsec_...',
+  // Acceso con Google (opcional)
+  'google_client_id' => '....apps.googleusercontent.com',
+  'google_client_secret' => '...',
 ];
 ```
+
+## Pagos de clientes (`/pagos/`)
+
+1. En el panel → **Pagos → Nuevo pago** creas un código (concepto, contenido, importe con IVA, email opcional, caducidad opcional).
+2. El cliente entra en `thenovis.com/pagos/`, crea su cuenta (email, teléfono, usuario y contraseña, o Google), confirma su email e introduce el código.
+3. Paga en la página segura de Stripe. Stripe avisa a `pagos/webhook.php` y el pago queda como **Pagado** en el panel; cliente y Novis reciben un email.
+
+Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https://thenovis.com/pagos/webhook.php`,
+eventos `checkout.session.completed` y `checkout.session.async_payment_succeeded`.
+
+Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de redirección
+`https://thenovis.com/pagos/google.php`.
 
 ## Cumplimiento legal
 

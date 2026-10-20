@@ -1,6 +1,8 @@
 // Novis — panel
-document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copiado ✓'; setTimeout(() => b.textContent = 'Copiar email', 1500); } catch (e) {}
+document.querySelectorAll('[data-copy], [data-copy-from]').forEach(b => b.addEventListener('click', async () => {
+  const texto = b.dataset.copy ?? document.getElementById(b.dataset.copyFrom).value;
+  const original = b.textContent;
+  try { await navigator.clipboard.writeText(texto); b.textContent = b.dataset.copied || 'Copiado ✓'; setTimeout(() => b.textContent = original, 1500); } catch (e) {}
 }));
 document.querySelectorAll('form[data-confirm]').forEach(f => f.addEventListener('submit', e => {
   if (!confirm(f.dataset.confirm)) e.preventDefault();

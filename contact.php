@@ -36,6 +36,7 @@ if (empty($_POST['acepto'])) {
 }
 
 require_once __DIR__ . '/lib/correo.php';
+require_once __DIR__ . '/lib/plantilla.php';
 if (!novis_limite('form', 5, 3600)) {
     http_response_code(429);
     echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
@@ -101,31 +102,11 @@ function novis_confirmacion(string $para, string $nombre, string $plan): bool {
         . "--\nHas recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo.\n"
         . "Política de privacidad: https://thenovis.com/privacidad.html\n";
 
-    $planHtml = $plan ? '<p style="margin:0 0 16px">Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.</p>' : '';
-    $html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hemos recibido tu solicitud</title></head>'
-      . '<body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;color:#1d1d1f">'
-      . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;padding:32px 12px"><tr><td align="center">'
-      . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden">'
-      . '<tr><td style="height:5px;background:#8e5cf7;background:linear-gradient(90deg,#0071e3,#8e5cf7,#ff6b8b)"></td></tr>'
-      . '<tr><td style="padding:36px 36px 8px">'
-      . '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
-      . '<td><img src="https://thenovis.com/assets/apple-touch-icon.png" width="40" height="40" alt="" style="display:block;border:0;border-radius:10px"></td>'
-      . '<td style="padding-left:10px;font-size:24px;font-weight:800;letter-spacing:-1px;color:#1d1d1f">novis</td>'
-      . '</tr></table></td></tr>'
-      . '<tr><td style="padding:24px 36px 8px;font-size:16px;line-height:1.6">'
-      . '<h1 style="margin:0 0 18px;font-size:26px;line-height:1.2;letter-spacing:-0.5px">Hemos recibido tu solicitud</h1>'
-      . '<p style="margin:0 0 16px">' . $h($saludo) . '</p>'
-      . '<p style="margin:0 0 16px">¡Gracias por contactar con Novis! Te responderemos <strong>lo antes posible</strong>, normalmente en menos de 24 horas.</p>'
-      . $planHtml
-      . '<p style="margin:0 0 24px">Si quieres añadir algo —ejemplos de webs que te gusten, tu logo, fechas…— responde directamente a este email.</p>'
-      . '<p style="margin:0 0 28px"><a href="https://thenovis.com" style="display:inline-block;background:#0071e3;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:980px">Visitar thenovis.com</a></p>'
-      . '<p style="margin:0">Un saludo,<br><strong>El equipo de Novis</strong></p>'
-      . '</td></tr>'
-      . '<tr><td style="padding:28px 36px 32px;font-size:12px;line-height:1.5;color:#6e6e73;border-top:1px solid #ececf0">'
-      . 'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. '
-      . '<a href="https://thenovis.com/privacidad.html" style="color:#0066cc">Política de privacidad</a>'
-      . '</td></tr></table></td></tr></table></body></html>';
-
+    $parrafos = [$h($saludo), '¡Gracias por contactar con Novis! Te responderemos <strong>lo antes posible</strong>, normalmente en menos de 24 horas.'];
+    if ($plan) $parrafos[] = 'Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.';
+    $parrafos[] = 'Si quieres añadir algo —ejemplos de webs que te gusten, tu logo, fechas…— responde directamente a este email.';
+    $html = novis_email_html('Hemos recibido tu solicitud', $parrafos, 'Visitar thenovis.com', 'https://thenovis.com',
+        'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a>');
     return novis_mail($para, 'Hemos recibido tu solicitud · Novis', $texto, $html, null,
         ['Auto-Submitted' => 'auto-replied', 'X-Auto-Response-Suppress' => 'All']);
 }

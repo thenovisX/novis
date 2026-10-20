@@ -1,4 +1,5 @@
 User-agent: *
 Disallow: /panel/
+Disallow: /pagos/
 
 Sitemap: https://thenovis.com/sitemap.xml

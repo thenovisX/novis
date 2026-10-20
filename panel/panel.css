@@ -135,3 +135,34 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .toast { margin: 0; text-align: center; background: #e6f4ea; color: #1e7b3a; padding: 10px 14px; border-radius: 12px; font-size: 14px; font-weight: 500; }
 .vaciar { text-align: center; padding-top: 10px; }
 .space { text-align: center; color: var(--muted); font-size: 13px; margin: 18px 0 90px; }
+
+/* Secciones del panel */
+.sw { display: flex; gap: 4px; max-width: 760px; margin: 12px auto 0; background: #e8e8ed; padding: 3px; border-radius: 11px; }
+.sw a { flex: 1; text-align: center; padding: 7px 10px; border-radius: 9px; color: var(--muted); font-size: 15px; font-weight: 500; }
+.sw a.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.amount { font-weight: 650; white-space: nowrap; }
+.warn { margin: 0; background: #fff7e0; color: #7a5600; padding: 12px 14px; border-radius: 12px; font-size: 14px; }
+.warn code { font-size: 12px; }
+.small { font-size: 13px; }
+.f-err { color: var(--red); font-size: 14px; margin: -4px 0 0; }
+.form-pago { display: grid; gap: 16px; }
+.form-pago h1 { font-size: 28px; margin: 0; }
+.form-pago .muted { margin: -8px 0 4px; }
+.form-pago label { display: block; font-weight: 600; font-size: 15px; }
+.form-pago label input, .form-pago label textarea { display: block; margin-top: 6px; }
+.form-pago label .muted { font-weight: 400; margin: 0; }
+.form-pago input, .form-pago textarea { font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1px solid #d2d2d7; border-radius: 12px; outline: none; width: 100%; background: #fff; }
+.form-pago input:focus, .form-pago textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.15); }
+.form-pago textarea { margin: 0; }
+.big-amount { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; margin: 6px 0 0; }
+.codebox { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0 4px; padding: 14px 16px; background: var(--bg); border-radius: 14px; }
+.codebox strong { font-size: 20px; letter-spacing: .04em; flex: 1; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.codebox .muted { flex-basis: 100%; font-size: 13px; }
+.msgbox { font-size: 14px; line-height: 1.5; background: var(--bg); border-color: transparent; }
+.actions-card { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.actions-card form { margin: 0; }
+
+/* Contraste */
+.sw a { color: #48484d; }
+.back { color: #0060c0; }
+.top .link { color: #0060c0; }
