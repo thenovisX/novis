@@ -52,9 +52,14 @@ function novis_purgar(): void {
 
 /** Libera de verdad el espacio en disco tras borrar (SQLite no encoge el archivo por sí solo). */
 function novis_compactar(): void {
-    $db = novis_db();
-    $db->exec('PRAGMA wal_checkpoint(TRUNCATE)');
-    $db->exec('VACUUM');
+    // Es una optimización: si falla (p. ej. otra consulta en curso), el borrado ya está hecho igualmente
+    try {
+        $db = novis_db();
+        $db->exec('PRAGMA wal_checkpoint(TRUNCATE)');
+        $db->exec('VACUUM');
+    } catch (Throwable $e) {
+        error_log('Novis compactar: ' . $e->getMessage());
+    }
 }
 
 /** Espacio que ocupa la base de datos, en formato legible. */

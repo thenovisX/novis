@@ -58,6 +58,9 @@ function nv_db(): PDO {
         stripe_pi TEXT,
         pagado_en TEXT
     )');
+    // Fecha del último cambio de contraseña (para cerrar sesiones abiertas)
+    $cols = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
+    if (!in_array('pass_cambiada', $cols, true)) $db->exec('ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');
     $listo = true;
     return $db;
 }
@@ -269,11 +272,18 @@ function nv_csrf_ok(): bool {
 function nv_entrar(int $id): void {
     session_regenerate_id(true);
     $_SESSION['uid'] = $id;
+    $_SESSION['desde'] = time();
     nv_db()->prepare('UPDATE usuarios SET ultimo_acceso = ? WHERE id = ?')->execute([date('c'), $id]);
 }
 function nv_usuario(): ?array {
     if (empty($_SESSION['uid'])) return null;
     $st = nv_db()->prepare('SELECT * FROM usuarios WHERE id = ?');
     $st->execute([$_SESSION['uid']]);
-    return $st->fetch() ?: null;
+    $u = $st->fetch() ?: null;
+    // Si la contraseña se cambió después de iniciar sesión (o la cuenta ya no existe), se cierra la sesión
+    if (!$u || ((int)$u['pass_cambiada'] > (int)($_SESSION['desde'] ?? 0))) {
+        unset($_SESSION['uid'], $_SESSION['desde']);
+        return null;
+    }
+    return $u;
 }

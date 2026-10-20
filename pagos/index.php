@@ -121,8 +121,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = nv_token_usar($t, 'reset');
             if (!$id) { aviso('El enlace no es válido o ha caducado. Pide uno nuevo.', 'err'); ir('a=olvide'); }
             // Si ha llegado desde el email, el email queda verificado
-            $db->prepare('UPDATE usuarios SET password_hash = ?, email_verificado = COALESCE(email_verificado, ?) WHERE id = ?')
-               ->execute([password_hash($pass, PASSWORD_DEFAULT), date('c'), $id]);
+            $db->prepare('UPDATE usuarios SET password_hash = ?, email_verificado = COALESCE(email_verificado, ?), pass_cambiada = ? WHERE id = ?')
+               ->execute([password_hash($pass, PASSWORD_DEFAULT), date('c'), time() - 1, $id]);
             nv_entrar($id);
             aviso('Contraseña actualizada.');
             ir();

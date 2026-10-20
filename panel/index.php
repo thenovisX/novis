@@ -173,7 +173,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=10">
+<link rel="stylesheet" href="panel.css?v=12">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -216,7 +216,7 @@ return [
         <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form>
       </div>
     </div>
-    <nav class="sw" aria-label="Secciones del panel"><a href="./" class="on" aria-current="page">Solicitudes</a><a href="pagos.php">Pagos</a></nav>
+    <nav class="sw" aria-label="Secciones del panel"><a href="./" class="on" aria-current="page">Solicitudes</a><a href="pagos.php">Pagos</a><a href="cuentas.php">Cuentas</a></nav>
     <div class="stats">
       <div><strong><?= $cuenta['nueva'] ?></strong><span>nuevas</span></div>
       <div><strong><?= $cuenta['en_curso'] ?></strong><span>en curso</span></div>

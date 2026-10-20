@@ -120,7 +120,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=10">
+<link rel="stylesheet" href="panel.css?v=12">
 </head>
 <body class="v-pagos">
 
@@ -130,7 +130,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
       <h1>Pagos</h1>
       <div class="top__actions"><a class="btn btn--small" href="?nuevo=1">Nuevo pago</a></div>
     </div>
-    <nav class="sw" aria-label="Secciones del panel"><a href="./">Solicitudes</a><a href="pagos.php" class="on" aria-current="page">Pagos</a></nav>
+    <nav class="sw" aria-label="Secciones del panel"><a href="./">Solicitudes</a><a href="pagos.php" class="on" aria-current="page">Pagos</a><a href="cuentas.php">Cuentas</a></nav>
     <div class="stats">
       <div><strong><?= e(nv_euros($mes)) ?></strong><span>cobrado este mes</span></div>
       <div><strong><?= e(nv_euros($pend)) ?></strong><span>pendiente</span></div>
@@ -200,7 +200,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
         <dt>Creado</dt><dd><?= e(date('d/m/Y H:i', strtotime($p['creado']))) ?></dd>
         <?php if ($p['email_cliente']): ?><dt>Solo para</dt><dd><?= e($p['email_cliente']) ?></dd><?php endif; ?>
         <?php if ($p['caduca']): ?><dt>Válido hasta</dt><dd><?= e(date('d/m/Y', strtotime($p['caduca']))) ?></dd><?php endif; ?>
-        <?php if ($p['usuario']): ?><dt>Cliente</dt><dd><?= e($p['usuario']) ?> · <?= e($p['cuenta_email']) ?><?= $p['telefono'] ? ' · ' . e($p['telefono']) : '' ?></dd><?php endif; ?>
+        <?php if ($p['usuario']): ?><dt>Cliente</dt><dd><a href="cuentas.php?id=<?= (int)$p['usuario_id'] ?>"><?= e($p['usuario']) ?></a> · <?= e($p['cuenta_email']) ?><?= $p['telefono'] ? ' · ' . e($p['telefono']) : '' ?></dd><?php endif; ?>
         <?php if ($p['pagado_en']): ?><dt>Pagado</dt><dd><?= e(date('d/m/Y H:i', strtotime($p['pagado_en']))) ?></dd><?php endif; ?>
         <?php if ($p['stripe_pi']): ?><dt>Stripe</dt><dd><a href="https://dashboard.stripe.com/payments/<?= e($p['stripe_pi']) ?>" target="_blank" rel="noopener">Ver en Stripe</a></dd><?php endif; ?>
       </dl>

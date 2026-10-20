@@ -166,3 +166,35 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .sw a { color: #48484d; }
 .back { color: #0060c0; }
 .top .link { color: #0060c0; }
+
+/* Cuentas */
+.avatar { width: 38px; height: 38px; flex: none; border-radius: 50%; background: #e8eefb; color: #0b2545; display: grid; place-items: center; font-weight: 650; font-size: 16px; }
+.avatar--big { width: 56px; height: 56px; font-size: 22px; }
+.v-cuentas .item { align-items: flex-start; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.badges:empty { display: none; }
+.badges .pill { font-size: 12px; padding: 2px 8px; }
+.person { display: flex; align-items: center; gap: 14px; }
+.person h1 { margin: 0; font-size: 26px; }
+.person .muted { margin: 2px 0 0; word-break: break-all; }
+.card h2 { margin-bottom: 10px; }
+.card > .muted { margin: 0 0 14px; font-size: 15px; }
+.actions form { margin: 0; }
+.actions { flex-wrap: wrap; }
+.mini { list-style: none; margin: 0; padding: 0; }
+.mini li + li { border-top: 1px solid var(--line); }
+.mini a { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--text); }
+.mini a > span:first-child { flex: 1; min-width: 0; display: grid; }
+.mini small { color: var(--muted); font-size: 13px; }
+.sub { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.sub summary { cursor: pointer; font-weight: 600; color: #0060c0; }
+.sub .form-pago { margin-top: 14px; }
+.btn--danger { background: var(--red); color: #fff; }
+.sw a { padding: 7px 6px; }
+
+/* Contraste (WCAG AA) */
+.pill { color: #505056; }
+.pill--en_curso { color: #8a3c00; }
+.pill--cerrada { color: #1e6b34; }
+.btn--ghost { color: #0060c0; }
+.btn--danger { background: #c62828; }
