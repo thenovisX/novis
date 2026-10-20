@@ -122,7 +122,7 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=18">
+<link rel="stylesheet" href="panel.css?v=19">
 </head>
 <body class="v-cuentas">
 

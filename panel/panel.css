@@ -235,3 +235,12 @@ code { font-size: .92em; background: #f0f0f3; color: #2b2b30; padding: 1px 5px; 
 .checks .c-mal .ic { background: #fdecec; color: #b3261e; }
 .checks small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
 .card .actions { margin-top: 14px; }
+
+/* Protocolo de brechas */
+.incidentes { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.incidentes li { border-top: 1px solid #e5e5ea; padding-top: 14px; }
+.incidentes li:first-child { border-top: 0; padding-top: 0; }
+.incidentes p { margin: 6px 0; overflow-wrap: anywhere; }
+.card details { margin-top: 12px; }
+.card details summary { cursor: pointer; padding: 6px 0; }
+.card details[open] summary { margin-bottom: 10px; }

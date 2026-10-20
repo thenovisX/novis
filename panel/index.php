@@ -206,7 +206,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=18">
+<link rel="stylesheet" href="panel.css?v=19">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 

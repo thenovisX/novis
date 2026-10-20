@@ -115,6 +115,7 @@ const NOVIS_CIFRADO = [
     'usuarios'     => [['email', 'usuario', 'telefono'], ['email_idx' => 'email', 'usuario_idx' => 'usuario'], ['google_sub']],
     'pagos'        => [['concepto', 'descripcion', 'email_cliente', 'pagador_email'], ['pagador_idx' => 'pagador_email'], []],
     'datos_tokens' => [['email'], ['email_idx' => 'email'], []],
+    'incidentes'   => [['descripcion', 'datos', 'medidas'], [], []],
 ];
 
 /**

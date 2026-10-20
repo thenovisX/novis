@@ -97,6 +97,20 @@ function nv_db(): PDO {
         fecha TEXT NOT NULL,
         stripe_invoice TEXT NOT NULL UNIQUE
     )');
+    // Registro de brechas de seguridad (art. 33.5 RGPD: se anotan todas, se notifiquen o no). Los textos van cifrados.
+    $db->exec('CREATE TABLE IF NOT EXISTS incidentes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creado TEXT NOT NULL,
+        descubierto TEXT NOT NULL,
+        descripcion TEXT NOT NULL,
+        datos TEXT,
+        personas INTEGER,
+        riesgo TEXT NOT NULL DEFAULT \'bajo\',
+        aepd TEXT,
+        afectados TEXT,
+        medidas TEXT,
+        cerrado TEXT
+    )');
     // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
     foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens'] as $t) novis_cifrar_tabla($db, $t);
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');

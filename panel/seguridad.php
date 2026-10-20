@@ -118,7 +118,7 @@ $comprobaciones = [
 <title>Seguridad · Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=18">
+<link rel="stylesheet" href="panel.css?v=19">
 </head>
 <body class="v-pagos">
   <header class="top top--detail"><a href="./" class="back">‹ Solicitudes</a></header>
@@ -138,6 +138,12 @@ $comprobaciones = [
           <button class="btn" name="accion" value="cifrar">Cifrar lo que falte</button>
         </form>
       <?php endif; ?>
+    </section>
+
+    <section class="card">
+      <h2>¿Crees que ha habido una brecha?</h2>
+      <p class="muted">Si alguien ha podido entrar, ver o llevarse datos, sigue el protocolo paso a paso: contener, evaluar, avisar a quien corresponda en 72 h y dejarlo registrado.</p>
+      <div class="actions"><a class="btn btn--ghost" href="brecha.php">Abrir el protocolo y el registro de incidentes</a></div>
     </section>
 
     <section class="card">

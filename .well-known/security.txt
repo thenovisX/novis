@@ -1,0 +1,6 @@
+# Si encuentras un problema de seguridad en thenovis.com, avísanos. Gracias.
+Contact: mailto:hola@thenovis.com
+Expires: 2027-10-20T00:00:00.000Z
+Preferred-Languages: es, gl, en
+Policy: https://thenovis.com/privacidad.html#seguridad
+Canonical: https://thenovis.com/.well-known/security.txt
