@@ -115,28 +115,66 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 })();
 
-// ===== Ejemplos: pestañas =====
+// ===== Ejemplos: pestañas con cambio automático =====
 (function () {
-  const tabs = [...document.querySelectorAll('.work__tabs [role="tab"]')];
-  if (!tabs.length) return;
-  function activar(tab, foco) {
-    tabs.forEach(t => {
-      const on = t === tab;
+  const lista = document.querySelector('.work__tabs');
+  if (!lista) return;
+  const tabs = [...lista.querySelectorAll('[role="tab"]')];
+  const seccion = document.getElementById('trabajos');
+  const boton = document.getElementById('workPlay');
+  const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let actual = 0;
+
+  function activar(i, foco) {
+    actual = (i + tabs.length) % tabs.length;
+    tabs.forEach((t, n) => {
+      const on = n === actual;
       t.setAttribute('aria-selected', String(on));
       t.tabIndex = on ? 0 : -1;
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
-    if (foco) tab.focus();
+    if (foco) tabs[actual].focus();
   }
+
+  // Cambio automático: avanza cuando la barra de progreso de la pestaña activa termina
+  function auto(on) {
+    lista.classList.toggle('is-auto', on);
+    boton.classList.toggle('is-stopped', !on);
+    boton.setAttribute('aria-label', on ? 'Pausar el cambio automático' : 'Reanudar el cambio automático');
+  }
+  lista.addEventListener('animationend', e => {
+    if (e.animationName === 'progreso' && lista.classList.contains('is-auto')) activar(actual + 1);
+  });
+
+  // Se detiene en cuanto el usuario elige un ejemplo
   tabs.forEach((t, i) => {
-    t.addEventListener('click', () => activar(t));
+    t.addEventListener('click', () => { auto(false); activar(i); });
     t.addEventListener('keydown', e => {
       let n = null;
-      if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
-      if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === 'ArrowRight') n = i + 1;
+      if (e.key === 'ArrowLeft') n = i - 1;
       if (e.key === 'Home') n = 0;
       if (e.key === 'End') n = tabs.length - 1;
-      if (n !== null) { e.preventDefault(); activar(tabs[n], true); }
+      if (n !== null) { e.preventDefault(); auto(false); activar(n, true); }
     });
   });
+  boton.addEventListener('click', () => {
+    const reanudar = !lista.classList.contains('is-auto');
+    if (reanudar) activar(actual + 1);
+    auto(reanudar);
+  });
+
+  // Pausa mientras el ratón está encima, mientras no se ve la sección o la pestaña del navegador está oculta
+  let encima = false, fuera = false;
+  const pausa = () => lista.classList.toggle('is-paused', encima || fuera || document.hidden);
+  seccion.addEventListener('mouseenter', () => { encima = true; pausa(); });
+  seccion.addEventListener('mouseleave', () => { encima = false; pausa(); });
+  document.addEventListener('visibilitychange', pausa);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => { fuera = !e.isIntersecting; pausa(); }, { threshold: 0.25 })
+      .observe(seccion.querySelector('.work__panel').parentElement);
+  }
+
+  boton.hidden = false;
+  auto(!reducir);
 })();

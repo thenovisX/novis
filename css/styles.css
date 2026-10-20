@@ -174,13 +174,42 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
   padding: 9px 16px; border-radius: 9px; white-space: nowrap; transition: color .2s, background .2s, box-shadow .2s;
 }
 .work__tabs [role="tab"]:hover { color: var(--text); }
+.work__tabs [role="tab"] { position: relative; }
+/* Barra de progreso del cambio automático */
+.work__tabs [role="tab"]::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: 3px; height: 2px; border-radius: 2px;
+  background: var(--blue); transform: scaleX(0); transform-origin: left; opacity: 0;
+}
+.work__tabs.is-auto [role="tab"][aria-selected="true"]::after { opacity: 1; animation: progreso 5s linear forwards; }
+.work__tabs.is-auto.is-paused [role="tab"][aria-selected="true"]::after { animation-play-state: paused; }
+@keyframes progreso { to { transform: scaleX(1); } }
+.work__controls { display: flex; align-items: center; gap: 8px; }
+.work__play {
+  width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; cursor: pointer; background: var(--mist);
+  display: grid; place-items: center; color: var(--ink); transition: background .2s;
+}
+.work__play:hover { background: #e6eaf0; }
+.work__play svg { width: 16px; height: 16px; grid-area: 1 / 1; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.work__play .i-play { fill: currentColor; stroke-width: 1.6; }
+.work__play .i-play, .work__play.is-stopped .i-pause { display: none; }
+.work__play.is-stopped .i-play { display: block; }
 .work__tabs [role="tab"][aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(11,37,69,.12), 0 0 0 1px rgba(11,37,69,.04); }
 
 .work__panel { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: clamp(28px, 4vw, 56px); align-items: center; }
 .work__panel[hidden] { display: none; }
-.work__panel:not([hidden]) { animation: aparecer .45s var(--ease); }
+/* Animación de entrada de cada ejemplo */
+.work__panel:not([hidden]) .stage { animation: entrarFondo .7s var(--ease) both; }
+.work__panel:not([hidden]) .browser { animation: entrarWeb .75s .05s var(--ease) both; }
+.work__panel:not([hidden]) .phone { animation: entrarMovil .85s .2s var(--ease) both; }
+.work__panel:not([hidden]) .work__info > * { animation: entrarTexto .6s var(--ease) both; }
+.work__panel:not([hidden]) .work__info > :nth-child(2) { animation-delay: .08s; }
+.work__panel:not([hidden]) .work__info > :nth-child(3) { animation-delay: .16s; }
+@keyframes entrarFondo { from { opacity: 0; transform: scale(.985); } }
+@keyframes entrarWeb { from { opacity: 0; transform: translateY(22px) scale(.97); } }
+@keyframes entrarMovil { from { opacity: 0; transform: translateY(48px) rotate(5deg); } }
+@keyframes entrarTexto { from { opacity: 0; transform: translateY(12px); } }
 .work__panel:focus-visible { outline: 3px solid #5b8cff; outline-offset: 6px; border-radius: 24px; }
-@keyframes aparecer { from { opacity: 0; transform: translateY(6px); } }
+
 
 .stage { position: relative; border-radius: 24px; padding: 5% 9% 7% 5%; }
 .stage--barro { background: #e8dccb; }
@@ -198,6 +227,7 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .phone i { flex: 1; border-radius: 10px; background: #eef1f5; }
 .phone em { font-style: normal; text-align: center; padding: 8px 4px; border-radius: 9px; color: #fff; font-weight: 600; }
 .phone--barro { font-family: Georgia, serif; background: #f6efe6; }
+.phone--barro span { color: #6b5a4c; }
 .phone--barro b { font-style: italic; font-weight: 400; font-size: 16px; }
 .phone--barro i { background: radial-gradient(circle at 50% 66%, #c47a52 0 26%, transparent 27%), #eadcc9; }
 .phone--barro em { background: #3b2a20; font-family: "Geist", sans-serif; }
@@ -447,7 +477,8 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .hero__cta { flex-direction: column; }
   .hero__cta .btn { width: 100%; }
   .work__head { padding-top: 36px; }
-  .work__tabs { width: 100%; }
+  .work__controls { width: 100%; }
+  .work__tabs { flex: 1; }
   .work__tabs [role="tab"] { flex: 1; padding: 9px 6px; font-size: 14px; }
   .stage { padding: 6% 12% 9% 5%; border-radius: 18px; }
   .phone { width: 24%; border-radius: 14px; padding: 10px 6px 7px; gap: 4px; font-size: 7px; box-shadow: 0 16px 30px -12px rgba(0,0,0,.45), 0 0 0 3px #1c2230; }
