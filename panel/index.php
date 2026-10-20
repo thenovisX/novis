@@ -20,6 +20,9 @@ session_start();
 $config = novis_config();
 $clave  = (string)($config['panel_password'] ?? '');
 $hashClave = (string)($config['panel_password_hash'] ?? '');   // recomendado: solo el hash, nunca la contraseña
+// Si se pegó el hash (empieza por $2y$…) en panel_password por error, se trata igualmente como hash
+if ($hashClave === '' && password_get_info($clave)['algo'] !== null) { $hashClave = $clave; $clave = ''; }
+$hashClave = trim($hashClave);
 $usuario = (string)($config['panel_user'] ?? '');
 $error  = '';
 $aviso  = '';
