@@ -43,6 +43,8 @@ return [
   'key' => 'CLAVE_GEMINI',          // con facturación activada (obligatorio para usuarios de la UE)
   'panel_user' => 'USUARIO',
   'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres (provisional)
+  // Opcional: clave de cifrado de la base de datos (si no, se crea sola en novis-clave.key). Ver «Seguridad y cifrado».
+  // 'data_key' => 'BASE64_DE_32_BYTES',
   // Recomendado: en el panel, abajo del todo → «Seguridad», genera esta línea y sustituye la anterior:
   // 'panel_password_hash' => '$2y$10$...',
   'smtp_user' => 'hola@thenovis.com',
@@ -83,6 +85,27 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 - Pestañas: **Inicio** (resumen y pendientes), **Servicios** (contratados y catálogo para contratar mantenimiento o alojamiento sin código), **Mensajes** (conversaciones con Novis), **Pagos** (código e historial) y **Cuenta** (descargar datos, eliminar cuenta y datos).
 - Precios del catálogo en `NV_CATALOGO` (`lib/cuentas.php`), sin IVA; el cliente paga con el 21 % incluido.
 - Los mensajes de clientes llegan al panel como solicitudes («Cliente · …»). Se responden desde el detalle de la solicitud: el cliente lo ve en su área y le llega por email.
+
+## Seguridad y cifrado de la base de datos
+
+- La base de datos (`novis-data/solicitudes.sqlite`), las sesiones y los límites de intentos viven **fuera de `public_html`**
+  (carpeta privada con permisos 700; los archivos, 600) y la carpeta lleva además un `.htaccess` que lo prohíbe todo.
+- **Todos los datos personales se guardan cifrados** (XChaCha20-Poly1305 con libsodium; AES-256-GCM como respaldo):
+  nombre, empresa, email, teléfono, mensajes, notas, conversaciones, conceptos de pago, emails de cobro y enlaces de «Tus datos».
+  Quedan en claro a propósito: fechas, estados, importes, códigos de pago e identificadores de Stripe.
+  El identificador de Google solo se guarda como huella (HMAC).
+- Para buscar por email o usuario sin descifrar todo se guarda un **índice ciego** (HMAC-SHA256 con otra clave derivada); el login, el
+  registro, «Tus datos» y el enlace entre mensajes y cuentas funcionan con él. La búsqueda del panel se hace ya con los datos descifrados.
+- **La clave** (32 bytes en base64) se crea sola en la primera visita en `novis-clave.key`, junto a `gemini-config.php` (fuera de `public_html`).
+  Para tenerla en la configuración en lugar de en ese archivo: `'data_key' => '...'` en `gemini-config.php` (usa exactamente la misma clave) y borra `novis-clave.key`.
+  **Guarda una copia** (panel → Seguridad → «Copia de la clave de cifrado»): sin ella los datos no se pueden recuperar. La aplicación nunca crea una clave
+  nueva si ya hay datos cifrados; si falta o no coincide, se niega a arrancar (mejor un error que datos corruptos).
+- Los datos que ya existían sin cifrar se cifran solos la primera vez que se abre la base de datos (transacción única, repetible) y el archivo se compacta.
+- Panel → **Seguridad**: estado del cifrado y de los permisos, comprobación desde internet de que los archivos internos no se pueden abrir y copia de la clave.
+- Las copias de seguridad de Hostinger hechas **antes** del cifrado contienen los datos sin cifrar; las posteriores, solo texto cifrado.
+- Sesiones: carpeta privada propia, cookies `HttpOnly` + `SameSite`; el panel caduca a los 7 días sin uso (máximo 30) y el área de cliente a las 2 h.
+- Límites de intentos por IP (guardada solo como huella con clave), por cuenta y, en el panel, global; el login no delata si una cuenta existe.
+- Una cuenta con el email sin confirmar no puede ver, descargar ni borrar nada hasta confirmarlo.
 
 ## Cumplimiento legal
 

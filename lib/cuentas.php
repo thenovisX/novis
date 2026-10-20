@@ -68,13 +68,19 @@ function nv_db(): PDO {
     )');
     // Fecha del último cambio de contraseña (para cerrar sesiones abiertas)
     $cols = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
-    if (!in_array('pass_cambiada', $cols, true)) $db->exec('ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');
+    if (!in_array('pass_cambiada', $cols, true)) novis_alter($db, 'ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');
     // Suscripciones (cobro recurrente mensual o anual)
     $cols = array_column($db->query('PRAGMA table_info(pagos)')->fetchAll(), 'name');
     foreach (['periodo TEXT', 'stripe_sub TEXT', 'stripe_customer TEXT', 'sub_estado TEXT', 'sub_fin TEXT', 'sub_cancela INTEGER NOT NULL DEFAULT 0'] as $col) {
-        if (!in_array(strtok($col, ' '), $cols, true)) $db->exec('ALTER TABLE pagos ADD COLUMN ' . $col);
+        if (!in_array(strtok($col, ' '), $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN ' . $col);
     }
-    if (!in_array('servicio', $cols, true)) $db->exec('ALTER TABLE pagos ADD COLUMN servicio TEXT');
+    if (!in_array('servicio', $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN servicio TEXT');
+    // Índices ciegos (huella con clave) para buscar por email o usuario sin guardarlos en claro
+    if (!in_array('pagador_idx', $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN pagador_idx TEXT');
+    $colsU = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
+    foreach (['email_idx', 'usuario_idx'] as $col) if (!in_array($col, $colsU, true)) novis_alter($db, "ALTER TABLE usuarios ADD COLUMN $col TEXT");
+    $colsT = array_column($db->query('PRAGMA table_info(datos_tokens)')->fetchAll(), 'name');
+    if (!in_array('email_idx', $colsT, true)) novis_alter($db, 'ALTER TABLE datos_tokens ADD COLUMN email_idx TEXT');
     // Conversación de cada mensaje (solicitud) entre el cliente y Novis
     $db->exec('CREATE TABLE IF NOT EXISTS respuestas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,6 +97,12 @@ function nv_db(): PDO {
         fecha TEXT NOT NULL,
         stripe_invoice TEXT NOT NULL UNIQUE
     )');
+    // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
+    foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens'] as $t) novis_cifrar_tabla($db, $t);
+    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
+    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_usuario_idx ON usuarios(usuario_idx)');
+    $db->exec('CREATE INDEX IF NOT EXISTS pagos_pagador_idx ON pagos(pagador_idx)');
+    $db->exec('CREATE INDEX IF NOT EXISTS datos_tokens_email_idx ON datos_tokens(email_idx)');
     $listo = true;
     return $db;
 }
@@ -141,16 +153,16 @@ function nv_hilo(int $solicitudId): array {
 /** Todos los datos que Novis guarda de un email (RGPD: acceso y portabilidad). */
 function nv_datos_de(string $email): array {
     $db = nv_db();
-    $st = $db->prepare('SELECT id, creado, nombre, empresa, email, plan, mensaje, estado, consentimiento FROM solicitudes WHERE email = ? COLLATE NOCASE ORDER BY id');
-    $st->execute([$email]);
+    $st = $db->prepare('SELECT id, creado, nombre, empresa, email, plan, mensaje, estado, consentimiento FROM solicitudes WHERE email_idx = ? ORDER BY id');
+    $st->execute([nv_indice($email)]);
     $sol = $st->fetchAll();
     foreach ($sol as &$x) {
         $x['conversacion'] = array_map(fn($r) => ['autor' => $r['autor'] === 'novis' ? 'Novis' : 'Tú', 'texto' => $r['texto'], 'fecha' => $r['fecha']], nv_hilo((int)$x['id']));
         unset($x['id']);
     }
     unset($x);
-    $st = $db->prepare('SELECT id, email, usuario, telefono, email_verificado, creado, ultimo_acceso, (google_sub IS NOT NULL) AS google FROM usuarios WHERE email = ?');
-    $st->execute([$email]);
+    $st = $db->prepare('SELECT id, email, usuario, telefono, email_verificado, creado, ultimo_acceso, (google_sub IS NOT NULL) AS google FROM usuarios WHERE email_idx = ?');
+    $st->execute([nv_indice($email)]);
     $cuenta = $st->fetch() ?: null;
     $campos = 'codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela';
     $pagos = [];
@@ -159,8 +171,8 @@ function nv_datos_de(string $email): array {
         $st->execute([$cuenta['id']]);
         $pagos = $st->fetchAll();
     }
-    $st = $db->prepare("SELECT $campos FROM pagos WHERE pagador_email = ? COLLATE NOCASE AND usuario_id IS NULL");
-    $st->execute([$email]);
+    $st = $db->prepare("SELECT $campos FROM pagos WHERE pagador_idx = ? AND usuario_id IS NULL");
+    $st->execute([nv_indice($email)]);
     $pagos = array_merge($pagos, $st->fetchAll());
     return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'pagos' => $pagos];
 }
@@ -177,9 +189,10 @@ function nv_datos_json(string $email): string {
 function nv_borrar_datos(string $email, string $desde): array {
     $db = nv_db();
     $d = nv_datos_de($email);
-    $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email = ?')->execute([$email]);
-    $db->prepare('DELETE FROM respuestas WHERE solicitud_id IN (SELECT id FROM solicitudes WHERE email = ? COLLATE NOCASE)')->execute([$email]);
-    $db->prepare('DELETE FROM solicitudes WHERE email = ? COLLATE NOCASE')->execute([$email]);
+    $idx = nv_indice($email);
+    $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email_idx = ?')->execute([$idx]);
+    $db->prepare('DELETE FROM respuestas WHERE solicitud_id IN (SELECT id FROM solicitudes WHERE email_idx = ?)')->execute([$idx]);
+    $db->prepare('DELETE FROM solicitudes WHERE email_idx = ?')->execute([$idx]);
     if ($d['cuenta']) {
         $id = (int)$d['cuenta']['id'];
         nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando
@@ -356,10 +369,11 @@ function nv_stripe(string $metodo, string $ruta, array $datos = []): array {
 /** Marca un pago como pagado (idempotente) y envía los emails la primera vez. */
 function nv_marcar_pagado(int $pagoId, array $sesion): void {
     $db = nv_db();
+    $mail = $sesion['customer_details']['email'] ?? null;
     $st = $db->prepare("UPDATE pagos SET estado = 'pagado', pagado_en = ?, stripe_session = ?, stripe_pi = ?,
-        pagador_email = COALESCE(pagador_email, ?) WHERE id = ? AND estado != 'pagado'");
+        pagador_email = COALESCE(pagador_email, ?), pagador_idx = COALESCE(pagador_idx, ?) WHERE id = ? AND estado != 'pagado'");
     $st->execute([date('c'), $sesion['id'] ?? null, is_string($sesion['payment_intent'] ?? null) ? $sesion['payment_intent'] : null,
-        $sesion['customer_details']['email'] ?? null, $pagoId]);
+        is_string($mail) ? nv_cifrar($mail) : null, is_string($mail) ? nv_indice($mail) : null, $pagoId]);
     $primera = $st->rowCount() === 1;
     // Suscripción: se guarda su identificador y su estado (próxima renovación, etc.)
     if (is_string($sesion['subscription'] ?? null)) {
@@ -483,12 +497,42 @@ function nv_google_usuario(string $code, string $nonce): ?array {
 
 /* ================= Sesión del cliente ================= */
 
+/** ¿Es correcta esta contraseña de administrador? (con hash configurado se usa siempre password_verify) */
+function nv_panel_clave_ok(string $pass): bool {
+    $c = novis_config();
+    $clave = (string)($c['panel_password'] ?? '');
+    $hash = trim((string)($c['panel_password_hash'] ?? ''));
+    if ($hash === '' && password_get_info($clave)['algo'] !== null) { $hash = $clave; $clave = ''; }
+    if ($hash !== '') return password_verify($pass, $hash);
+    return $clave !== '' && hash_equals($clave, $pass);
+}
+
+/** ¿La visita llegó por HTTPS? (también si hay un proxy o CDN delante) */
+function nv_https(): bool {
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+}
+
+/**
+ * Ajustes comunes de las sesiones: se guardan en una carpeta privada propia (no en la carpeta temporal
+ * compartida del servidor), solo se aceptan identificadores que creó este servidor y se limpian solas.
+ */
+function nv_sesion_ajustes(string $carpeta, int $segundos): void {
+    session_save_path(novis_dir('sesiones/' . $carpeta));
+    @ini_set('session.use_strict_mode', '1');
+    @ini_set('session.use_only_cookies', '1');
+    @ini_set('session.use_trans_sid', '0');
+    @ini_set('session.gc_maxlifetime', (string)$segundos);
+    @ini_set('session.gc_probability', '1');
+    @ini_set('session.gc_divisor', '50');
+}
+
 function nv_sesion(): void {
     if (session_status() === PHP_SESSION_ACTIVE) return;
+    nv_sesion_ajustes('cliente', 7200);
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/pagos/',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => nv_https(),
         'httponly' => true,
         'samesite' => 'Lax',   // Lax para poder volver desde Stripe y Google con la sesión iniciada
     ]);
@@ -497,6 +541,30 @@ function nv_sesion(): void {
     // Cierre automático tras 2 horas sin actividad
     if (!empty($_SESSION['uid']) && ($_SESSION['visto'] ?? 0) < time() - 7200) { $_SESSION = []; session_regenerate_id(true); }
     $_SESSION['visto'] = time();
+}
+
+/** Sesión del panel de administración: 30 días como máximo y se cierra sola tras 7 días sin usarla. */
+function nv_panel_sesion(): void {
+    if (session_status() === PHP_SESSION_ACTIVE) return;
+    nv_sesion_ajustes('panel', 86400 * 30);
+    session_set_cookie_params([
+        'lifetime' => 60 * 60 * 24 * 30,
+        'path' => '/panel/',
+        'secure' => nv_https(),
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    session_name('novis_panel');
+    session_start();
+    if (!empty($_SESSION['ok'])) {
+        $ahora = time();
+        if (($_SESSION['visto'] ?? 0) < $ahora - 86400 * 7 || ($_SESSION['desde'] ?? 0) < $ahora - 86400 * 30) {
+            $_SESSION = [];
+            session_regenerate_id(true);
+        } else {
+            $_SESSION['visto'] = $ahora;
+        }
+    }
 }
 function nv_csrf(): string {
     if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));

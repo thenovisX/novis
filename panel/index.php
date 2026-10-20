@@ -7,15 +7,7 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-store');
 
-session_set_cookie_params([
-    'lifetime' => 60 * 60 * 24 * 30,   // 30 días conectado
-    'path' => '/panel/',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
-session_name('novis_panel');
-session_start();
+nv_panel_sesion();
 
 $config = novis_config();
 $clave  = (string)($config['panel_password'] ?? '');
@@ -49,13 +41,17 @@ if (($hashClave === '' && strlen($clave) < 8) || $usuario === '') {
 elseif (empty($_SESSION['ok'])) {
     $vista = 'login';
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $dir = NOVIS_PRIVATE . '/novis-data';
-        if (!is_dir($dir)) @mkdir($dir, 0700, true);
-        $f = $dir . '/intentos-' . hash('sha256', $_SERVER['REMOTE_ADDR'] ?? 'x') . '.json';
-        $intentos = is_readable($f) ? (json_decode(file_get_contents($f), true) ?: []) : [];
-        $intentos = array_values(array_filter($intentos, fn($t) => $t > time() - 900));
-        if (count($intentos) >= 5) {
-            $error = 'Demasiados intentos. Espera 15 minutos.';
+        $dir = novis_dir();
+        $f = $dir . '/intentos-' . nv_huella($_SERVER['REMOTE_ADDR'] ?? 'x') . '.json';
+        $g = $dir . '/intentos-global.json';   // todos los fallos, vengan de donde vengan: frena los ataques repartidos entre muchas IP
+        $leer = function (string $archivo, int $ventana): array {
+            $t = is_readable($archivo) ? (json_decode((string)file_get_contents($archivo), true) ?: []) : [];
+            return array_values(array_filter($t, fn($x) => $x > time() - $ventana));
+        };
+        $intentos = $leer($f, 900);
+        $globales = $leer($g, 3600);
+        if (count($intentos) >= 5 || count($globales) >= 40) {
+            $error = 'Demasiados intentos. Espera un rato antes de volver a probar.';
         } elseif (
             hash_equals(mb_strtolower($usuario), mb_strtolower(trim((string)($_POST['usuario'] ?? '')))) &
             // Con hash configurado se usa siempre password_verify; la contraseña en texto plano solo sirve si no hay hash
@@ -64,11 +60,14 @@ elseif (empty($_SESSION['ok'])) {
         ) {
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
+            $_SESSION['desde'] = $_SESSION['visto'] = time();
             @unlink($f);
             volver();
         } else {
             $intentos[] = time();
+            $globales[] = time();
             @file_put_contents($f, json_encode($intentos), LOCK_EX);
+            @file_put_contents($g, json_encode($globales), LOCK_EX);
             sleep(1);
             $error = 'Usuario o contraseña incorrectos.';
         }
@@ -98,10 +97,10 @@ else {
             $st->execute([$id]);
             $sol = $st->fetch();
             if ($sol && $texto !== '') {
-                nv_db()->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'novis', ?, ?)")->execute([$id, mb_substr($texto, 0, 5000), date('c')]);
+                nv_db()->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'novis', ?, ?)")->execute([$id, nv_cifrar(mb_substr($texto, 0, 5000)), date('c')]);
                 $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado = 'nueva' THEN 'en_curso' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $id]);
-                $c = $db->prepare('SELECT 1 FROM usuarios WHERE email = ?');
-                $c->execute([$sol['email']]);
+                $c = $db->prepare('SELECT 1 FROM usuarios WHERE email_idx = ?');
+                $c->execute([nv_indice($sol['email'])]);
                 $conCuenta = (bool)$c->fetchColumn();
                 $url = $conCuenta ? nv_url('pagos/?a=mensaje&id=' . $id) : nv_url('');
                 $parrafos = ['Hola' . ($sol['nombre'] ? ', ' . e($sol['nombre']) : '') . ':', nl2br(e($texto)),
@@ -112,7 +111,7 @@ else {
             volver('id=' . $id . '&respondido=1');
         }
         if ($accion === 'notas') {
-            $db->prepare('UPDATE solicitudes SET notas = ?, actualizado = ? WHERE id = ?')->execute([mb_substr($_POST['notas'] ?? '', 0, 5000), date('c'), $id]);
+            $db->prepare('UPDATE solicitudes SET notas = ?, actualizado = ? WHERE id = ?')->execute([nv_cifrar(mb_substr((string)($_POST['notas'] ?? ''), 0, 5000)), date('c'), $id]);
             volver('id=' . $id . '&guardado=1');
         }
         $filtroVolver = preg_replace('/[^a-z_]/', '', $_POST['f'] ?? '');
@@ -150,23 +149,27 @@ else {
         $vista = 'detalle';
         if (!empty($_GET['guardado'])) $aviso = 'Notas guardadas';
         $hilo = nv_hilo($id);
-        $c = $db->prepare('SELECT id FROM usuarios WHERE email = ?');
-        $c->execute([$sol['email']]);
+        $c = $db->prepare('SELECT id FROM usuarios WHERE email_idx = ?');
+        $c->execute([nv_indice($sol['email'])]);
         $cuentaId = (int)$c->fetchColumn();
     } else {
         $vista = 'lista';
-        $filtro = $_GET['f'] ?? 'activas';
-        $buscar = trim($_GET['q'] ?? '');
+        $filtro = is_string($_GET['f'] ?? 'activas') ? ($_GET['f'] ?? 'activas') : 'activas';
+        $buscar = is_string($_GET['q'] ?? '') ? trim($_GET['q'] ?? '') : '';
         $donde = []; $params = [];
         if ($filtro === 'activas') { $donde[] = "estado IN ('nueva','en_curso')"; }
         elseif (isset(ESTADOS[$filtro])) { $donde[] = 'estado = ?'; $params[] = $filtro; }
-        if ($buscar !== '') {
-            $donde[] = '(nombre LIKE ? OR empresa LIKE ? OR email LIKE ? OR mensaje LIKE ?)';
-            array_push($params, "%$buscar%", "%$buscar%", "%$buscar%", "%$buscar%");
-        }
-        $sql = 'SELECT * FROM solicitudes' . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY id DESC LIMIT 300';
+        $sql = 'SELECT * FROM solicitudes' . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY id DESC';
         $st = $db->prepare($sql); $st->execute($params);
         $lista = $st->fetchAll();
+        // Los datos personales están cifrados en la base de datos, así que la búsqueda se hace aquí, con ellos ya descifrados
+        if ($buscar !== '') {
+            $lista = array_values(array_filter($lista, function ($x) use ($buscar) {
+                foreach (['nombre', 'empresa', 'email', 'mensaje'] as $c) if (mb_stripos((string)$x[$c], $buscar) !== false) return true;
+                return false;
+            }));
+        }
+        $lista = array_slice($lista, 0, 300);
         $cuenta = ['todas' => 0, 'activas' => 0];
         foreach (array_keys(ESTADOS) as $k) $cuenta[$k] = 0;
         foreach ($db->query('SELECT estado, COUNT(*) n FROM solicitudes GROUP BY estado') as $r) {
@@ -203,7 +206,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=15">
+<link rel="stylesheet" href="panel.css?v=18">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 

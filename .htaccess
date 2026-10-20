@@ -13,7 +13,20 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
 # Bloquear archivos internos (repositorio Git, documentación, ejemplos)
 RedirectMatch 404 /\.git
 RedirectMatch 404 /\.(gitignore|htaccess|env)
-RedirectMatch 404 /(README\.md|gemini-config\.example\.php)$
+RedirectMatch 404 /(README\.md|gemini-config(\.example)?\.php)$
+
+# Nunca se sirven bases de datos, claves, copias de seguridad ni registros, estén donde estén
+<FilesMatch "(?i)\.(sqlite3?|db|sql|key|pem|bak|old|orig|swp|log|ini|sh|zip|tar|gz|tgz)$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "(?i)^(novis-clave|gemini-config|solicitudes)">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 ^/novis-(data|clave)
+
+# Sin métodos que no se usan (TRACE/TRACK reflejan las cabeceras de la petición)
+RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG)$ [NC]
+RewriteRule ^ - [F]
 
 # Cabeceras de seguridad
 <IfModule mod_headers.c>
@@ -21,6 +34,7 @@ RedirectMatch 404 /(README\.md|gemini-config\.example\.php)$
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"

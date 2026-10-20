@@ -7,15 +7,7 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-store');
 
-session_set_cookie_params([
-    'lifetime' => 60 * 60 * 24 * 30,
-    'path' => '/panel/',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
-session_name('novis_panel');
-session_start();
+nv_panel_sesion();
 if (empty($_SESSION['ok'])) { header('Location: ./'); exit; }
 
 function csrf(): string {
@@ -84,26 +76,33 @@ if ($vista === 'detalle') {
     $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
     $st->execute([$u['id']]);
     $pagos = $st->fetchAll();
-    $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email = ? COLLATE NOCASE ORDER BY id DESC');
-    $st->execute([$u['email']]);
+    $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email_idx = ? ORDER BY id DESC');
+    $st->execute([nv_indice($u['email'])]);
     $msgs = $st->fetchAll();
     $avisos = ['reset' => 'Email enviado: el cliente recibirá un enlace para crear su contraseña.',
                'pass' => 'Contraseña cambiada. Las sesiones abiertas de este cliente se han cerrado.',
                'verificado' => 'Email marcado como verificado.'];
     $aviso = $avisos[$_GET['ok'] ?? ''] ?? '';
 } else {
-    $f = $_GET['f'] ?? 'todas';
-    $q = trim((string)($_GET['q'] ?? ''));
+    $f = is_string($_GET['f'] ?? 'todas') ? ($_GET['f'] ?? 'todas') : 'todas';
+    $q = is_string($_GET['q'] ?? '') ? trim($_GET['q'] ?? '') : '';
     $donde = []; $params = [];
     if ($f === 'sin_verificar') $donde[] = 'u.email_verificado IS NULL';
     elseif ($f === 'google') $donde[] = 'u.google_sub IS NOT NULL';
     elseif ($f === 'con_pagos') $donde[] = "EXISTS (SELECT 1 FROM pagos p WHERE p.usuario_id = u.id AND p.estado = 'pagado')";
     else $f = 'todas';
-    if ($q !== '') { $donde[] = '(u.usuario LIKE ? OR u.email LIKE ? OR u.telefono LIKE ?)'; array_push($params, "%$q%", "%$q%", "%$q%"); }
     $st = $db->prepare("SELECT u.*, (SELECT COALESCE(SUM(importe),0) FROM pagos p WHERE p.usuario_id = u.id AND p.estado = 'pagado') AS pagado
-        FROM usuarios u" . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY u.id DESC LIMIT 300');
+        FROM usuarios u" . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY u.id DESC');
     $st->execute($params);
     $lista = $st->fetchAll();
+    // Usuario, email y teléfono están cifrados en la base de datos: la búsqueda se hace aquí, ya descifrados
+    if ($q !== '') {
+        $lista = array_values(array_filter($lista, function ($x) use ($q) {
+            foreach (['usuario', 'email', 'telefono'] as $c) if (mb_stripos((string)$x[$c], $q) !== false) return true;
+            return false;
+        }));
+    }
+    $lista = array_slice($lista, 0, 300);
     $c = $db->query("SELECT COUNT(*) total,
         SUM(email_verificado IS NULL) sin_verificar,
         SUM(google_sub IS NOT NULL) google,
@@ -123,7 +122,7 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=15">
+<link rel="stylesheet" href="panel.css?v=18">
 </head>
 <body class="v-cuentas">
 

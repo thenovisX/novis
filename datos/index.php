@@ -23,21 +23,21 @@ function token_email(string $t): ?string {
 function datos_de(string $email): array { return nv_datos_de($email); }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $accion = $_POST['accion'] ?? '';
+    $accion = (string)($_POST['accion'] ?? '');
 
     // 1) Pedir el enlace por email
     if ($accion === 'pedir') {
         $email = strtolower(trim((string)($_POST['email'] ?? '')));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Escribe un email válido.';
-        } elseif (!novis_limite('datos', 3, 3600)) {
+        } elseif (!novis_limite('datos', 3, 3600) || !novis_limite('datos-cta', 2, 3600, $email)) {
             $error = 'Ya has pedido varios enlaces. Espera un rato e inténtalo de nuevo.';
         } else {
             $d = datos_de($email);
             if ($d['solicitudes'] || $d['cuenta'] || $d['pagos']) {
                 $t = bin2hex(random_bytes(24));
-                $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email = ? AND usado = 0')->execute([$email]);
-                $db->prepare('INSERT INTO datos_tokens (email, hash, caduca) VALUES (?, ?, ?)')->execute([$email, hash('sha256', $t), time() + 3600]);
+                $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email_idx = ? AND usado = 0')->execute([nv_indice($email)]);
+                $db->prepare('INSERT INTO datos_tokens (email, email_idx, hash, caduca) VALUES (?, ?, ?, ?)')->execute([nv_cifrar($email), nv_indice($email), hash('sha256', $t), time() + 3600]);
                 $db->prepare('DELETE FROM datos_tokens WHERE caduca < ?')->execute([time() - 86400]);
                 $url = nv_url('datos/?t=' . $t);
                 $html = novis_email_html('Tus datos en Novis', [

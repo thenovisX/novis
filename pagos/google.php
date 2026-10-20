@@ -36,13 +36,15 @@ if (!$g) volver_con('No hemos podido iniciar sesión con Google. Inténtalo de n
 if (!$g['verificado']) volver_con('Tu cuenta de Google no tiene el email verificado.');
 
 $db = nv_db();
+// El identificador de Google se guarda solo como huella con clave (sirve para reconocer la cuenta, no para leerlo)
+$huellaSub = nv_indice($g['sub']);
 $st = $db->prepare('SELECT * FROM usuarios WHERE google_sub = ?');
-$st->execute([$g['sub']]);
+$st->execute([$huellaSub]);
 $u = $st->fetch();
 
 if (!$u) {
-    $st = $db->prepare('SELECT * FROM usuarios WHERE email = ?');
-    $st->execute([$g['email']]);
+    $st = $db->prepare('SELECT * FROM usuarios WHERE email_idx = ?');
+    $st->execute([nv_indice($g['email'])]);
     $u = $st->fetch();
     if ($u) {
         // Ya existía una cuenta con ese email: se vincula a Google.
@@ -50,10 +52,10 @@ if (!$u) {
         // (podría haberla creado otra persona con este email).
         $db->prepare('UPDATE usuarios SET google_sub = ?, email_verificado = COALESCE(email_verificado, ?),
             password_hash = CASE WHEN email_verificado IS NULL THEN NULL ELSE password_hash END WHERE id = ?')
-           ->execute([$g['sub'], date('c'), $u['id']]);
+           ->execute([$huellaSub, date('c'), $u['id']]);
     } else {
-        $db->prepare('INSERT INTO usuarios (email, google_sub, email_verificado, creado) VALUES (?, ?, ?, ?)')
-           ->execute([$g['email'], $g['sub'], date('c'), date('c')]);
+        $db->prepare('INSERT INTO usuarios (email, email_idx, google_sub, email_verificado, creado) VALUES (?, ?, ?, ?, ?)')
+           ->execute([nv_cifrar($g['email']), nv_indice($g['email']), $huellaSub, date('c'), date('c')]);
         $u = ['id' => (int)$db->lastInsertId()];
     }
 }

@@ -19,15 +19,17 @@ if (!empty($_POST['web'])) {
     exit;
 }
 
+// Solo se aceptan textos: si alguien envía listas u otros tipos de dato, se tratan como vacíos
+function texto($v): string { return is_string($v) ? $v : ''; }
 function limpiar($v) {
-    return trim(str_replace(["\r", "\n"], ' ', strip_tags($v ?? '')));
+    return trim(str_replace(["\r", "\n"], ' ', strip_tags(texto($v))));
 }
 
 $nombre  = limpiar($_POST['nombre'] ?? '');
 $empresa = limpiar($_POST['empresa'] ?? '');
-$email   = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+$email   = filter_var(trim(texto($_POST['email'] ?? '')), FILTER_VALIDATE_EMAIL);
 $plan    = limpiar($_POST['plan'] ?? '');
-$mensaje = trim(strip_tags($_POST['mensaje'] ?? ''));
+$mensaje = trim(strip_tags(texto($_POST['mensaje'] ?? '')));
 
 if (empty($_POST['acepto'])) {
     http_response_code(422);
@@ -49,11 +51,20 @@ if (!$nombre || !$email || !$mensaje) {
     exit;
 }
 
+// Que el formulario no sirva para llenar de correos a un tercero ni de basura el buzón de Novis
+if (!novis_limite('form-email', 2, 3600, $email) || !novis_limite('form-global', 80, 3600, 'todos')) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
+    exit;
+}
+
 // Guardar la solicitud en el panel
 $guardado = false;
 try {
-    $st = novis_db()->prepare('INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje, consentimiento) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    $st->execute([date('c'), mb_substr($nombre, 0, 120), mb_substr($empresa, 0, 120), $email, mb_substr($plan, 0, 40), mb_substr($mensaje, 0, 5000), date('c')]);
+    // Los datos personales se guardan cifrados (ver lib/cifrado.php); email_idx permite buscarlos sin guardar el email en claro
+    $st = novis_db()->prepare('INSERT INTO solicitudes (creado, nombre, empresa, email, email_idx, plan, mensaje, consentimiento) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $st->execute([date('c'), nv_cifrar(mb_substr($nombre, 0, 120)), nv_cifrar(mb_substr($empresa, 0, 120)), nv_cifrar($email), nv_indice($email),
+        mb_substr($plan, 0, 40), nv_cifrar(mb_substr($mensaje, 0, 5000)), date('c')]);
     novis_purgar();
     $guardado = true;
 } catch (Throwable $err) {

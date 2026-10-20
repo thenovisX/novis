@@ -7,15 +7,7 @@ header('X-Frame-Options: DENY');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-store');
 
-session_set_cookie_params([
-    'lifetime' => 60 * 60 * 24 * 30,
-    'path' => '/panel/',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
-session_name('novis_panel');
-session_start();
+nv_panel_sesion();
 if (empty($_SESSION['ok'])) { header('Location: ./'); exit; }
 
 function csrf(): string {
@@ -57,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errores) {
             do { $codigo = nv_generar_codigo(); $ya = $db->prepare('SELECT 1 FROM pagos WHERE codigo = ?'); $ya->execute([$codigo]); } while ($ya->fetch());
             $db->prepare('INSERT INTO pagos (codigo, concepto, descripcion, importe, email_cliente, caduca, creado, periodo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-               ->execute([$codigo, $concepto, $descripcion ?: null, $importe, $email ?: null, $caduca ?: null, date('c'), $periodo ?: null]);
+               ->execute([$codigo, nv_cifrar($concepto), $descripcion !== '' ? nv_cifrar($descripcion) : null, $importe, $email !== '' ? nv_cifrar($email) : null, $caduca ?: null, date('c'), $periodo ?: null]);
             volver('id=' . $db->lastInsertId() . '&nuevo=1');
         }
     }
@@ -121,7 +113,7 @@ if ($vista === 'detalle') {
         . "\nCualquier duda, responde a este email.\n\nUn saludo,\nNovis";
 }
 if ($vista === 'lista') {
-    $f = $_GET['f'] ?? 'pendiente';
+    $f = is_string($_GET['f'] ?? 'pendiente') ? ($_GET['f'] ?? 'pendiente') : 'pendiente';
     if (!isset(EST[$f]) && !in_array($f, ['todos', 'subs'], true)) $f = 'pendiente';
     $vivas = "p.estado = 'pagado' AND p.stripe_sub IS NOT NULL AND COALESCE(p.sub_estado, '') NOT IN ('canceled', 'incomplete_expired')";
     $st = match ($f) {
@@ -155,7 +147,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=15">
+<link rel="stylesheet" href="panel.css?v=18">
 </head>
 <body class="v-pagos">
 

@@ -106,7 +106,8 @@
 
     <section>
       <h2>6. Seguridad</h2>
-      <p>Aplicamos medidas técnicas y organizativas adecuadas: conexión cifrada (HTTPS), almacenamiento de las solicitudes fuera de la parte pública del servidor, acceso restringido con usuario y contraseña, límites contra envíos automatizados y borrado automático de los datos que ya no son necesarios.</p>
+      <p>Aplicamos medidas técnicas y organizativas adecuadas: conexión cifrada (HTTPS), almacenamiento de los datos fuera de la parte pública del servidor y con permisos restringidos, acceso al panel con usuario y contraseña (guardada cifrada) y sesiones que caducan, límites contra envíos y accesos automatizados y borrado automático de los datos que ya no son necesarios.</p>
+      <p>Los datos personales de la base de datos (nombre, empresa, email, teléfono, mensajes, notas y conversaciones) se guardan <strong>cifrados</strong> con un algoritmo moderno (XChaCha20-Poly1305 / AES-256-GCM). La clave de cifrado se conserva aparte de la base de datos, de modo que una copia del archivo por sí sola no permite leer su contenido. Al eliminar datos, el espacio que ocupaban se sobrescribe.</p>
     </section>
 
     <section>

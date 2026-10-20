@@ -223,4 +223,15 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .responder .btn { justify-self: start; }
 
 .pasos { margin: 10px 0 12px 20px; padding: 0; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; }
-code { font-size: .92em; background: #f0f0f3; padding: 1px 5px; border-radius: 6px; }
+code { font-size: .92em; background: #f0f0f3; color: #2b2b30; padding: 1px 5px; border-radius: 6px; }
+
+/* Página Seguridad: lista de comprobaciones */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.checks { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+.checks li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: start; font-size: 15px; line-height: 1.4; }
+.checks .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 1px; background: #f0f0f3; }
+.checks .c-ok .ic { background: #e6f4ea; color: #1e6b34; }
+.checks .c-aviso .ic { background: #fef3e2; color: #8a3c00; }
+.checks .c-mal .ic { background: #fdecec; color: #b3261e; }
+.checks small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+.card .actions { margin-top: 14px; }

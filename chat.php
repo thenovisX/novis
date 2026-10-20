@@ -35,11 +35,12 @@ if (!novis_limite('chat', $MAX_POR_HORA, 3600)) {
 
 // --- Leer la conversación ---
 $entrada = json_decode(file_get_contents('php://input'), true);
-$mensajes = is_array($entrada['messages'] ?? null) ? $entrada['messages'] : [];
-$mensajes = array_slice($mensajes, -$MAX_HISTORIAL);
+$mensajes = is_array($entrada) && is_array($entrada['messages'] ?? null) ? $entrada['messages'] : [];
+$mensajes = array_slice(array_values($mensajes), -$MAX_HISTORIAL);
 
 $contenidos = [];
 foreach ($mensajes as $m) {
+    if (!is_array($m) || !is_string($m['text'] ?? '')) continue;
     $texto = trim(mb_substr((string)($m['text'] ?? ''), 0, $MAX_CARACTERES));
     if ($texto === '') continue;
     $rol = ($m['role'] ?? '') === 'model' ? 'model' : 'user';

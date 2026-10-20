@@ -7,7 +7,7 @@ header('Cache-Control: no-store');
 header('Referrer-Policy: same-origin');
 nv_sesion();
 
-$a = preg_replace('/[^a-z-]/', '', $_GET['a'] ?? '');
+$a = preg_replace('/[^a-z-]/', '', is_string($_GET['a'] ?? '') ? ($_GET['a'] ?? '') : '');
 $db = nv_db();
 $u = nv_usuario();
 $errores = [];
@@ -33,7 +33,13 @@ if ($a === 'verificar') {
 /* ---------- Acciones (POST) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!nv_csrf_ok()) { aviso('La página ha caducado. Inténtalo de nuevo.', 'err'); ir($a ? 'a=' . $a : ''); }
-    $accion = $_POST['accion'] ?? '';
+    $accion = (string)($_POST['accion'] ?? '');
+
+    // Una cuenta con el email sin confirmar podría ser de otra persona: no puede ver ni tocar nada hasta confirmarlo
+    if ($u && !$u['email_verificado'] && !in_array($accion, ['salir', 'reenviar'], true)) {
+        aviso('Confirma tu email para continuar.', 'err');
+        ir();
+    }
 
     if ($accion === 'salir') {
         $_SESSION = [];
@@ -54,18 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mb_strlen($pass) < 10) $errores['password'] = 'La contraseña debe tener al menos 10 caracteres.';
         elseif ($pass !== (string)($_POST['password2'] ?? '')) $errores['password2'] = 'Las contraseñas no coinciden.';
         if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar la política de privacidad.';
+        // El límite va antes de comprobar si el email o el usuario existen (si no, el formulario serviría para averiguar quién tiene cuenta)
+        if (!$errores && !novis_limite('registro', 8, 3600)) $errores['general'] = 'Demasiados intentos. Prueba de nuevo dentro de un rato.';
         if (!$errores) {
-            $st = $db->prepare('SELECT email, usuario FROM usuarios WHERE email = ? OR usuario = ?');
-            $st->execute([$email, $usuario]);
+            $st = $db->prepare('SELECT email, usuario FROM usuarios WHERE email_idx = ? OR usuario_idx = ?');
+            $st->execute([nv_indice($email), nv_indice($usuario)]);
             foreach ($st->fetchAll() as $r) {
                 if (strcasecmp($r['email'], $email) === 0) $errores['email'] = 'Ya existe una cuenta con este email. Inicia sesión o recupera tu contraseña.';
                 if ($r['usuario'] && strcasecmp($r['usuario'], $usuario) === 0) $errores['usuario'] = 'Este nombre de usuario ya está en uso.';
             }
         }
-        if (!$errores && !novis_limite('registro', 5, 3600)) $errores['general'] = 'Demasiados intentos. Prueba de nuevo dentro de un rato.';
         if (!$errores) {
-            $db->prepare('INSERT INTO usuarios (email, usuario, telefono, password_hash, creado) VALUES (?, ?, ?, ?, ?)')
-               ->execute([$email, $usuario, $tel, password_hash($pass, PASSWORD_DEFAULT), date('c')]);
+            $db->prepare('INSERT INTO usuarios (email, email_idx, usuario, usuario_idx, telefono, password_hash, creado) VALUES (?, ?, ?, ?, ?, ?, ?)')
+               ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), nv_cifrar($tel), password_hash($pass, PASSWORD_DEFAULT), date('c')]);
             $id = (int)$db->lastInsertId();
             nv_entrar($id);
             nv_email_verificacion(['id' => $id, 'email' => $email, 'usuario' => $usuario]);
@@ -78,12 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $viejo = $_POST;
         $id_ = strtolower(campo('identificador'));
         $pass = (string)($_POST['password'] ?? '');
-        if (!novis_limite('login', 10, 900)) {
+        // Límite por IP y también por cuenta (frena a quien prueba contraseñas desde muchas IP distintas)
+        if (!novis_limite('login', 10, 900) || !novis_limite('login-cta', 15, 900, $id_)) {
             $errores['general'] = 'Demasiados intentos. Espera 15 minutos.';
         } else {
-            $st = $db->prepare('SELECT * FROM usuarios WHERE email = ? OR usuario = ?');
-            $st->execute([$id_, $id_]);
+            $st = $db->prepare('SELECT * FROM usuarios WHERE email_idx = ? OR usuario_idx = ?');
+            $st->execute([nv_indice($id_), nv_indice($id_)]);
             $f = $st->fetch();
+            // Si la cuenta no existe se hace igualmente una comprobación falsa, para que tarde lo mismo y no delate qué usuarios existen
+            if (!$f) password_verify($pass, '$2y$10$4ISSDEyMW6wnv7jNKsoZAu9GsPnuMzwCE6MMIYGgAscLnH/rM3JcC');
             if ($f && !$f['password_hash'] && $f['google_sub']) {
                 $errores['general'] = 'Esta cuenta se creó con Google. Usa el botón «Continuar con Google».';
             } elseif ($f && password_verify($pass, (string)$f['password_hash'])) {
@@ -102,9 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($accion === 'olvide' && !$u) {
         $email = strtolower(campo('email'));
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) && novis_limite('reset', 5, 3600)) {
-            $st = $db->prepare('SELECT * FROM usuarios WHERE email = ?');
-            $st->execute([$email]);
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) && novis_limite('reset', 5, 3600) && novis_limite('reset-cta', 3, 3600, $email)) {
+            $st = $db->prepare('SELECT * FROM usuarios WHERE email_idx = ?');
+            $st->execute([nv_indice($email)]);
             if ($f = $st->fetch()) nv_email_restablecer($f);
         }
         // Mismo mensaje exista o no la cuenta, para no revelar qué emails están registrados
@@ -149,12 +159,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678.';
         if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar la política de privacidad.';
         if (!$errores) {
-            $st = $db->prepare('SELECT 1 FROM usuarios WHERE usuario = ? AND id != ?');
-            $st->execute([$usuario, $u['id']]);
+            $st = $db->prepare('SELECT 1 FROM usuarios WHERE usuario_idx = ? AND id != ?');
+            $st->execute([nv_indice($usuario), $u['id']]);
             if ($st->fetch()) $errores['usuario'] = 'Este nombre de usuario ya está en uso.';
         }
         if (!$errores) {
-            $db->prepare('UPDATE usuarios SET usuario = ?, telefono = ? WHERE id = ?')->execute([$usuario, $tel, $u['id']]);
+            $db->prepare('UPDATE usuarios SET usuario = ?, usuario_idx = ?, telefono = ? WHERE id = ?')->execute([nv_cifrar($usuario), nv_indice($usuario), nv_cifrar($tel), $u['id']]);
             ir();
         }
     }
@@ -223,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ref = ['description' => mb_substr($p['concepto'] . ' (' . $p['codigo'] . ')', 0, 500), 'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo']]];
             if ($sub) $datos['subscription_data'] = $ref; else $datos['payment_intent_data'] = $ref;
             $s = nv_stripe('POST', '/v1/checkout/sessions', $datos);
-            $db->prepare('UPDATE pagos SET stripe_session = ?, pagador_email = ? WHERE id = ?')->execute([$s['id'], $u['email'], $p['id']]);
+            $db->prepare('UPDATE pagos SET stripe_session = ?, pagador_email = ?, pagador_idx = ? WHERE id = ?')->execute([$s['id'], nv_cifrar($u['email']), nv_indice($u['email']), $p['id']]);
             header('Location: ' . $s['url'], true, 303);
             exit;
         } catch (Throwable $e) {
@@ -273,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!novis_limite('contratar', 10, 3600)) { aviso('Demasiados intentos. Prueba de nuevo dentro de un rato.', 'err'); ir('a=servicios'); }
             do { $codigo = nv_generar_codigo(); $ya = $db->prepare('SELECT 1 FROM pagos WHERE codigo = ?'); $ya->execute([$codigo]); } while ($ya->fetch());
             $db->prepare('INSERT INTO pagos (codigo, concepto, descripcion, importe, email_cliente, creado, periodo, usuario_id, servicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-               ->execute([$codigo, $c['nombre'], $c['desc'], nv_con_iva($c['base']), $u['email'], date('c'), $c['periodo'], $u['id'], $k]);
+               ->execute([$codigo, nv_cifrar($c['nombre']), nv_cifrar($c['desc']), nv_con_iva($c['base']), nv_cifrar($u['email']), date('c'), $c['periodo'], $u['id'], $k]);
             $id = (int)$db->lastInsertId();
         }
         ir('a=resumen&id=' . $id);
@@ -289,8 +299,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif (mb_strlen($texto) > 5000) $errores['texto'] = 'Máximo 5000 caracteres.';
         if (!$errores && !novis_limite('mensaje', 10, 3600)) $errores['texto'] = 'Has enviado muchos mensajes seguidos. Prueba de nuevo dentro de un rato.';
         if (!$errores) {
-            $db->prepare("INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje, consentimiento) VALUES (?, ?, '', ?, ?, ?, ?)")
-               ->execute([date('c'), $u['usuario'], $u['email'], 'Cliente · ' . NV_TEMAS[$tema], $texto, date('c')]);
+            $db->prepare("INSERT INTO solicitudes (creado, nombre, empresa, email, email_idx, plan, mensaje, consentimiento) VALUES (?, ?, '', ?, ?, ?, ?, ?)")
+               ->execute([date('c'), nv_cifrar($u['usuario']), nv_cifrar($u['email']), nv_indice($u['email']), 'Cliente · ' . NV_TEMAS[$tema], nv_cifrar($texto), date('c')]);
             $mid = (int)$db->lastInsertId();
             novis_mail('hola@thenovis.com', 'Mensaje de cliente: ' . NV_TEMAS[$tema] . ' · ' . $u['usuario'],
                 "{$u['usuario']} ({$u['email']}, {$u['telefono']}) te ha escrito desde su área de cliente.\n\nTema: " . NV_TEMAS[$tema] . "\n\n$texto\n\nResponder en el panel: " . nv_url('panel/?id=' . $mid),
@@ -303,14 +313,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // El cliente contesta en una conversación
     if ($accion === 'responder' && $u) {
-        $st = $db->prepare('SELECT * FROM solicitudes WHERE id = ? AND email = ? COLLATE NOCASE');
-        $st->execute([(int)($_POST['id'] ?? 0), $u['email']]);
+        $st = $db->prepare('SELECT * FROM solicitudes WHERE id = ? AND email_idx = ?');
+        $st->execute([(int)($_POST['id'] ?? 0), nv_indice($u['email'])]);
         $m = $st->fetch();
         if (!$m) ir('a=mensajes');
         $texto = trim((string)($_POST['texto'] ?? ''));
         if (mb_strlen($texto) < 2 || mb_strlen($texto) > 5000) { aviso('Escribe tu respuesta (máximo 5000 caracteres).', 'err'); ir('a=mensaje&id=' . $m['id']); }
         if (!novis_limite('responder', 20, 3600)) { aviso('Has enviado muchos mensajes seguidos. Prueba de nuevo dentro de un rato.', 'err'); ir('a=mensaje&id=' . $m['id']); }
-        $db->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'cliente', ?, ?)")->execute([$m['id'], $texto, date('c')]);
+        $db->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'cliente', ?, ?)")->execute([$m['id'], nv_cifrar($texto), date('c')]);
         // Si estaba cerrado se vuelve a abrir, para que Novis lo vea como pendiente
         $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado IN ('cerrada', 'descartada') THEN 'nueva' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $m['id']]);
         novis_mail('hola@thenovis.com', 'Respuesta de cliente: ' . preg_replace('/^Cliente · /', '', (string)$m['plan']) . ' · ' . $u['usuario'],
@@ -385,8 +395,8 @@ if (!$u) {
     $contratados = array_flip(array_filter(array_column($vivas, 'servicio')));
     $st = $db->prepare("SELECT s.*, (SELECT COUNT(*) FROM respuestas r WHERE r.solicitud_id = s.id) AS n,
         (SELECT autor FROM respuestas r WHERE r.solicitud_id = s.id ORDER BY r.id DESC LIMIT 1) AS ultimo
-        FROM solicitudes s WHERE s.email = ? COLLATE NOCASE ORDER BY COALESCE(s.actualizado, s.creado) DESC");
-    $st->execute([$u['email']]);
+        FROM solicitudes s WHERE s.email_idx = ? ORDER BY COALESCE(s.actualizado, s.creado) DESC");
+    $st->execute([nv_indice($u['email'])]);
     $mensajes = $st->fetchAll();
     $abiertos = count(array_filter($mensajes, fn($m) => in_array($m['estado'], ['nueva', 'en_curso'], true)));
     if ($vista === 'mensaje') {
@@ -523,7 +533,7 @@ $google = nv_google_ok();
       <h1>Contraseña nueva</h1>
       <form method="post" class="acc-form" novalidate>
         <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
-        <input type="hidden" name="t" value="<?= e($_GET['t'] ?? '') ?>">
+        <input type="hidden" name="t" value="<?= e(is_string($_GET['t'] ?? '') ? ($_GET['t'] ?? '') : '') ?>">
         <div class="f"><label for="password">Contraseña nueva <span class="f-hint">(mínimo 10 caracteres)</span></label>
           <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" required<?= inv($errores, 'password') ?>><?= err($errores, 'password') ?></div>
         <div class="f"><label for="password2">Repite la contraseña</label>

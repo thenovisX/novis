@@ -1,1 +1,6 @@
 gemini-config.php
+novis-clave.key
+novis-data/
+*.sqlite
+*.sqlite-*
+*.key
