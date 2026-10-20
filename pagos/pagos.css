@@ -95,3 +95,13 @@
   .acc-list__main { flex-basis: 100%; }
   .acc-user span { display: none; }
 }
+
+/* Tus datos (RGPD) */
+.datos-h { font-size: 18px; color: var(--ink); margin: 26px 0 8px; letter-spacing: -0.01em; }
+.datos-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.datos-list li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.datos-list span { display: block; margin-top: 2px; color: var(--muted); font-size: 14px; }
+.datos-nota { text-align: left; }
+.datos-actions { margin-top: 26px; }
+.datos-borrar { margin-top: 28px; padding-top: 6px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.datos-borrar .btn { justify-self: start; }

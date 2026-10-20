@@ -107,7 +107,7 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     if ($plan) $parrafos[] = 'Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.';
     $parrafos[] = 'Si quieres añadir algo —ejemplos de webs que te gusten, tu logo, fechas…— responde directamente a este email.';
     $html = novis_email_html('Hemos recibido tu solicitud', $parrafos, 'Visitar thenovis.com', 'https://thenovis.com',
-        'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a>');
+        'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a> · <a href="https://thenovis.com/datos/" style="color:#1d63ed">Eliminar mis datos</a>');
     if ($gl) {
         $planGl = ['Esencial' => 'Esencial', 'Profesional' => 'Profesional', 'Tienda' => 'Tenda'][$plan] ?? '';
         $texto = "$saludo\n\nGrazas por contactar con Novis! Recibimos a túa solicitude e responderémosche canto antes, normalmente en menos de 24 horas.\n\n"

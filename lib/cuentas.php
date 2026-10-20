@@ -58,6 +58,14 @@ function nv_db(): PDO {
         stripe_pi TEXT,
         pagado_en TEXT
     )');
+    // Enlaces para ver / descargar / borrar datos personales (RGPD), por email y sin cuenta
+    $db->exec('CREATE TABLE IF NOT EXISTS datos_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL COLLATE NOCASE,
+        hash TEXT NOT NULL UNIQUE,
+        caduca INTEGER NOT NULL,
+        usado INTEGER NOT NULL DEFAULT 0
+    )');
     // Fecha del último cambio de contraseña (para cerrar sesiones abiertas)
     $cols = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
     if (!in_array('pass_cambiada', $cols, true)) $db->exec('ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');

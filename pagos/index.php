@@ -299,8 +299,8 @@ $google = nv_google_ok();
   <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../css/styles.css?v=15">
-  <link rel="stylesheet" href="pagos.css?v=1">
+  <link rel="stylesheet" href="../css/styles.css?v=18">
+  <link rel="stylesheet" href="pagos.css?v=3">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -509,7 +509,7 @@ $google = nv_google_ok();
         <div><dt>Teléfono</dt><dd><?= e($u['telefono']) ?></dd></div>
         <div><dt>Acceso con Google</dt><dd><?= $u['google_sub'] ? 'Vinculado' : 'No' ?></dd></div>
       </dl>
-      <p class="acc-desc">Para cambiar tus datos, escríbenos a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a>.</p>
+      <p class="acc-desc">Para cambiar tus datos, escríbenos a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a>. También puedes <a href="/datos/">descargar o eliminar todos tus datos</a>, incluidos los mensajes que nos enviaste por el formulario.</p>
       <details class="acc-danger">
         <summary>Eliminar mi cuenta</summary>
         <p>Se borrarán tus datos de acceso. Los pagos realizados se conservan el tiempo que exige la ley, desvinculados de la cuenta.</p>
