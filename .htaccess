@@ -34,7 +34,8 @@ RedirectMatch 404 /(README\.md|gemini-config\.example\.php)$
   ExpiresActive On
   ExpiresByType text/css "access plus 1 week"
   ExpiresByType application/javascript "access plus 1 week"
-  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 day"
+  ExpiresByType image/png "access plus 1 day"
   ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 

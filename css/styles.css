@@ -69,7 +69,7 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .nav.menu-open::before { background: #fff; }
 .nav__inner { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); height: 64px; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 21px; letter-spacing: -0.045em; color: var(--text); }
-.logo__mark { width: 26px; height: 26px; flex: none; background: url("../assets/logo-mark.svg") center / contain no-repeat; }
+.logo__mark { width: 26px; height: 26px; flex: none; background: url("../assets/logo-mark.svg?v=10") center / contain no-repeat; }
 .nav__links { display: flex; align-items: center; gap: 28px; }
 .nav__links a:not(.btn) { font-size: 15px; color: var(--body); transition: color .2s; }
 .nav__links a:not(.btn):hover { color: var(--text); }
@@ -392,7 +392,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .chat__head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .chat__head strong { display: block; font-size: 15px; color: var(--text); }
 .chat__head small { color: var(--muted); font-size: 12px; }
-.chat__avatar { width: 34px; height: 34px; flex: none; background: url("../assets/logo-mark.svg") center / contain no-repeat; }
+.chat__avatar { width: 34px; height: 34px; flex: none; background: url("../assets/logo-mark.svg?v=10") center / contain no-repeat; }
 .chat__close { margin-left: auto; background: var(--mist); border: 0; width: 30px; height: 30px; border-radius: 50%; font-size: 20px; line-height: 1; color: var(--body); cursor: pointer; }
 .chat__body { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
 .chat__msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; line-height: 1.45; word-wrap: break-word; }

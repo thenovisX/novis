@@ -37,7 +37,7 @@ pre { background: #f0f0f3; padding: 14px; border-radius: 12px; overflow-x: auto;
 .fields input:focus { position: relative; z-index: 1; }
 .box input { font: inherit; padding: 14px 16px; border-radius: 12px; border: 1px solid #d2d2d7; outline: none; text-align: center; }
 .box input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.15); }
-.logo { width: 56px; height: 56px; margin: 0 auto 4px; background: url("../assets/logo-mark.svg") center / contain no-repeat; }
+.logo { width: 56px; height: 56px; margin: 0 auto 4px; background: url("../assets/logo-mark.svg?v=10") center / contain no-repeat; }
 .error { color: var(--red); font-size: 14px; }
 
 /* Cabecera */

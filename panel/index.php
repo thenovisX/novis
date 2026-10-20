@@ -167,13 +167,13 @@ function hace(string $fecha): string {
 <meta name="robots" content="noindex, nofollow">
 <title>Solicitudes · Novis</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=6">
+<link rel="stylesheet" href="panel.css?v=7">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
