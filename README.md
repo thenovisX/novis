@@ -64,9 +64,9 @@ Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https:
 `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`,
 `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`.
 
-### Suscripciones (mantenimiento mensual, alojamiento anual)
+### Suscripciones (mantenimiento mensual, alojamiento anual o cada 3 años)
 
-- Al crear el código en el panel eliges **Tipo de cobro**: pago único, suscripción mensual o anual.
+- Al crear el código en el panel eliges **Tipo de cobro**: pago único, suscripción mensual, anual o cada 3 años (alojamiento con descuento).
 - El cliente se suscribe con el código; Stripe cobra solo cada periodo. Cada renovación aparece en el panel y llega un email.
 - El cliente puede **darse de baja** (sigue activa hasta el final del periodo pagado), anular la baja o cambiar la tarjeta desde `thenovis.com/pagos/`.
 - Para «Cambiar tarjeta o ver facturas» activa el portal en Stripe: *Settings → Billing → Customer portal* (guardar una vez).

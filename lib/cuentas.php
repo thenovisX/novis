@@ -106,8 +106,12 @@ function nv_euros(int $centimos): string {
 
 /* ================= Suscripciones ================= */
 
-const NV_PERIODOS = ['month' => 'mes', 'year' => 'año'];
-const NV_PERIODOS_TXT = ['' => 'Pago único', 'month' => 'Suscripción mensual', 'year' => 'Suscripción anual'];
+const NV_PERIODOS = ['month' => 'mes', 'year' => 'año', 'year3' => '3 años'];
+const NV_PERIODOS_TXT = ['' => 'Pago único', 'month' => 'Suscripción mensual', 'year' => 'Suscripción anual', 'year3' => 'Suscripción cada 3 años'];
+/** Periodo en el formato de Stripe: [interval, interval_count] */
+const NV_PERIODOS_STRIPE = ['month' => ['month', 1], 'year' => ['year', 1], 'year3' => ['year', 3]];
+/** Meses que cubre cada cuota (para calcular lo que entra al mes) */
+const NV_PERIODOS_MESES = ['month' => 1, 'year' => 12, 'year3' => 36];
 
 function nv_es_sub(array $p): bool { return isset(NV_PERIODOS[$p['periodo'] ?? '']); }
 /** «29,00 €» o «29,00 € / mes» */

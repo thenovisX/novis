@@ -73,7 +73,7 @@ PLANES (precios orientativos "desde", IVA no especificado; cada proyecto se pres
 - Tienda, desde 990 €: catálogo de productos, pagos seguros, gestión de pedidos, formación incluida.
 
 DESPUÉS DE PUBLICAR (IVA no incluido):
-- Alojamiento y dominio: 120 € al año, o 384 € por 4 años (un 20 % de descuento, 96 € al año). Incluye dominio, https y copias de seguridad. Se paga por adelantado y se renueva al terminar el periodo; si no se renueva, entregamos los archivos de la web.
+- Alojamiento y dominio: 120 € al año, o 288 € por 3 años (un 20 % de descuento, 96 € al año). Incluye dominio, https y copias de seguridad. Se paga por adelantado y se renueva al terminar el periodo; si no se renueva, entregamos los archivos de la web.
 - Mantenimiento: 29 € al mes, sin permanencia (baja cuando quiera, sin penalización; la web sigue online). Incluye cambios pequeños (textos, fotos, precios, horarios; hasta 2 h al mes), actualizaciones y revisiones de seguridad, respuesta en 48 h laborables.
 - Sin mantenimiento, cada cambio se presupuesta aparte desde 30 €.
 

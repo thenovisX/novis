@@ -135,10 +135,10 @@ if ($vista === 'lista') {
     foreach ($db->query('SELECT estado, COUNT(*) n FROM pagos GROUP BY estado') as $r) { $cuenta[$r['estado']] = (int)$r['n']; $cuenta['todos'] += (int)$r['n']; }
     $mes = (int)$db->query("SELECT COALESCE(SUM(importe),0) FROM pagos WHERE estado = 'pagado' AND pagado_en >= '" . date('Y-m-01') . "'")->fetchColumn()
          + (int)$db->query("SELECT COALESCE(SUM(importe),0) FROM renovaciones WHERE fecha >= '" . date('Y-m-01') . "'")->fetchColumn();
-    // Suscripciones activas y lo que suman al mes (las anuales cuentan como 1/12)
+    // Suscripciones activas y lo que suman al mes (las anuales cuentan como 1/12 y las de 3 años como 1/36)
     $subs = $db->query("SELECT p.periodo, p.importe FROM pagos p WHERE $vivas AND p.sub_cancela = 0")->fetchAll();
     $cuenta['subs'] = (int)$db->query("SELECT COUNT(*) FROM pagos p WHERE $vivas")->fetchColumn();
-    $alMes = array_sum(array_map(fn($x) => $x['periodo'] === 'year' ? intdiv((int)$x['importe'], 12) : (int)$x['importe'], $subs));
+    $alMes = array_sum(array_map(fn($x) => intdiv((int)$x['importe'], NV_PERIODOS_MESES[$x['periodo']] ?? 1), $subs));
     $pend = (int)$db->query("SELECT COALESCE(SUM(importe),0) FROM pagos WHERE estado = 'pendiente'")->fetchColumn();
     $clientes = (int)$db->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
 }
@@ -213,7 +213,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
           <label><input type="radio" name="periodo" value="<?= $k ?>"<?= ($viejo['periodo'] ?? '') === $k ? ' checked' : '' ?>> <?= e($t) ?></label>
         <?php endforeach; ?>
       </fieldset>
-      <p class="muted small">Las suscripciones se cobran solas cada mes o cada año hasta que el cliente se dé de baja (puede hacerlo desde su área). Para 4 años de alojamiento usa un pago único.</p>
+      <p class="muted small">Las suscripciones se cobran solas cada mes, cada año o cada 3 años hasta que el cliente se dé de baja (puede hacerlo desde su área). Para el alojamiento de 3 años elige «cada 3 años».</p>
       <label>Importe en euros <span class="muted">(IVA incluido; en suscripciones, el de cada cuota)</span>
         <input name="importe" inputmode="decimal" required placeholder="332,15" value="<?= $v('importe') ?>"></label><?= $err('importe') ?>
       <label>Email del cliente <span class="muted">(opcional: solo esa persona podrá usar el código)</span>

@@ -725,14 +725,14 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .extra:hover::before, .extra.is-active::before { opacity: 1; }
 .extra.is-active { transform: translateY(-4px); box-shadow: 0 0 0 1px var(--line), 0 24px 44px -30px rgba(11,37,69,.4); }
 
-/* Selector 1 año / 4 años */
+/* Selector 1 año / 3 años */
 .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin: 22px 0 0; padding: 4px; border: 0; border-radius: 14px; background: var(--mist); }
 .seg label { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 10px; border-radius: 11px; font-size: 15px; font-weight: 550; color: var(--muted); cursor: pointer; transition: color .3s; }
 .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .seg label:has(input:checked) { color: var(--ink); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
 .seg__thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 11px; background: #fff; box-shadow: 0 1px 2px rgba(11,37,69,.08), 0 6px 16px -8px rgba(11,37,69,.3); transition: transform .5s cubic-bezier(.3,1.4,.5,1); }
-.seg:has(input[value="4"]:checked) .seg__thumb { transform: translateX(100%); }
+.seg:has(input[value="3"]:checked) .seg__thumb { transform: translateX(100%); }
 .seg__save {
   position: relative; overflow: hidden; font-size: 12px; font-weight: 650; color: #fff; padding: 3px 8px; border-radius: 980px; background: #c4123f;
 }
@@ -745,12 +745,12 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .roll > span { grid-area: 1 / 1; transition: transform .55s cubic-bezier(.3,1.25,.5,1), opacity .4s, visibility 0s; }
 .roll > span:last-child { transform: translateY(100%); opacity: 0; visibility: hidden; transition-delay: 0s, 0s, .55s; }
 .extra__per.roll > span { transition-delay: .06s, .06s, 0s; }
-.extra:has(input[value="4"]:checked) .roll > span:first-child { transform: translateY(-100%); opacity: 0; visibility: hidden; transition-delay: 0s, 0s, .55s; }
-.extra:has(input[value="4"]:checked) .roll > span:last-child { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
-.extra:has(input[value="4"]:checked) .extra__opt--host { background: #fff4f6; box-shadow: inset 0 0 0 1.5px var(--coral); }
+.extra:has(input[value="3"]:checked) .roll > span:first-child { transform: translateY(-100%); opacity: 0; visibility: hidden; transition-delay: 0s, 0s, .55s; }
+.extra:has(input[value="3"]:checked) .roll > span:last-child { transform: none; opacity: 1; visibility: visible; transition-delay: 0s; }
+.extra:has(input[value="3"]:checked) .extra__opt--host { background: #fff4f6; box-shadow: inset 0 0 0 1.5px var(--coral); }
 .extra__ahorro { display: grid; grid-template-rows: 0fr; opacity: 0; font-size: 15px; color: var(--body); transition: grid-template-rows .45s var(--ease), opacity .35s, margin .45s var(--ease); margin: 0; }
 .extra__ahorro > span { min-height: 0; overflow: hidden; }
-.extra:has(input[value="4"]:checked) .extra__ahorro { grid-template-rows: 1fr; opacity: 1; margin-top: 12px; }
+.extra:has(input[value="3"]:checked) .extra__ahorro { grid-template-rows: 1fr; opacity: 1; margin-top: 12px; }
 .extra__ahorro strong { color: #a3123a; }
 .extra .seg ~ .extra__note { margin-top: 18px; }
 

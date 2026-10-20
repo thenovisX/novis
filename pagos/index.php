@@ -209,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'currency' => $p['moneda'],
                         'unit_amount' => (int)$p['importe'],
                         // Suscripción: Stripe lo cobrará solo cada mes o cada año
-                        'recurring' => $sub ? ['interval' => $p['periodo']] : null,
+                        'recurring' => $sub ? ['interval' => NV_PERIODOS_STRIPE[$p['periodo']][0], 'interval_count' => NV_PERIODOS_STRIPE[$p['periodo']][1]] : null,
                         'product_data' => array_filter([
                             'name' => mb_substr($p['concepto'], 0, 250),
                             'description' => $p['descripcion'] ? mb_substr($p['descripcion'], 0, 500) : null,
