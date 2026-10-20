@@ -646,3 +646,32 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .e404__screen { aspect-ratio: 16 / 9; }
   .e404__big { font-size: 72px; }
 }
+
+/* ===== Selector de idioma (discreto) ===== */
+.nav__links { margin-left: auto; }
+.lang { position: relative; margin-left: 18px; }
+.lang__btn {
+  display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: .03em;
+  color: var(--body); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 5px 7px 5px 9px; cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.lang__btn:hover, .lang.is-open .lang__btn { border-color: #c3cad6; color: var(--text); }
+.lang__btn svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s var(--ease); }
+.lang.is-open .lang__btn svg { transform: rotate(180deg); }
+.lang__menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 70; min-width: 150px; list-style: none; margin: 0; padding: 6px;
+  background: #fff; border-radius: 12px; box-shadow: 0 16px 40px -12px rgba(11,37,69,.3), 0 0 0 1px var(--line);
+  animation: menuLang .18s var(--ease);
+}
+.lang__menu[hidden] { display: none; }
+.lang__menu a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 8px; font-size: 15px; color: var(--text); }
+.lang__menu a:hover, .lang__menu a:focus-visible { background: var(--mist); }
+.lang__menu a[aria-current="true"] { font-weight: 600; }
+.lang__menu a[aria-current="true"]::after {
+  content: ""; width: 14px; height: 14px; flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%231d63ed' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+@keyframes menuLang { from { opacity: 0; transform: translateY(-4px); } }
+@media (max-width: 760px) {
+  .lang { margin-left: auto; margin-right: 6px; }
+}

@@ -1,4 +1,28 @@
 // ===== Novis — interacciones =====
+// Textos de la interfaz en castellano y gallego (según <html lang>)
+const GL = document.documentElement.lang === 'gl';
+const T = GL ? {
+  elegido: 'Escollido',
+  chip: 'Escolliches o plan <strong></strong>. Cóntanos o teu proxecto e mandámosche o orzamento.',
+  aceptar: 'Tes que aceptar a política de privacidade.',
+  revisar: 'Revisa os campos marcados.',
+  enviando: 'Enviando…',
+  gracias: 'Grazas! Respondémosche en menos de 24 horas.',
+  fallo: 'Non se puido enviar. Escríbenos a hola@thenovis.com',
+  enviar: 'Enviar mensaxe',
+  verPlan: 'Ver plan ',
+} : {
+  elegido: 'Elegido',
+  chip: 'Has elegido el plan <strong></strong>. Cuéntanos tu proyecto y te enviamos el presupuesto.',
+  aceptar: 'Debes aceptar la política de privacidad.',
+  revisar: 'Revisa los campos marcados.',
+  enviando: 'Enviando…',
+  gracias: '¡Gracias! Te responderemos en menos de 24 horas.',
+  fallo: 'No se pudo enviar. Escríbenos a hola@thenovis.com',
+  enviar: 'Enviar mensaje',
+  verPlan: 'Ver plan ',
+};
+
 (function () {
   const nav = document.getElementById('nav');
   const toggle = document.getElementById('navToggle');
@@ -78,7 +102,7 @@
     tarjetas.forEach((t, i) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.setAttribute('aria-label', 'Ver plan ' + t.querySelector('h3').textContent);
+      b.setAttribute('aria-label', T.verPlan + t.querySelector('h3').textContent);
       b.addEventListener('click', () => ir(i, true));
       puntos.appendChild(b);
     });
@@ -130,13 +154,15 @@
       if (es) {
         const sello = document.createElement('span');
         sello.className = 'plan__elegido';
-        sello.textContent = 'Elegido';
+        sello.textContent = T.elegido;
         pl.appendChild(sello);
       }
     });
     if (nombre && nombre !== 'Aún no lo sé') {
-      chip.innerHTML = '<span>Has elegido el plan <strong></strong>. Cuéntanos tu proyecto y te enviamos el presupuesto.</span>';
-      chip.querySelector('strong').textContent = nombre;
+      chip.innerHTML = '<span>' + T.chip + '</span>';
+      // Se muestra el nombre visible del plan (p. ej. «Tenda» en gallego)
+      const opcion = [...planSelect.options].find(o => o.value === nombre);
+      chip.querySelector('strong').textContent = opcion ? opcion.textContent : nombre;
       chip.hidden = false;
       if (animar) { chip.classList.remove('is-new'); void chip.offsetWidth; chip.classList.add('is-new'); }
     } else {
@@ -180,28 +206,28 @@
     });
     if (!valid) {
       const acepto = form.querySelector('[name="acepto"]');
-      setStatus(acepto && !acepto.checked ? 'Debes aceptar la política de privacidad.' : 'Revisa los campos marcados.', 'err');
+      setStatus(acepto && !acepto.checked ? T.aceptar : T.revisar, 'err');
       const primero = form.querySelector('[aria-invalid="true"]');
       if (primero) primero.focus();
       return;
     }
 
     const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.textContent = 'Enviando…'; setStatus('');
+    btn.disabled = true; btn.textContent = T.enviando; setStatus('');
 
     try {
       const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
         form.reset();
-        setStatus('¡Gracias! Te responderemos en menos de 24 horas.', 'ok');
+        setStatus(T.gracias, 'ok');
       } else {
         throw new Error(data.error || 'error');
       }
     } catch (err) {
-      setStatus('No se pudo enviar. Escríbenos a hola@thenovis.com', 'err');
+      setStatus(T.fallo, 'err');
     } finally {
-      btn.disabled = false; btn.textContent = 'Enviar mensaje';
+      btn.disabled = false; btn.textContent = T.enviar;
     }
   });
 
@@ -277,4 +303,20 @@
   }
 
   if (!reducir) lista.classList.add('is-auto');
+})();
+
+// ===== Selector de idioma =====
+(function () {
+  const caja = document.querySelector('.lang');
+  if (!caja) return;
+  const btn = caja.querySelector('.lang__btn');
+  const menu = caja.querySelector('.lang__menu');
+  const abrir = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); caja.classList.toggle('is-open', on); };
+  btn.addEventListener('click', e => { e.stopPropagation(); abrir(menu.hidden); if (!menu.hidden) menu.querySelector('a').focus(); });
+  document.addEventListener('click', e => { if (!caja.contains(e.target)) abrir(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { abrir(false); btn.focus(); } });
+  // Al cambiar de idioma se mantiene la sección en la que estabas
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    if (location.hash) a.href = a.getAttribute('href').split('#')[0] + location.hash;
+  }));
 })();
