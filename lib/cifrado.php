@@ -47,17 +47,30 @@ function nv_clave_leer(): ?string {
     return $clave = $raw;
 }
 
-/** Crea la clave en novis-clave.key (una sola vez y de forma atómica, aunque lleguen dos visitas a la vez). */
+/**
+ * Crea la clave en novis-clave.key una sola vez, aunque lleguen dos visitas a la vez.
+ * fopen('x') solo crea el archivo si no existe (operación atómica): la primera visita escribe la clave
+ * y las demás esperan un momento y usan esa misma. No usa link(), que Hostinger tiene desactivada.
+ */
 function nv_clave_crear(): string {
     $f = nv_clave_ruta();
-    $tmp = $f . '.' . bin2hex(random_bytes(4)) . '.tmp';
-    if (@file_put_contents($tmp, base64_encode(random_bytes(32)) . "\n", LOCK_EX) === false) {
+    $h = @fopen($f, 'x');
+    if ($h) {
+        fwrite($h, base64_encode(random_bytes(32)) . "\n");
+        fflush($h);
+        fclose($h);
+        @chmod($f, 0600);
+    } elseif (!is_file($f)) {
         throw new RuntimeException('No se puede crear la clave de cifrado en ' . dirname($f) . '. Revisa los permisos de esa carpeta.');
     }
-    @chmod($tmp, 0600);
-    // link() falla si el destino ya existe: gana la primera visita y las demás usan su clave
-    if (!@link($tmp, $f) && !is_file($f)) @rename($tmp, $f);
-    @unlink($tmp);
+    // Si la creó otra visita en este mismo instante, esperar a que termine de escribirla
+    for ($i = 0; $i < 40; $i++) {
+        clearstatcache(true, $f);
+        if (strlen(trim((string)@file_get_contents($f))) >= 44) break;
+        usleep(50000);
+    }
+    // Restos de la versión anterior (que dejaba archivos .tmp si el servidor no permitía link())
+    foreach (glob($f . '.*.tmp') ?: [] as $resto) @unlink($resto);
     $clave = nv_clave_leer();
     if ($clave === null) throw new RuntimeException('No se pudo crear la clave de cifrado.');
     return $clave;

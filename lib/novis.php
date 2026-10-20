@@ -15,6 +15,36 @@ define('NOVIS_PRIVATE', dirname(NOVIS_PUBLIC));    // carpeta que contiene publi
 
 require_once __DIR__ . '/cifrado.php';
 
+/**
+ * Si algo falla sin control, el visitante ve un aviso sencillo (nunca una página en blanco ni detalles internos)
+ * y el error queda anotado en novis-data/errores.log, que se puede abrir desde el Administrador de archivos de hPanel.
+ */
+set_exception_handler(function (Throwable $e) {
+    $linea = date('c') . ' ' . get_class($e) . ': ' . $e->getMessage() . ' en ' . basename($e->getFile()) . ':' . $e->getLine()
+        . ' (' . ($_SERVER['REQUEST_METHOD'] ?? 'CLI') . ' ' . strtok((string)($_SERVER['REQUEST_URI'] ?? ''), '?') . ")\n";
+    error_log('Novis: ' . trim($linea));
+    try {
+        $log = NOVIS_PRIVATE . '/novis-data/errores.log';
+        if (is_dir(dirname($log))) {
+            if (is_file($log) && filesize($log) > 200000) @rename($log, $log . '.1');
+            @file_put_contents($log, $linea, FILE_APPEND | LOCK_EX);
+        }
+    } catch (Throwable $x) {}
+    if (PHP_SAPI === 'cli') { fwrite(STDERR, $linea); exit(1); }
+    if (!headers_sent()) {
+        http_response_code(503);
+        header('Cache-Control: no-store');
+        foreach (headers_list() as $h) {
+            if (stripos($h, 'content-type: application/json') === 0) { echo json_encode(['ok' => false, 'error' => 'Ahora mismo no está disponible. Inténtalo en unos minutos.']); exit; }
+        }
+        header('Content-Type: text/html; charset=utf-8');
+    }
+    echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Novis</title>'
+        . '<div style="font:16px/1.5 system-ui,sans-serif;max-width:480px;margin:15vh auto;padding:0 20px;color:#1d1d1f">'
+        . '<h1 style="font-size:24px">Ahora mismo no está disponible</h1><p>Ha ocurrido un error. Vuelve a intentarlo en unos minutos o escríbenos a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a>.</p></div>';
+    exit;
+});
+
 /** Lee gemini-config.php (fuera de public_html). */
 function novis_config(): array {
     static $config = null;
