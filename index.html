@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="no-js">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,7 +21,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://thenovis.com/#negocio", "name": "Novis", "url": "https://thenovis.com/", "logo": "https://thenovis.com/assets/apple-touch-icon.png?v=10", "image": "https://thenovis.com/assets/og-image.png?v=10", "description": "Diseño y desarrollo de páginas web para empresas: webs corporativas, tiendas online, landing pages, SEO y mantenimiento.", "email": "hola@thenovis.com", "priceRange": "€€", "address": {"@type": "PostalAddress", "addressLocality": "Vigo", "addressRegion": "Pontevedra", "addressCountry": "ES"}, "areaServed": [{"@type": "City", "name": "Vigo"}, {"@type": "AdministrativeArea", "name": "Galicia"}, {"@type": "Country", "name": "España"}], "knowsLanguage": ["es", "gl", "en"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Planes de diseño web", "itemListElement": [{"@type": "Offer", "name": "Plan Esencial", "price": "249", "priceCurrency": "EUR", "description": "Web de una página adaptada a móvil"}, {"@type": "Offer", "name": "Plan Profesional", "price": "549", "priceCurrency": "EUR", "description": "Web corporativa a medida de hasta 6 secciones"}, {"@type": "Offer", "name": "Plan Tienda", "price": "990", "priceCurrency": "EUR", "description": "Tienda online con pagos seguros"}]}}, {"@type": "WebSite", "@id": "https://thenovis.com/#web", "url": "https://thenovis.com/", "name": "Novis", "inLanguage": "es", "publisher": {"@id": "https://thenovis.com/#negocio"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto tarda en estar lista mi web?", "acceptedAnswer": {"@type": "Answer", "text": "Una web sencilla suele estar lista en una semana. Proyectos más grandes, entre dos y cuatro semanas."}}, {"@type": "Question", "name": "¿Necesito tener dominio y hosting?", "acceptedAnswer": {"@type": "Answer", "text": "No te preocupes. Si no lo tienes, te ayudamos a contratarlo y lo dejamos todo configurado."}}, {"@type": "Question", "name": "¿Podré hacer cambios yo mismo?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Te explicamos cómo hacer los cambios básicos y, si lo prefieres, los hacemos nosotros con el plan de mantenimiento."}}, {"@type": "Question", "name": "¿Se verá bien en el móvil?", "acceptedAnswer": {"@type": "Answer", "text": "Siempre. Todas nuestras webs se diseñan pensando primero en el móvil."}}, {"@type": "Question", "name": "¿Cómo es el pago?", "acceptedAnswer": {"@type": "Answer", "text": "50% al aprobar el diseño y 50% al publicar la web. Sin sorpresas."}}]}]}</script>
-  <link rel="stylesheet" href="css/styles.css?v=12">
+  <link rel="stylesheet" href="css/styles.css?v=13">
 </head>
 <body>
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -76,10 +76,6 @@
           <button type="button" role="tab" id="tab-alameda" aria-controls="panel-alameda" aria-selected="false" tabindex="-1">Clínica dental</button>
           <button type="button" role="tab" id="tab-porto" aria-controls="panel-porto" aria-selected="false" tabindex="-1">Restaurante</button>
         </div>
-        <button type="button" class="work__play" id="workPlay" aria-label="Pausar el cambio automático" hidden>
-          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
-          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>
-        </button>
         </div>
       </div>
 
@@ -166,6 +162,7 @@
           <ul class="work__list"><li>Carta editable por el propio local</li><li>Reservas de mesa</li><li>Web bilingüe</li></ul>
         </div>
       </div>
+      <p class="work__swipe" aria-hidden="true">Desliza sobre el ejemplo para ver otro</p>
     </section>
 
     <!-- Servicios -->
@@ -277,6 +274,7 @@
         </div>
 
         <form class="form" id="contactForm" action="contact.php" method="post" novalidate>
+          <p class="plan-chip field--full" id="planChip" role="status" aria-live="polite" hidden></p>
           <div class="field">
             <label for="nombre">Nombre</label>
             <input type="text" id="nombre" name="nombre" required autocomplete="name">
@@ -289,7 +287,7 @@
             <label for="email">Email</label>
             <input type="email" id="email" name="email" required autocomplete="email">
           </div>
-          <div class="field">
+          <div class="field field--plan">
             <label for="plan">Plan que te interesa</label>
             <select id="plan" name="plan">
               <option value="Aún no lo sé">Aún no lo sé</option>
@@ -339,7 +337,7 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=10" defer></script>
+  <script src="js/main.js?v=11" defer></script>
   <script src="js/chat.js?v=8" defer></script>
 </body>
 </html>

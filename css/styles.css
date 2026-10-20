@@ -184,15 +184,6 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .work__tabs.is-auto.is-paused [role="tab"][aria-selected="true"]::after { animation-play-state: paused; }
 @keyframes progreso { to { transform: scaleX(1); } }
 .work__controls { display: flex; align-items: center; gap: 8px; }
-.work__play {
-  width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; cursor: pointer; background: var(--mist);
-  display: grid; place-items: center; color: var(--ink); transition: background .2s;
-}
-.work__play:hover { background: #e6eaf0; }
-.work__play svg { width: 16px; height: 16px; grid-area: 1 / 1; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-.work__play .i-play { fill: currentColor; stroke-width: 1.6; }
-.work__play .i-play, .work__play.is-stopped .i-pause { display: none; }
-.work__play.is-stopped .i-play { display: block; }
 .work__tabs [role="tab"][aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(11,37,69,.12), 0 0 0 1px rgba(11,37,69,.04); }
 
 .work__panel { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: clamp(28px, 4vw, 56px); align-items: center; }
@@ -500,3 +491,93 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 
 /* Alineación: todos los bloques empiezan en la misma línea que el menú y la portada */
 .section__head, .split, .steps, .plans, .contact, .footer__inner { max-width: calc(var(--max) - 2 * var(--gutter)); }
+
+
+/* ==========================================================
+   Dinamismo
+   ========================================================== */
+
+/* Entrada de la portada al cargar */
+.anim-on .hero__title { animation: subir .9s var(--ease) both; }
+.anim-on .hero__side > * { animation: subir .8s var(--ease) both; }
+.anim-on .hero__side > :nth-child(1) { animation-delay: .15s; }
+.anim-on .hero__side > :nth-child(2) { animation-delay: .25s; }
+.anim-on .hero__side > :nth-child(3) { animation-delay: .35s; }
+.anim-on .work__head { animation: subir .9s .3s var(--ease) both; }
+@keyframes subir { from { opacity: 0; transform: translateY(28px); } }
+
+/* Aparición al hacer scroll (solo si el JavaScript está activo).
+   Al terminar, el script quita data-anim para que los efectos de ratón y de selección funcionen sin interferencias. */
+.anim-on [data-anim]:not(.is-in) { opacity: 0; }
+.anim-on [data-anim].is-in { animation: revelar .8s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 90ms); }
+@keyframes revelar { from { opacity: 0; translate: 0 32px; } }
+
+/* Planes: al pasar el ratón y al elegir uno */
+.plan { position: relative; transition: transform .45s var(--ease), box-shadow .45s var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .plans:hover .plan:not(.plan--featured):hover { transform: translateY(-8px); box-shadow: 0 28px 50px -28px rgba(11,37,69,.4); z-index: 1; border-radius: 22px; }
+  .plan--featured:hover { transform: translateY(-8px) scale(1.01); }
+}
+.plan .btn { transition: background .2s, transform .2s var(--ease); }
+.plan .btn:active { transform: scale(.97); }
+.plan.is-chosen { z-index: 2; animation: elegir .7s var(--ease); }
+.plan:not(.plan--featured).is-chosen { box-shadow: 0 0 0 2px var(--blue), 0 28px 50px -28px rgba(29,99,237,.5); border-radius: 22px; }
+.plan--featured.is-chosen { box-shadow: 0 0 0 3px var(--coral), 0 30px 60px -28px rgba(11,37,69,.55); }
+@keyframes elegir { 0% { transform: scale(1); } 35% { transform: scale(1.045); } 100% { transform: scale(1); } }
+.plan__elegido {
+  position: absolute; top: 16px; right: 16px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: #fff; background: var(--blue); padding: 5px 10px; border-radius: 980px;
+  animation: sello .5s var(--ease) both;
+}
+.plan--featured .plan__elegido { background: var(--coral); color: var(--ink); }
+.plan__elegido::before { content: ""; width: 12px; height: 12px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.plan--featured .plan__elegido::before { filter: brightness(0) saturate(100%) invert(11%) sepia(39%) saturate(2400%) hue-rotate(196deg); }
+@keyframes sello { from { opacity: 0; transform: scale(.6) rotate(-8deg); } }
+
+/* El formulario recibe el plan elegido */
+.plan-chip {
+  display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 16px; border-radius: 12px;
+  background: rgba(122,167,255,.14); color: #fff; font-size: 15px; box-shadow: inset 0 0 0 1px rgba(122,167,255,.35);
+}
+.plan-chip[hidden] { display: none; }
+.plan-chip strong { color: #fff; }
+.plan-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--coral); flex: none; }
+.plan-chip.is-new { animation: chip .6s var(--ease) both; }
+@keyframes chip { from { opacity: 0; transform: translateY(-10px) scale(.96); } }
+.field--plan.is-flash select { animation: brillo 1.4s var(--ease); }
+@keyframes brillo { 0%, 100% { box-shadow: 0 0 0 0 rgba(122,167,255,0); } 30% { box-shadow: 0 0 0 6px rgba(122,167,255,.45); border-color: #7aa7ff; } }
+
+/* Menú del móvil: los enlaces entran uno detrás de otro */
+@media (max-width: 760px) {
+  .nav__links.is-open > * { animation: menuIn .45s var(--ease) both; }
+  .nav__links.is-open > :nth-child(2) { animation-delay: .04s; }
+  .nav__links.is-open > :nth-child(3) { animation-delay: .08s; }
+  .nav__links.is-open > :nth-child(4) { animation-delay: .12s; }
+  .nav__links.is-open > :nth-child(5) { animation-delay: .16s; }
+  .nav__links.is-open > :nth-child(6) { animation-delay: .2s; }
+  .nav__links.is-open > :nth-child(7) { animation-delay: .24s; }
+  @keyframes menuIn { from { opacity: 0; transform: translateX(-16px); } }
+}
+
+/* Pantallas táctiles: el elemento del centro de la pantalla se activa como si pasaras el ratón */
+@media (hover: none) {
+  .step.is-active { transform: translateY(-4px) scale(1.03); box-shadow: 0 24px 48px -24px rgba(11,37,69,.35); border-color: transparent; }
+  .steps.has-active .step:not(.is-active) { opacity: .6; }
+  .step.is-active .step__n { background: var(--ink); color: #fff; }
+  .plan.is-active:not(.plan--featured) { transform: translateY(-4px); box-shadow: 0 24px 44px -26px rgba(11,37,69,.35); z-index: 1; border-radius: 22px; }
+  .plan--featured.is-active { transform: scale(1.015); }
+  .services > div { transition: transform .4s var(--ease); }
+  .services > div.is-active dt { color: var(--blue); }
+  .services dt { transition: color .3s; }
+  .btn:active, .work__tabs [role="tab"]:active, .faq summary:active { transform: scale(.97); }
+  .btn, .work__tabs [role="tab"] { transition: transform .15s, background .2s, color .2s, box-shadow .2s; }
+  .stage { touch-action: pan-y; }
+}
+.work__swipe { display: none; }
+@media (hover: none) and (max-width: 760px) {
+  .work__swipe { display: block; margin-top: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-on [data-anim]:not(.is-in) { opacity: 1; }
+}
