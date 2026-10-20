@@ -66,7 +66,56 @@
       const grupo = e.target.parentElement;
       grupo.classList.toggle('has-active', !!grupo.querySelector('.is-active'));
     }), { rootMargin: '-42% 0px -42% 0px' });
-    document.querySelectorAll('.step, .plan, .services > div').forEach(el => centro.observe(el));
+    document.querySelectorAll('.step, .services > div').forEach(el => centro.observe(el));
+  }
+
+  // Precios en el móvil: carrusel con puntos; empieza en el plan más pedido
+  const carrusel = document.querySelector('.plans');
+  const puntos = document.getElementById('planDots');
+  if (carrusel && puntos) {
+    const tarjetas = [...carrusel.querySelectorAll('.plan')];
+    const movil = window.matchMedia('(max-width: 760px)');
+    tarjetas.forEach((t, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Ver plan ' + t.querySelector('h3').textContent);
+      b.addEventListener('click', () => ir(i, true));
+      puntos.appendChild(b);
+    });
+    const botones = [...puntos.children];
+    let actualPlan = -1;
+    function ir(i, suave) {
+      const t = tarjetas[i];
+      carrusel.scrollTo({ left: t.offsetLeft - (carrusel.clientWidth - t.offsetWidth) / 2, behavior: suave && !reducir ? 'smooth' : 'auto' });
+    }
+    function marcar() {
+      const centroX = carrusel.scrollLeft + carrusel.clientWidth / 2;
+      let mejor = 0, dist = Infinity;
+      tarjetas.forEach((t, i) => { const d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - centroX); if (d < dist) { dist = d; mejor = i; } });
+      if (mejor === actualPlan) return;
+      actualPlan = mejor;
+      tarjetas.forEach((t, i) => t.classList.toggle('is-current', i === mejor));
+      botones.forEach((b, i) => b.setAttribute('aria-current', String(i === mejor)));
+    }
+    let pendiente = false;
+    carrusel.addEventListener('scroll', () => {
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => { pendiente = false; marcar(); });
+    }, { passive: true });
+    function preparar() {
+      const on = movil.matches;
+      carrusel.classList.toggle('is-carrusel', on);
+      if (on) {
+        const destacado = tarjetas.findIndex(t => t.classList.contains('plan--featured'));
+        ir(destacado < 0 ? 0 : destacado, false);
+        actualPlan = -1; marcar();
+      } else {
+        tarjetas.forEach(t => t.classList.remove('is-current'));
+      }
+    }
+    movil.addEventListener('change', preparar);
+    preparar();
   }
 
   // Elegir un plan: la tarjeta lo confirma, la página baja al formulario y el plan queda marcado
