@@ -72,12 +72,17 @@ PLANES (precios orientativos "desde", IVA no especificado; cada proyecto se pres
 - Profesional, desde 549 € (el más elegido): hasta 6 secciones, diseño 100% a medida, blog o noticias, SEO avanzado y analítica, 1 mes de soporte incluido.
 - Tienda, desde 990 €: catálogo de productos, pagos seguros, gestión de pedidos, formación incluida.
 
+DESPUÉS DE PUBLICAR (IVA no incluido):
+- Alojamiento y dominio: 120 € al año, o 384 € por 4 años (un 20 % de descuento, 96 € al año). Incluye dominio, https y copias de seguridad. Se paga por adelantado y se renueva al terminar el periodo; si no se renueva, entregamos los archivos de la web.
+- Mantenimiento: 29 € al mes, sin permanencia (baja cuando quiera, sin penalización; la web sigue online). Incluye cambios pequeños (textos, fotos, precios, horarios; hasta 2 h al mes), actualizaciones y revisiones de seguridad, respuesta en 48 h laborables.
+- Sin mantenimiento, cada cambio se presupuesta aparte desde 30 €.
+
 PROCESO (4 pasos): 1) Hablamos de tu negocio y objetivos, sin compromiso. 2) Diseñamos una propuesta visual y la ajustamos. 3) Construimos la web. 4) La publicamos y damos soporte.
 
 PLAZOS: una web sencilla suele estar lista en una semana; proyectos más grandes, de dos a cuatro semanas.
 PAGO: 50% al aprobar el diseño y 50% al publicar la web.
 DOMINIO Y HOSTING: si el cliente no los tiene, le ayudamos a contratarlos y lo dejamos todo configurado.
-CAMBIOS: explicamos cómo hacer cambios básicos; también podemos hacerlos nosotros con mantenimiento.
+CAMBIOS: explicamos cómo hacer cambios básicos; también podemos hacerlos nosotros con el mantenimiento mensual o, sin él, desde 30 € por cambio.
 CONTACTO: formulario de esta página o hola@thenovis.com. Respondemos en menos de 24 horas. Todavía no hay teléfono público.
 
 REGLAS:

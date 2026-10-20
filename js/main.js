@@ -58,6 +58,7 @@ const T = GL ? {
       ['#servicios .split__aside', '#servicios .services > div'],
       ['#proceso .section__head', '#proceso .step'],
       ['#planes .section__head', '#planes .plan'],
+      ['#planes .extras__head', '#planes .extra', '#planes .extras__foot'],
       ['#faq .split__aside', '#faq details'],
       ['#contacto .contact__intro', '#contacto .form'],
     ];

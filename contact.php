@@ -89,11 +89,11 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     $nombre = preg_replace('/[^\p{L}\s\'\-]/u', '', $nombre);
     $nombre = trim(mb_substr(preg_split('/\s+/', trim($nombre))[0] ?? '', 0, 30));
     $saludo = $gl ? ($nombre !== '' ? "Ola, $nombre:" : 'Ola:') : ($nombre !== '' ? "Hola, $nombre:" : 'Hola:');
-    $planes = ['Esencial', 'Profesional', 'Tienda'];
+    $planes = ['Esencial', 'Profesional', 'Tienda', 'Mantenimiento'];
     $plan = in_array($plan, $planes, true) ? $plan : '';
 
     $h = fn($t) => htmlspecialchars($t, ENT_QUOTES, 'UTF-8');
-    $lineaPlan = $plan ? "Nos has indicado interés en el plan $plan." : '';
+    $lineaPlan = $plan === 'Mantenimiento' ? 'Nos has indicado interés en el mantenimiento mensual.' : ($plan ? "Nos has indicado interés en el plan $plan." : '');
 
     $texto = "$saludo\n\n"
         . "¡Gracias por contactar con Novis! Hemos recibido tu solicitud y te responderemos lo antes posible, normalmente en menos de 24 horas.\n\n"
@@ -104,22 +104,25 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
         . "Política de privacidad: https://thenovis.com/privacidad.html\n";
 
     $parrafos = [$h($saludo), '¡Gracias por contactar con Novis! Te responderemos <strong>lo antes posible</strong>, normalmente en menos de 24 horas.'];
-    if ($plan) $parrafos[] = 'Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.';
+    if ($plan === 'Mantenimiento') $parrafos[] = 'Nos has indicado interés en el <strong>mantenimiento mensual</strong>.';
+    elseif ($plan) $parrafos[] = 'Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.';
     $parrafos[] = 'Si quieres añadir algo —ejemplos de webs que te gusten, tu logo, fechas…— responde directamente a este email.';
     $html = novis_email_html('Hemos recibido tu solicitud', $parrafos, 'Visitar thenovis.com', 'https://thenovis.com',
         'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a> · <a href="https://thenovis.com/datos/" style="color:#1d63ed">Eliminar mis datos</a>');
     if ($gl) {
         $planGl = ['Esencial' => 'Esencial', 'Profesional' => 'Profesional', 'Tienda' => 'Tenda'][$plan] ?? '';
+        $lineaGl = $plan === 'Mantenimiento' ? 'Indicáchesnos interese no mantemento mensual.' : ($planGl ? "Indicáchesnos interese no plan $planGl." : '');
         $texto = "$saludo\n\nGrazas por contactar con Novis! Recibimos a túa solicitude e responderémosche canto antes, normalmente en menos de 24 horas.\n\n"
-            . ($planGl ? "Indicáchesnos interese no plan $planGl.\n\n" : '')
+            . ($lineaGl ? "$lineaGl\n\n" : '')
             . "Se queres engadir algo (exemplos de webs que che gusten, o teu logotipo, datas…), responde directamente a este correo.\n\n"
             . "Un saúdo,\nO equipo de Novis\nhttps://thenovis.com/gl/\n";
         $par = [$h($saludo), 'Grazas por contactar con Novis! Responderémosche <strong>canto antes</strong>, normalmente en menos de 24 horas.'];
-        if ($planGl) $par[] = 'Indicáchesnos interese no plan <strong>' . $h($planGl) . '</strong>.';
+        if ($plan === 'Mantenimiento') $par[] = 'Indicáchesnos interese no <strong>mantemento mensual</strong>.';
+        elseif ($planGl) $par[] = 'Indicáchesnos interese no plan <strong>' . $h($planGl) . '</strong>.';
         $par[] = 'Se queres engadir algo —exemplos de webs que che gusten, o teu logotipo, datas…— responde directamente a este correo.';
         $html = str_replace(['Un saludo,', 'El equipo de Novis'], ['Un saúdo,', 'O equipo de Novis'],
             novis_email_html('Recibimos a túa solicitude', $par, 'Visitar thenovis.com', 'https://thenovis.com/gl/',
-            'Recibiches esta mensaxe porque enviaches o formulario de contacto de thenovis.com. Se non fuches ti, podes ignorala. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidade</a>'));
+            'Recibiches esta mensaxe porque enviaches o formulario de contacto de thenovis.com. Se non fuches ti, podes ignorala. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidade</a> · <a href="https://thenovis.com/datos/" style="color:#1d63ed">Eliminar os meus datos</a>'));
         return novis_mail($para, 'Recibimos a túa solicitude · Novis', $texto, $html, null,
             ['Auto-Submitted' => 'auto-replied', 'X-Auto-Response-Suppress' => 'All']);
     }
