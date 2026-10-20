@@ -115,30 +115,28 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 })();
 
-// ===== Navegador de la portada: cambia entre los ejemplos =====
+// ===== Ejemplos: pestañas =====
 (function () {
-  const sites = [...document.querySelectorAll('.showcase .site')];
-  const botones = [...document.querySelectorAll('.showcase__controls button')];
-  const url = document.getElementById('showcaseUrl');
-  if (!sites.length) return;
-  let actual = 0, temporizador = null, visible = true, manual = false;
-  const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function mostrar(i) {
-    actual = (i + sites.length) % sites.length;
-    sites.forEach((s, n) => { s.classList.toggle('is-active', n === actual); s.setAttribute('aria-hidden', String(n !== actual)); });
-    botones.forEach((b, n) => { b.classList.toggle('is-active', n === actual); b.setAttribute('aria-pressed', String(n === actual)); });
-    url.textContent = sites[actual].dataset.url;
+  const tabs = [...document.querySelectorAll('.work__tabs [role="tab"]')];
+  if (!tabs.length) return;
+  function activar(tab, foco) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (foco) tab.focus();
   }
-  function programar() {
-    clearInterval(temporizador);
-    if (reducir || manual || !visible) return;
-    temporizador = setInterval(() => mostrar(actual + 1), 4500);
-  }
-  botones.forEach((b, n) => b.addEventListener('click', () => { manual = true; mostrar(n); programar(); }));
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([e]) => { visible = e.isIntersecting; programar(); }).observe(document.querySelector('.showcase'));
-  }
-  document.addEventListener('visibilitychange', () => { visible = document.visibilityState === 'visible'; programar(); });
-  programar();
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => activar(t));
+    t.addEventListener('keydown', e => {
+      let n = null;
+      if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+      if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === 'Home') n = 0;
+      if (e.key === 'End') n = tabs.length - 1;
+      if (n !== null) { e.preventDefault(); activar(tabs[n], true); }
+    });
+  });
 })();

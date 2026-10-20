@@ -21,7 +21,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://thenovis.com/#negocio", "name": "Novis", "url": "https://thenovis.com/", "logo": "https://thenovis.com/assets/apple-touch-icon.png", "image": "https://thenovis.com/assets/og-image.png", "description": "Diseño y desarrollo de páginas web para empresas: webs corporativas, tiendas online, landing pages, SEO y mantenimiento.", "email": "hola@thenovis.com", "priceRange": "€€", "address": {"@type": "PostalAddress", "addressLocality": "Vigo", "addressRegion": "Pontevedra", "addressCountry": "ES"}, "areaServed": [{"@type": "City", "name": "Vigo"}, {"@type": "AdministrativeArea", "name": "Galicia"}, {"@type": "Country", "name": "España"}], "knowsLanguage": ["es", "gl", "en"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Planes de diseño web", "itemListElement": [{"@type": "Offer", "name": "Plan Esencial", "price": "249", "priceCurrency": "EUR", "description": "Web de una página adaptada a móvil"}, {"@type": "Offer", "name": "Plan Profesional", "price": "549", "priceCurrency": "EUR", "description": "Web corporativa a medida de hasta 6 secciones"}, {"@type": "Offer", "name": "Plan Tienda", "price": "990", "priceCurrency": "EUR", "description": "Tienda online con pagos seguros"}]}}, {"@type": "WebSite", "@id": "https://thenovis.com/#web", "url": "https://thenovis.com/", "name": "Novis", "inLanguage": "es", "publisher": {"@id": "https://thenovis.com/#negocio"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto tarda en estar lista mi web?", "acceptedAnswer": {"@type": "Answer", "text": "Una web sencilla suele estar lista en una semana. Proyectos más grandes, entre dos y cuatro semanas."}}, {"@type": "Question", "name": "¿Necesito tener dominio y hosting?", "acceptedAnswer": {"@type": "Answer", "text": "No te preocupes. Si no lo tienes, te ayudamos a contratarlo y lo dejamos todo configurado."}}, {"@type": "Question", "name": "¿Podré hacer cambios yo mismo?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Te explicamos cómo hacer los cambios básicos y, si lo prefieres, los hacemos nosotros con el plan de mantenimiento."}}, {"@type": "Question", "name": "¿Se verá bien en el móvil?", "acceptedAnswer": {"@type": "Answer", "text": "Siempre. Todas nuestras webs se diseñan pensando primero en el móvil."}}, {"@type": "Question", "name": "¿Cómo es el pago?", "acceptedAnswer": {"@type": "Answer", "text": "50% al aprobar el diseño y 50% al publicar la web. Sin sorpresas."}}]}]}</script>
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=10">
 </head>
 <body>
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -47,12 +47,12 @@
 
     <!-- Portada -->
     <section class="hero" id="inicio">
-      <div class="hero__text">
-        <h1 class="hero__title">Diseñamos webs para negocios de Vigo y&nbsp;Galicia.</h1>
+      <h1 class="hero__title">Diseñamos webs para negocios de Vigo y&nbsp;Galicia.</h1>
+      <div class="hero__side">
         <p class="hero__sub">Rápidas, claras y pensadas para que tus clientes te encuentren y te escriban. Tú nos cuentas qué necesitas; nosotros nos encargamos del diseño, los textos y la publicación.</p>
         <div class="hero__cta">
           <a href="#contacto" class="btn">Pedir presupuesto</a>
-          <a href="#trabajos" class="btn btn--ghost">Ver diseños</a>
+          <a href="#trabajos" class="btn btn--ghost">Ver ejemplos</a>
         </div>
         <ul class="hero__facts">
           <li>Respuesta en menos de 24&nbsp;horas</li>
@@ -60,108 +60,104 @@
           <li>Entrega en 1 a 4 semanas</li>
         </ul>
       </div>
-
-      <figure class="showcase" aria-label="Ejemplos de webs diseñadas por Novis">
-        <div class="browser">
-          <div class="browser__bar">
-            <span class="browser__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="browser__url" id="showcaseUrl">barrotaller.es</span>
-          </div>
-          <div class="browser__screen">
-
-            <!-- Ejemplo 1: taller de cerámica -->
-            <div class="site site--barro is-active" data-url="barrotaller.es" aria-hidden="false">
-              <div class="s-nav"><b>Barro</b><span>Piezas</span><span>Clases</span><span>Visítanos</span></div>
-              <div class="s-hero">
-                <div>
-                  <p class="s-kicker">Taller de cerámica en el Casco Vello</p>
-                  <h2>Hecho a mano, pensado para durar.</h2>
-                  <span class="s-btn">Reserva una clase</span>
-                </div>
-                <div class="s-pots" aria-hidden="true"><i></i><i></i><i></i></div>
-              </div>
-            </div>
-
-            <!-- Ejemplo 2: clínica dental -->
-            <div class="site site--alameda" data-url="clinicaalameda.es" aria-hidden="true">
-              <div class="s-nav"><b>Clínica Alameda</b><span>Tratamientos</span><span>Equipo</span><span class="s-pill">Pedir cita</span></div>
-              <div class="s-hero">
-                <div>
-                  <h2>Tu sonrisa, en buenas manos desde 1998.</h2>
-                  <p>Odontología general, ortodoncia invisible e implantes en el centro de Vigo.</p>
-                  <div class="s-row"><span class="s-btn">Pedir cita online</span><span class="s-tel">986 000 000</span></div>
-                </div>
-                <div class="s-card" aria-hidden="true">
-                  <b>Próxima cita disponible</b>
-                  <span>Martes, 10:30</span>
-                  <i></i><i></i><i></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ejemplo 3: taberna -->
-            <div class="site site--porto" data-url="tabernaoporto.gal" aria-hidden="true">
-              <div class="s-nav"><b>Taberna O Porto</b><span>Carta</span><span>Reservas</span></div>
-              <div class="s-hero">
-                <h2>Cociña de mercado, a dous pasos do porto.</h2>
-                <ul class="s-menu">
-                  <li><span>Pulpo á feira</span><span>16 €</span></li>
-                  <li><span>Zamburiñas á prancha</span><span>14 €</span></li>
-                  <li><span>Empanada de berberechos</span><span>9 €</span></li>
-                </ul>
-              </div>
-            </div>
-
-          </div>
-        </div>
-        <div class="showcase__controls" role="group" aria-label="Cambiar ejemplo">
-          <button type="button" class="is-active" data-show="0" aria-pressed="true">Cerámica</button>
-          <button type="button" data-show="1" aria-pressed="false">Clínica dental</button>
-          <button type="button" data-show="2" aria-pressed="false">Restaurante</button>
-        </div>
-      </figure>
     </section>
 
-    <!-- Trabajos -->
-    <section class="section" id="trabajos">
-      <div class="section__head">
-        <h2>Cada negocio, una web distinta.</h2>
-        <p>No usamos plantillas: partimos de cómo trabajas y de lo que buscan tus clientes. Estos son diseños de ejemplo para tres tipos de negocio muy diferentes.</p>
+    <!-- Ejemplos -->
+    <section class="work" id="trabajos" aria-labelledby="trabajos-titulo">
+      <div class="work__head">
+        <div>
+          <h2 id="trabajos-titulo">Cada negocio, una web distinta.</h2>
+          <p>No usamos plantillas: partimos de cómo trabajas y de lo que buscan tus clientes. Estos son diseños de ejemplo para tres tipos de negocio.</p>
+        </div>
+        <div class="work__tabs" role="tablist" aria-label="Elige un ejemplo">
+          <button type="button" role="tab" id="tab-barro" aria-controls="panel-barro" aria-selected="true">Cerámica</button>
+          <button type="button" role="tab" id="tab-alameda" aria-controls="panel-alameda" aria-selected="false" tabindex="-1">Clínica dental</button>
+          <button type="button" role="tab" id="tab-porto" aria-controls="panel-porto" aria-selected="false" tabindex="-1">Restaurante</button>
+        </div>
       </div>
 
-      <div class="cases">
-        <article class="case">
-          <div class="case__media case__media--barro" aria-hidden="true">
-            <div class="case__phone"><b>Barro</b><span>Clases de torno</span><i></i><em>Reservar</em></div>
+      <!-- Ejemplo 1: taller de cerámica -->
+      <div class="work__panel" role="tabpanel" id="panel-barro" aria-labelledby="tab-barro" tabindex="0">
+        <div class="stage stage--barro" aria-hidden="true">
+          <div class="browser">
+            <div class="browser__bar"><span class="browser__dots"><i></i><i></i><i></i></span><span class="browser__url">barrotaller.es</span></div>
+            <div class="browser__screen">
+              <div class="site site--barro">
+                <div class="s-nav"><b>Barro</b><span>Piezas</span><span>Clases</span><span>Visítanos</span></div>
+                <div class="s-hero">
+                  <div>
+                    <p class="s-kicker">Taller de cerámica en el Casco Vello</p>
+                    <h3>Hecho a mano, pensado para durar.</h3>
+                    <span class="s-btn">Reserva una clase</span>
+                  </div>
+                  <div class="s-pots"><i></i><i></i><i></i></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="case__body">
-            <h3>Taller de cerámica</h3>
-            <p>Una web cálida, con mucho espacio para las fotos de las piezas, calendario de clases y una tienda pequeña para vender online.</p>
-            <ul class="case__list"><li>Reservas de clases</li><li>Tienda con pago seguro</li><li>Galería de piezas</li></ul>
-          </div>
-        </article>
+          <div class="phone phone--barro"><b>Barro</b><span>Clases de torno</span><i></i><em>Reservar</em></div>
+        </div>
+        <div class="work__info">
+          <h3>Taller de cerámica</h3>
+          <p>Una web cálida, con mucho espacio para las fotos de las piezas, calendario de clases y una tienda pequeña para vender online.</p>
+          <ul class="work__list"><li>Reservas de clases</li><li>Tienda con pago seguro</li><li>Galería de piezas</li></ul>
+        </div>
+      </div>
 
-        <article class="case">
-          <div class="case__media case__media--alameda" aria-hidden="true">
-            <div class="case__phone"><b>Clínica Alameda</b><span>Pide tu cita</span><i></i><em>Llamar</em></div>
+      <!-- Ejemplo 2: clínica dental -->
+      <div class="work__panel" role="tabpanel" id="panel-alameda" aria-labelledby="tab-alameda" tabindex="0" hidden>
+        <div class="stage stage--alameda" aria-hidden="true">
+          <div class="browser">
+            <div class="browser__bar"><span class="browser__dots"><i></i><i></i><i></i></span><span class="browser__url">clinicaalameda.es</span></div>
+            <div class="browser__screen">
+              <div class="site site--alameda">
+                <div class="s-nav"><b>Clínica Alameda</b><span>Tratamientos</span><span>Equipo</span><span class="s-pill">Pedir cita</span></div>
+                <div class="s-hero">
+                  <div>
+                    <h3>Tu sonrisa, en buenas manos desde 1998.</h3>
+                    <p>Odontología general, ortodoncia invisible e implantes en el centro de Vigo.</p>
+                    <div class="s-row"><span class="s-btn">Pedir cita online</span><span class="s-tel">986 000 000</span></div>
+                  </div>
+                  <div class="s-card"><b>Próxima cita disponible</b><span>Martes, 10:30</span><i></i><i></i><i></i></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="case__body">
-            <h3>Clínica dental</h3>
-            <p>Transmitir confianza en pocos segundos: tratamientos explicados con claridad, el equipo con nombre y cara, y la cita a un toque desde el móvil.</p>
-            <ul class="case__list"><li>Cita online y botón de llamada</li><li>Fichas de tratamientos</li><li>Opiniones de pacientes</li></ul>
-          </div>
-        </article>
+          <div class="phone phone--alameda"><b>Clínica Alameda</b><span>Pide tu cita</span><i></i><em>Llamar</em></div>
+        </div>
+        <div class="work__info">
+          <h3>Clínica dental</h3>
+          <p>Transmitir confianza en pocos segundos: tratamientos explicados con claridad, el equipo con nombre y cara, y la cita a un toque desde el móvil.</p>
+          <ul class="work__list"><li>Cita online y botón de llamada</li><li>Fichas de tratamientos</li><li>Opiniones de pacientes</li></ul>
+        </div>
+      </div>
 
-        <article class="case">
-          <div class="case__media case__media--porto" aria-hidden="true">
-            <div class="case__phone"><b>O Porto</b><span>Carta de hoxe</span><i></i><em>Reservar mesa</em></div>
+      <!-- Ejemplo 3: restaurante -->
+      <div class="work__panel" role="tabpanel" id="panel-porto" aria-labelledby="tab-porto" tabindex="0" hidden>
+        <div class="stage stage--porto" aria-hidden="true">
+          <div class="browser">
+            <div class="browser__bar"><span class="browser__dots"><i></i><i></i><i></i></span><span class="browser__url">tabernaoporto.gal</span></div>
+            <div class="browser__screen">
+              <div class="site site--porto">
+                <div class="s-nav"><b>Taberna O Porto</b><span>Carta</span><span>Reservas</span></div>
+                <div class="s-hero">
+                  <h3>Cociña de mercado, a dous pasos do porto.</h3>
+                  <ul class="s-menu">
+                    <li><span>Pulpo á feira</span><span>16 €</span></li>
+                    <li><span>Zamburiñas á prancha</span><span>14 €</span></li>
+                    <li><span>Empanada de berberechos</span><span>9 €</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="case__body">
-            <h3>Restaurante</h3>
-            <p>La carta siempre al día, fácil de leer en el móvil, en gallego y castellano, y reservas sin tener que llamar.</p>
-            <ul class="case__list"><li>Carta editable por el propio local</li><li>Reservas de mesa</li><li>Web bilingüe</li></ul>
-          </div>
-        </article>
+          <div class="phone phone--porto"><b>O Porto</b><span>Carta de hoxe</span><i></i><em>Reservar mesa</em></div>
+        </div>
+        <div class="work__info">
+          <h3>Restaurante</h3>
+          <p>La carta siempre al día, fácil de leer en el móvil, en gallego y castellano, y reservas sin tener que llamar.</p>
+          <ul class="work__list"><li>Carta editable por el propio local</li><li>Reservas de mesa</li><li>Web bilingüe</li></ul>
+        </div>
       </div>
     </section>
 
@@ -336,7 +332,7 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=8" defer></script>
+  <script src="js/main.js?v=9" defer></script>
   <script src="js/chat.js?v=8" defer></script>
 </body>
 </html>
