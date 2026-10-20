@@ -129,7 +129,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <title>Tus datos — Novis</title>
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/styles.css?v=20">
+  <link rel="stylesheet" href="/css/styles.css?v=21">
   <link rel="stylesheet" href="/pagos/pagos.css?v=4">
 </head>
 <body class="acc-page">
