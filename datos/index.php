@@ -31,11 +31,11 @@ function datos_de(string $email): array {
     $cuenta = $st->fetch() ?: null;
     $pagos = [];
     if ($cuenta) {
-        $st = $db->prepare('SELECT codigo, concepto, importe, estado, pagado_en FROM pagos WHERE usuario_id = ? ORDER BY id');
+        $st = $db->prepare('SELECT codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela FROM pagos WHERE usuario_id = ? ORDER BY id');
         $st->execute([$cuenta['id']]);
         $pagos = $st->fetchAll();
     }
-    $st = $db->prepare('SELECT codigo, concepto, importe, estado, pagado_en FROM pagos WHERE pagador_email = ? COLLATE NOCASE AND usuario_id IS NULL');
+    $st = $db->prepare('SELECT codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela FROM pagos WHERE pagador_email = ? COLLATE NOCASE AND usuario_id IS NULL');
     $st->execute([$email]);
     $pagos = array_merge($pagos, $st->fetchAll());
     return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'pagos' => $pagos];
@@ -98,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare('DELETE FROM solicitudes WHERE email = ? COLLATE NOCASE')->execute([$email]);
             if ($d['cuenta']) {
                 $id = (int)$d['cuenta']['id'];
+                nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando
                 $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
                 $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
                 $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
@@ -128,8 +129,8 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <title>Tus datos — Novis</title>
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/styles.css?v=19">
-  <link rel="stylesheet" href="/pagos/pagos.css?v=3">
+  <link rel="stylesheet" href="/css/styles.css?v=20">
+  <link rel="stylesheet" href="/pagos/pagos.css?v=4">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -196,10 +197,10 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
       <?php if (!$d['pagos']): ?><p class="acc-desc">Ninguno.</p><?php else: ?>
         <ul class="datos-list">
           <?php foreach ($d['pagos'] as $p): ?>
-            <li><strong><?= e(nv_euros((int)$p['importe'])) ?></strong> · <?= e($p['concepto']) ?><span><?= e($p['codigo']) ?> · <?= e(['pendiente' => 'Pendiente', 'pagado' => 'Pagado', 'cancelado' => 'Anulado'][$p['estado']] ?? $p['estado']) ?></span></li>
+            <li><strong><?= e(nv_importe_txt($p)) ?></strong> · <?= e($p['concepto']) ?><span><?= e($p['codigo']) ?> · <?= e(nv_estado($p)[1]) ?></span></li>
           <?php endforeach; ?>
         </ul>
-        <p class="acc-secure datos-nota">Los pagos realizados no se pueden borrar: la ley obliga a conservarlos 6 años como registro contable. Si eliminas tus datos, dejarán de estar vinculados a ti en esta web.</p>
+        <p class="acc-secure datos-nota">Los pagos realizados no se pueden borrar: la ley obliga a conservarlos 6 años como registro contable. Si eliminas tus datos, dejarán de estar vinculados a ti en esta web y tus suscripciones activas se cancelarán.</p>
       <?php endif; ?>
 
       <div class="datos-actions">

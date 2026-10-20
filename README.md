@@ -60,8 +60,18 @@ return [
 2. El cliente entra en `thenovis.com/pagos/`, crea su cuenta (email, teléfono, usuario y contraseña, o Google), confirma su email e introduce el código.
 3. Paga en la página segura de Stripe. Stripe avisa a `pagos/webhook.php` y el pago queda como **Pagado** en el panel; cliente y Novis reciben un email.
 
-Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https://thenovis.com/pagos/webhook.php`,
-eventos `checkout.session.completed` y `checkout.session.async_payment_succeeded`.
+Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https://thenovis.com/pagos/webhook.php`, eventos:
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`,
+`customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`.
+
+### Suscripciones (mantenimiento mensual, alojamiento anual)
+
+- Al crear el código en el panel eliges **Tipo de cobro**: pago único, suscripción mensual o anual.
+- El cliente se suscribe con el código; Stripe cobra solo cada periodo. Cada renovación aparece en el panel y llega un email.
+- El cliente puede **darse de baja** (sigue activa hasta el final del periodo pagado), anular la baja o cambiar la tarjeta desde `thenovis.com/pagos/`.
+- Para «Cambiar tarjeta o ver facturas» activa el portal en Stripe: *Settings → Billing → Customer portal* (guardar una vez).
+- Recomendado: *Settings → Billing → Subscriptions and emails* → reintentos automáticos y cancelar la suscripción si todos fallan.
+- Si se borra una cuenta (cliente, panel o página «Tus datos»), sus suscripciones se cancelan al momento.
 
 Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de redirección
 `https://thenovis.com/pagos/google.php`.

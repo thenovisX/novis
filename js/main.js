@@ -91,7 +91,40 @@ const T = GL ? {
       const grupo = e.target.parentElement;
       grupo.classList.toggle('has-active', !!grupo.querySelector('.is-active'));
     }), { rootMargin: '-42% 0px -42% 0px' });
-    document.querySelectorAll('.step, .services > div').forEach(el => centro.observe(el));
+    document.querySelectorAll('.step, .services > div, .extra').forEach(el => centro.observe(el));
+  }
+
+  // Alojamiento y mantenimiento: foco de luz que sigue al ratón, lista en cascada y precio que cuenta
+  const extras = [...document.querySelectorAll('.extra')];
+  extras.forEach(card => {
+    card.querySelectorAll('li').forEach((li, i) => li.style.setProperty('--n', i));
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  });
+  function contar(el) {
+    const fin = parseInt(el.dataset.contar, 10);
+    if (reducir || !fin) return;
+    const t0 = performance.now(), dur = 900;
+    const paso = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3))) + ' €';
+      if (k < 1) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  }
+  if ('IntersectionObserver' in window) {
+    const visto = new IntersectionObserver(entries => entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      visto.unobserve(e.target);
+      e.target.classList.add('is-visto');
+      e.target.querySelectorAll('[data-contar]').forEach(contar);
+    }), { threshold: 0.35 });
+    extras.forEach(c => visto.observe(c));
+  } else {
+    extras.forEach(c => c.classList.add('is-visto'));
   }
 
   // Precios en el móvil: carrusel con puntos; empieza en el plan más pedido

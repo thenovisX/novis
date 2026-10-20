@@ -15,7 +15,7 @@
     panel: 'Asistente de Novis', titulo: 'Asistente Novis', sub: 'Asistente con inteligencia artificial',
     cerrar: 'Cerrar chat', abrir: 'Abrir chat', nota: 'Respuestas generadas por IA; pueden contener errores. No compartas datos personales.',
     priv: 'Privacidad', placeholder: 'Escribe tu pregunta…', mensaje: 'Tu mensaje', enviar: 'Enviar',
-    error: T.error,
+    error: 'Ahora mismo no puedo responder. Escríbenos a hola@thenovis.com.',
   };
   const SALUDO = T.saludo;
   const SUGERENCIAS = T.sugerencias;

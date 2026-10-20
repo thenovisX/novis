@@ -69,6 +69,19 @@ function nv_db(): PDO {
     // Fecha del último cambio de contraseña (para cerrar sesiones abiertas)
     $cols = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
     if (!in_array('pass_cambiada', $cols, true)) $db->exec('ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');
+    // Suscripciones (cobro recurrente mensual o anual)
+    $cols = array_column($db->query('PRAGMA table_info(pagos)')->fetchAll(), 'name');
+    foreach (['periodo TEXT', 'stripe_sub TEXT', 'stripe_customer TEXT', 'sub_estado TEXT', 'sub_fin TEXT', 'sub_cancela INTEGER NOT NULL DEFAULT 0'] as $col) {
+        if (!in_array(strtok($col, ' '), $cols, true)) $db->exec('ALTER TABLE pagos ADD COLUMN ' . $col);
+    }
+    // Cada renovación cobrada de una suscripción (la primera cuota es el propio pago)
+    $db->exec('CREATE TABLE IF NOT EXISTS renovaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pago_id INTEGER NOT NULL,
+        importe INTEGER NOT NULL,
+        fecha TEXT NOT NULL,
+        stripe_invoice TEXT NOT NULL UNIQUE
+    )');
     $listo = true;
     return $db;
 }
@@ -89,6 +102,66 @@ function nv_normalizar_codigo(string $c): string {
 }
 function nv_euros(int $centimos): string {
     return number_format($centimos / 100, 2, ',', '.') . ' €';
+}
+
+/* ================= Suscripciones ================= */
+
+const NV_PERIODOS = ['month' => 'mes', 'year' => 'año'];
+const NV_PERIODOS_TXT = ['' => 'Pago único', 'month' => 'Suscripción mensual', 'year' => 'Suscripción anual'];
+
+function nv_es_sub(array $p): bool { return isset(NV_PERIODOS[$p['periodo'] ?? '']); }
+/** «29,00 €» o «29,00 € / mes» */
+function nv_importe_txt(array $p): string {
+    return nv_euros((int)$p['importe']) . (nv_es_sub($p) ? ' / ' . NV_PERIODOS[$p['periodo']] : '');
+}
+/** Estado para mostrar: [clave, texto]. Claves: pendiente, pagado, cancelado, error. */
+function nv_estado(array $p): array {
+    if (!nv_es_sub($p) || $p['estado'] !== 'pagado') {
+        return [$p['estado'], ['pendiente' => 'Pendiente', 'pagado' => 'Pagado', 'cancelado' => 'Anulado'][$p['estado']] ?? $p['estado']];
+    }
+    $fin = $p['sub_fin'] ? date('d/m/Y', strtotime($p['sub_fin'])) : '';
+    return match ($p['sub_estado'] ?? 'active') {
+        'canceled', 'incomplete_expired' => ['cancelado', 'Cancelada'],
+        'past_due', 'unpaid', 'incomplete' => ['error', 'Pago fallido'],
+        default => $p['sub_cancela'] ? ['pendiente', 'Activa hasta el ' . $fin] : ['pagado', 'Activa'],
+    };
+}
+function nv_sub_viva(array $p): bool {
+    return nv_es_sub($p) && $p['stripe_sub'] && !in_array($p['sub_estado'], ['canceled', 'incomplete_expired'], true);
+}
+
+/** Guarda en el pago el estado de su suscripción tal y como lo da Stripe. */
+function nv_sub_guardar(int $pagoId, array $sub): void {
+    $fin = $sub['current_period_end'] ?? ($sub['items']['data'][0]['current_period_end'] ?? null);
+    nv_db()->prepare('UPDATE pagos SET stripe_sub = ?, stripe_customer = COALESCE(?, stripe_customer), sub_estado = ?, sub_fin = ?, sub_cancela = ? WHERE id = ?')
+        ->execute([$sub['id'], is_string($sub['customer'] ?? null) ? $sub['customer'] : null, (string)($sub['status'] ?? ''),
+            $fin ? date('c', (int)$fin) : null, !empty($sub['cancel_at_period_end']) || !empty($sub['cancel_at']) ? 1 : 0, $pagoId]);
+}
+function nv_sub_sincronizar(array $p): ?array {
+    if (empty($p['stripe_sub']) || !nv_stripe_ok()) return null;
+    try { $s = nv_stripe('GET', '/v1/subscriptions/' . rawurlencode($p['stripe_sub'])); } catch (Throwable $e) { return null; }
+    nv_sub_guardar((int)$p['id'], $s);
+    return $s;
+}
+/** Programa la baja al final del periodo ya pagado ($cancelar = true) o la anula ($cancelar = false). */
+function nv_sub_baja(array $p, bool $cancelar): void {
+    $s = nv_stripe('POST', '/v1/subscriptions/' . rawurlencode($p['stripe_sub']), ['cancel_at_period_end' => $cancelar ? 'true' : 'false']);
+    nv_sub_guardar((int)$p['id'], $s);
+}
+/** Cancela ya (sin esperar al final del periodo) todas las suscripciones vivas de una cuenta. Para cuando se borra la cuenta. */
+function nv_sub_cancelar_de_usuario(int $usuarioId): void {
+    $st = nv_db()->prepare("SELECT * FROM pagos WHERE usuario_id = ? AND stripe_sub IS NOT NULL");
+    $st->execute([$usuarioId]);
+    foreach ($st->fetchAll() as $p) {
+        if (!nv_sub_viva($p)) continue;
+        try { nv_sub_guardar((int)$p['id'], nv_stripe('DELETE', '/v1/subscriptions/' . rawurlencode($p['stripe_sub']))); }
+        catch (Throwable $e) { error_log('Novis cancelar suscripción ' . $p['id'] . ': ' . $e->getMessage()); }
+    }
+}
+/** Abre el portal de Stripe para que el cliente cambie su tarjeta o descargue facturas. */
+function nv_portal_url(array $p): string {
+    $s = nv_stripe('POST', '/v1/billing_portal/sessions', ['customer' => $p['stripe_customer'], 'return_url' => nv_url('pagos/?a=resumen&id=' . $p['id']), 'locale' => 'es']);
+    return (string)$s['url'];
 }
 
 /** Crea un token de un solo uso (verificar email / restablecer contraseña). Devuelve el token en claro. */
@@ -138,19 +211,22 @@ function nv_email_restablecer(array $u): bool {
 
 function nv_emails_pago(array $p): void {
     $destino = 'hola@thenovis.com';
-    $importe = nv_euros((int)$p['importe']);
+    $importe = nv_importe_txt($p);
+    $sub = nv_es_sub($p);
     $email = (string)($p['pagador_email'] ?? '');
     if ($email !== '') {
-        $html = novis_email_html('Pago recibido', [
-            'Hemos recibido tu pago. ¡Gracias por confiar en Novis!',
+        $html = novis_email_html($sub ? 'Suscripción activada' : 'Pago recibido', [
+            $sub ? 'Tu suscripción ya está activa. ¡Gracias por confiar en Novis!' : 'Hemos recibido tu pago. ¡Gracias por confiar en Novis!',
             '<strong>Concepto:</strong> ' . e($p['concepto']) . '<br><strong>Importe:</strong> ' . e($importe) . '<br><strong>Referencia:</strong> ' . e($p['codigo']),
-            'Stripe te enviará también su propio recibo. Si necesitas factura o tienes cualquier duda, responde a este email.',
-        ], 'Ver mis pagos', nv_url('pagos/'));
-        $texto = "Hemos recibido tu pago. ¡Gracias por confiar en Novis!\n\nConcepto: {$p['concepto']}\nImporte: $importe\nReferencia: {$p['codigo']}\n\nSi necesitas factura, responde a este email.";
-        novis_mail($email, 'Pago recibido · Novis', $texto, $html, $destino);
+            $sub ? 'Se renovará automáticamente cada ' . NV_PERIODOS[$p['periodo']] . '. <strong>No tiene permanencia</strong>: puedes cancelarla cuando quieras desde tu área de cliente.'
+                 : 'Stripe te enviará también su propio recibo. Si necesitas factura o tienes cualquier duda, responde a este email.',
+        ], $sub ? 'Gestionar mi suscripción' : 'Ver mis pagos', nv_url($sub ? 'pagos/?a=resumen&id=' . $p['id'] : 'pagos/'));
+        $texto = ($sub ? 'Tu suscripción ya está activa.' : 'Hemos recibido tu pago.') . " ¡Gracias por confiar en Novis!\n\nConcepto: {$p['concepto']}\nImporte: $importe\nReferencia: {$p['codigo']}\n\n"
+            . ($sub ? 'Se renueva automáticamente y puedes cancelarla cuando quieras: ' . nv_url('pagos/?a=resumen&id=' . $p['id']) : 'Si necesitas factura, responde a este email.');
+        novis_mail($email, ($sub ? 'Suscripción activada' : 'Pago recibido') . ' · Novis', $texto, $html, $destino);
     }
-    $texto = "Pago recibido por Stripe\n\nConcepto: {$p['concepto']}\nImporte: $importe\nCódigo: {$p['codigo']}\nCliente: $email\n\nVer en el panel: " . nv_url('panel/pagos.php');
-    novis_mail($destino, "Pago recibido: $importe · {$p['concepto']}", $texto, null, $email ?: null);
+    $texto = (nv_es_sub($p) ? 'Nueva suscripción' : 'Pago recibido por Stripe') . "\n\nConcepto: {$p['concepto']}\nImporte: $importe\nCódigo: {$p['codigo']}\nCliente: $email\n\nVer en el panel: " . nv_url('panel/pagos.php');
+    novis_mail($destino, ($sub ? "Nueva suscripción" : "Pago recibido") . ": $importe · {$p['concepto']}", $texto, null, $email ?: null);
 }
 
 /* ================= Stripe (API REST, sin librerías) ================= */
@@ -165,6 +241,7 @@ function nv_stripe(string $metodo, string $ruta, array $datos = []): array {
         CURLOPT_USERPWD => (string)$c['stripe_secret'] . ':',
         CURLOPT_HTTPHEADER => ['Stripe-Version: 2024-06-20'],
     ]);
+    if ($metodo === 'DELETE') curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
     if ($metodo === 'POST') {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($datos));
@@ -187,11 +264,66 @@ function nv_marcar_pagado(int $pagoId, array $sesion): void {
         pagador_email = COALESCE(pagador_email, ?) WHERE id = ? AND estado != 'pagado'");
     $st->execute([date('c'), $sesion['id'] ?? null, is_string($sesion['payment_intent'] ?? null) ? $sesion['payment_intent'] : null,
         $sesion['customer_details']['email'] ?? null, $pagoId]);
-    if ($st->rowCount() === 1) {
+    $primera = $st->rowCount() === 1;
+    // Suscripción: se guarda su identificador y su estado (próxima renovación, etc.)
+    if (is_string($sesion['subscription'] ?? null)) {
+        $db->prepare("UPDATE pagos SET stripe_sub = ?, stripe_customer = COALESCE(stripe_customer, ?), sub_estado = COALESCE(sub_estado, 'active') WHERE id = ?")
+           ->execute([$sesion['subscription'], is_string($sesion['customer'] ?? null) ? $sesion['customer'] : null, $pagoId]);
+        if ($primera) { $q = $db->prepare('SELECT * FROM pagos WHERE id = ?'); $q->execute([$pagoId]); nv_sub_sincronizar($q->fetch()); }
+    }
+    if ($primera) {
         $p = $db->prepare('SELECT * FROM pagos WHERE id = ?');
         $p->execute([$pagoId]);
         try { nv_emails_pago($p->fetch()); } catch (Throwable $e) { error_log('Novis email pago: ' . $e->getMessage()); }
     }
+}
+
+/** Renovación cobrada (factura de un ciclo nuevo). Idempotente: cada factura se registra una sola vez. */
+function nv_renovacion(array $p, array $factura): void {
+    $db = nv_db();
+    $st = $db->prepare('INSERT OR IGNORE INTO renovaciones (pago_id, importe, fecha, stripe_invoice) VALUES (?, ?, ?, ?)');
+    $st->execute([$p['id'], (int)($factura['amount_paid'] ?? $p['importe']), date('c'), (string)$factura['id']]);
+    if ($st->rowCount() !== 1) return;
+    nv_sub_sincronizar($p);
+    $importe = nv_euros((int)($factura['amount_paid'] ?? $p['importe']));
+    $email = (string)($p['pagador_email'] ?? '');
+    try {
+        if ($email !== '') {
+            $html = novis_email_html('Suscripción renovada', [
+                'Hemos cobrado la renovación de tu suscripción. ¡Gracias por seguir con Novis!',
+                '<strong>Concepto:</strong> ' . e($p['concepto']) . '<br><strong>Importe:</strong> ' . e($importe),
+                'Puedes cancelarla cuando quieras desde tu área de cliente, sin permanencia ni penalización.',
+            ], 'Gestionar mi suscripción', nv_url('pagos/?a=resumen&id=' . $p['id']));
+            $texto = "Hemos cobrado la renovación de tu suscripción.\n\nConcepto: {$p['concepto']}\nImporte: $importe\n\nPuedes cancelarla cuando quieras: " . nv_url('pagos/?a=resumen&id=' . $p['id']);
+            novis_mail($email, 'Suscripción renovada · Novis', $texto, $html, 'hola@thenovis.com');
+        }
+        novis_mail('hola@thenovis.com', "Renovación cobrada: $importe · {$p['concepto']}",
+            "Se ha renovado una suscripción.\n\nConcepto: {$p['concepto']}\nImporte: $importe\nCliente: $email\n\n" . nv_url('panel/pagos.php?id=' . $p['id']));
+    } catch (Throwable $e) { error_log('Novis email renovación: ' . $e->getMessage()); }
+}
+
+/** Avisos de una suscripción a Hugo (y al cliente si el cobro ha fallado). */
+function nv_aviso_sub(array $p, string $que): void {
+    $email = (string)($p['pagador_email'] ?? '');
+    $url = nv_url('pagos/?a=resumen&id=' . $p['id']);
+    try {
+        if ($que === 'fallo') {
+            if ($email !== '') {
+                $html = novis_email_html('No hemos podido cobrar tu suscripción', [
+                    'El cobro de «' . e($p['concepto']) . '» no se ha podido completar. Suele pasar cuando la tarjeta ha caducado o no tiene saldo.',
+                    'Actualiza tu tarjeta para que el servicio siga activo. Stripe volverá a intentarlo en los próximos días.',
+                ], 'Actualizar mi tarjeta', $url);
+                novis_mail($email, 'No hemos podido cobrar tu suscripción · Novis',
+                    "El cobro de «{$p['concepto']}» no se ha podido completar. Actualiza tu tarjeta aquí: $url", $html, 'hola@thenovis.com');
+            }
+            novis_mail('hola@thenovis.com', "Cobro fallido: {$p['concepto']}", "Stripe no ha podido cobrar la suscripción.\nCliente: $email\n\n" . nv_url('panel/pagos.php?id=' . $p['id']));
+        } else {
+            $txt = ['baja' => 'El cliente ha pedido la baja: la suscripción terminará al final del periodo pagado.',
+                    'reanuda' => 'El cliente ha anulado la baja: la suscripción sigue activa.',
+                    'fin' => 'La suscripción ha terminado y ya no se cobrará más.'][$que] ?? $que;
+            novis_mail('hola@thenovis.com', "Suscripción: {$p['concepto']}", "$txt\n\nCliente: $email\n" . nv_url('panel/pagos.php?id=' . $p['id']));
+        }
+    } catch (Throwable $e) { error_log('Novis aviso suscripción: ' . $e->getMessage()); }
 }
 
 /** Comprueba en Stripe el estado de una sesión de pago y actualiza el pago si ya está pagado. */

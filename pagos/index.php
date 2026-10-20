@@ -197,30 +197,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($s && ($s['payment_status'] ?? '') === 'paid') ir('a=exito&id=' . $p['id']);
                 if ($s && ($s['status'] ?? '') === 'open' && !empty($s['url'])) { header('Location: ' . $s['url'], true, 303); exit; }
             }
+            $sub = nv_es_sub($p);
             $datos = [
-                'mode' => 'payment',
+                'mode' => $sub ? 'subscription' : 'payment',
                 'locale' => 'es',
                 'customer_email' => $u['email'],
                 'client_reference_id' => (string)$p['id'],
                 'line_items' => [[
                     'quantity' => 1,
-                    'price_data' => [
+                    'price_data' => array_filter([
                         'currency' => $p['moneda'],
                         'unit_amount' => (int)$p['importe'],
+                        // Suscripción: Stripe lo cobrará solo cada mes o cada año
+                        'recurring' => $sub ? ['interval' => $p['periodo']] : null,
                         'product_data' => array_filter([
                             'name' => mb_substr($p['concepto'], 0, 250),
                             'description' => $p['descripcion'] ? mb_substr($p['descripcion'], 0, 500) : null,
                         ]),
-                    ],
+                    ]),
                 ]],
                 'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo'], 'usuario_id' => (string)$u['id']],
-                'payment_intent_data' => [
-                    'description' => mb_substr($p['concepto'] . ' (' . $p['codigo'] . ')', 0, 500),
-                    'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo']],
-                ],
                 'success_url' => nv_url('pagos/?a=exito&id=' . $p['id']),
                 'cancel_url' => nv_url('pagos/?a=resumen&id=' . $p['id'] . '&cancelado=1'),
             ];
+            $ref = ['description' => mb_substr($p['concepto'] . ' (' . $p['codigo'] . ')', 0, 500), 'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo']]];
+            if ($sub) $datos['subscription_data'] = $ref; else $datos['payment_intent_data'] = $ref;
             $s = nv_stripe('POST', '/v1/checkout/sessions', $datos);
             $db->prepare('UPDATE pagos SET stripe_session = ?, pagador_email = ? WHERE id = ?')->execute([$s['id'], $u['email'], $p['id']]);
             header('Location: ' . $s['url'], true, 303);
@@ -231,11 +232,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Gestión de una suscripción: darse de baja, mantenerla o cambiar la tarjeta
+    if (in_array($accion, ['baja', 'reanudar', 'tarjeta'], true) && $u) {
+        $st = $db->prepare("SELECT * FROM pagos WHERE id = ? AND usuario_id = ? AND estado = 'pagado'");
+        $st->execute([(int)($_POST['id'] ?? 0), $u['id']]);
+        $p = $st->fetch();
+        if (!$p || !nv_sub_viva($p)) ir();
+        $volver = 'a=resumen&id=' . $p['id'];
+        try {
+            if ($accion === 'tarjeta') { header('Location: ' . nv_portal_url($p), true, 303); exit; }
+            nv_sub_baja($p, $accion === 'baja');
+            nv_aviso_sub($p, $accion === 'baja' ? 'baja' : 'reanuda');
+            $st->execute([$p['id'], $u['id']]);
+            $p = $st->fetch();
+            aviso($accion === 'baja'
+                ? 'Listo. Tu suscripción seguirá activa hasta el ' . date('d/m/Y', strtotime((string)$p['sub_fin'])) . ' y no se te cobrará nada más.'
+                : 'Perfecto, tu suscripción sigue activa.');
+        } catch (Throwable $e) {
+            aviso($accion === 'tarjeta'
+                ? 'Ahora mismo no podemos abrir la gestión de la tarjeta. Escríbenos a hola@thenovis.com y te ayudamos.'
+                : 'No hemos podido conectar con el sistema de pago. Inténtalo de nuevo en unos minutos.', 'err');
+        }
+        ir($volver);
+    }
+
     if ($accion === 'eliminar' && $u) {
         if (strcasecmp(campo('confirmar'), 'ELIMINAR') !== 0) {
             aviso('Para eliminar la cuenta escribe ELIMINAR en la casilla.', 'err');
             ir('a=cuenta');
         }
+        // Las suscripciones activas se cancelan para que no se siga cobrando
+        nv_sub_cancelar_de_usuario((int)$u['id']);
         // Los pagos se conservan (obligación legal), pero dejan de estar ligados a la cuenta
         $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$u['id']]);
         $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$u['id']]);
@@ -267,7 +294,19 @@ if (!$u) {
         $p = $st->fetch();
         if (!$p) ir();
         if ($p['estado'] === 'pendiente' && $p['stripe_session']) { nv_sincronizar($p); $st->execute([$p['id'], $u['id']]); $p = $st->fetch(); }
-        if ($vista === 'resumen' && $p['estado'] === 'pagado') $vista = 'exito';
+        $esSub = nv_es_sub($p);
+        if ($vista === 'resumen' && $p['estado'] === 'pagado') {
+            if ($esSub) {
+                // Estado al día (próxima renovación, baja programada…) y número de cobros
+                if (nv_sub_viva($p) && nv_sub_sincronizar($p)) { $st->execute([$p['id'], $u['id']]); $p = $st->fetch(); }
+                $r = $db->prepare('SELECT COUNT(*) FROM renovaciones WHERE pago_id = ?');
+                $r->execute([$p['id']]);
+                $cobros = 1 + (int)$r->fetchColumn();
+                $vista = 'suscripcion';
+            } else {
+                $vista = 'exito';
+            }
+        }
     }
     if ($vista === 'inicio') {
         $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
@@ -279,7 +318,7 @@ if (!$u) {
 $titulos = [
     'entrar' => 'Iniciar sesión', 'registro' => 'Crear cuenta', 'olvide' => 'Recuperar contraseña', 'restablecer' => 'Contraseña nueva',
     'pendiente' => 'Confirma tu email', 'perfil' => 'Completa tu perfil', 'inicio' => 'Pagos', 'resumen' => 'Resumen del pago',
-    'exito' => 'Pago', 'cuenta' => 'Tu cuenta',
+    'exito' => 'Pago', 'cuenta' => 'Tu cuenta', 'suscripcion' => 'Tu suscripción',
 ];
 $v = fn(string $k) => e($viejo[$k] ?? '');
 function err(array $errores, string $k): string {
@@ -299,8 +338,8 @@ $google = nv_google_ok();
   <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../css/styles.css?v=19">
-  <link rel="stylesheet" href="pagos.css?v=3">
+  <link rel="stylesheet" href="../css/styles.css?v=20">
+  <link rel="stylesheet" href="pagos.css?v=4">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -450,8 +489,8 @@ $google = nv_google_ok();
               <li>
                 <a href="?a=resumen&amp;id=<?= (int)$p['id'] ?>">
                   <span class="acc-list__main"><strong><?= e($p['concepto']) ?></strong><small><?= e($p['codigo']) ?></small></span>
-                  <span class="acc-list__amount"><?= e(nv_euros((int)$p['importe'])) ?></span>
-                  <span class="pill pill--<?= e($p['estado']) ?>"><?= ['pendiente' => 'Pendiente', 'pagado' => 'Pagado', 'cancelado' => 'Anulado'][$p['estado']] ?? e($p['estado']) ?></span>
+                  <span class="acc-list__amount"><?= e(nv_importe_txt($p)) ?></span>
+                  <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= e($cl) ?>"><?= e($tx) ?></span>
                 </a>
               </li>
             <?php endforeach; ?>
@@ -470,16 +509,24 @@ $google = nv_google_ok();
       <dl class="acc-sum">
         <div><dt>Código</dt><dd><?= e($p['codigo']) ?></dd></div>
         <?php if ($p['caduca']): ?><div><dt>Válido hasta</dt><dd><?= e(date('d/m/Y', strtotime($p['caduca']))) ?></dd></div><?php endif; ?>
-        <div class="acc-sum__total"><dt>Total a pagar</dt><dd><?= e(nv_euros((int)$p['importe'])) ?></dd></div>
+        <?php if ($esSub): ?><div><dt>Tipo</dt><dd><?= e(NV_PERIODOS_TXT[$p['periodo']]) ?>, sin permanencia</dd></div><?php endif; ?>
+        <div class="acc-sum__total"><dt><?= $esSub ? 'Cuota' : 'Total a pagar' ?></dt><dd><?= e(nv_importe_txt($p)) ?></dd></div>
       </dl>
+      <?php if ($esSub && $p['estado'] !== 'cancelado'): ?>
+        <div class="acc-subinfo">
+          <p><strong>Se renueva sola cada <?= e(NV_PERIODOS[$p['periodo']]) ?>.</strong> Te cobraremos <?= e(nv_euros((int)$p['importe'])) ?> hoy y después cada <?= e(NV_PERIODOS[$p['periodo']]) ?>, y te avisaremos por email de cada cobro.</p>
+          <p><strong>Sin permanencia.</strong> Puedes darte de baja cuando quieras desde esta página: sigue activa hasta el final del periodo pagado y no se te cobra nada más.</p>
+        </div>
+      <?php endif; ?>
       <?php if ($p['estado'] === 'cancelado'): ?>
         <p class="acc-flash acc-flash--err">Este pago se ha anulado. Si crees que es un error, escríbenos a hola@thenovis.com.</p>
       <?php else: ?>
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-          <button class="btn acc-pay" name="accion" value="pagar">Pagar <?= e(nv_euros((int)$p['importe'])) ?></button>
+          <button class="btn acc-pay" name="accion" value="pagar"><?= $esSub ? 'Suscribirme · ' . e(nv_importe_txt($p)) : 'Pagar ' . e(nv_euros((int)$p['importe'])) ?></button>
         </form>
+        <?php if ($esSub): ?><p class="acc-secure">Al suscribirte autorizas a Novis a cobrar esta cuota cada <?= e(NV_PERIODOS[$p['periodo']]) ?> en tu tarjeta hasta que te des de baja.</p><?php endif; ?>
         <p class="acc-secure">Pago seguro con Stripe: tarjeta, Apple Pay o Google Pay. Novis nunca ve ni guarda los datos de tu tarjeta.</p>
       <?php endif; ?>
     </div>
@@ -488,8 +535,14 @@ $google = nv_google_ok();
     <div class="acc-card">
       <?php if ($p['estado'] === 'pagado'): ?>
         <div class="acc-icon acc-icon--ok" aria-hidden="true"></div>
+        <?php if ($esSub): ?>
+          <h1>¡Suscripción activada!</h1>
+          <p class="acc-lead">Hemos cobrado la primera cuota de «<?= e($p['concepto']) ?>» (<strong><?= e(nv_importe_txt($p)) ?></strong>). Se renovará sola y puedes darte de baja cuando quieras.</p>
+          <p><a class="btn btn--ghost" href="?a=resumen&amp;id=<?= (int)$p['id'] ?>">Gestionar mi suscripción</a></p>
+        <?php else: ?>
         <h1>¡Pago completado!</h1>
         <p class="acc-lead">Hemos recibido <strong><?= e(nv_euros((int)$p['importe'])) ?></strong> por «<?= e($p['concepto']) ?>». Te hemos enviado la confirmación por email.</p>
+        <?php endif; ?>
       <?php else: ?>
         <div class="acc-icon acc-icon--wait" aria-hidden="true"></div>
         <h1>Estamos confirmando tu pago</h1>
@@ -497,6 +550,54 @@ $google = nv_google_ok();
         <p><a class="btn btn--ghost" href="?a=exito&amp;id=<?= (int)$p['id'] ?>">Actualizar</a></p>
       <?php endif; ?>
       <p class="acc-alt"><a href="./">Ver tus pagos</a></p>
+    </div>
+
+<?php elseif ($vista === 'suscripcion'):
+    [$cl, $tx] = nv_estado($p);
+    $fin = $p['sub_fin'] ? date('d/m/Y', strtotime($p['sub_fin'])) : '';
+    $viva = nv_sub_viva($p); ?>
+    <div class="acc-card acc-card--wide">
+      <p class="acc-back"><a href="./">‹ Tus pagos</a></p>
+      <span class="pill pill--<?= e($cl) ?>"><?= e($tx) ?></span>
+      <h1 class="acc-subtitle"><?= e($p['concepto']) ?></h1>
+      <?php if ($p['descripcion']): ?><p class="acc-desc"><?= nl2br(e($p['descripcion'])) ?></p><?php endif; ?>
+      <dl class="acc-sum">
+        <div><dt>Cuota</dt><dd><?= e(nv_importe_txt($p)) ?></dd></div>
+        <?php if ($fin && $viva): ?><div><dt><?= $p['sub_cancela'] ? 'Activa hasta' : 'Próxima renovación' ?></dt><dd><?= e($fin) ?></dd></div><?php endif; ?>
+        <div><dt>Cuotas pagadas</dt><dd><?= (int)$cobros ?></dd></div>
+        <div><dt>Referencia</dt><dd><?= e($p['codigo']) ?></dd></div>
+      </dl>
+
+      <?php if ($cl === 'error'): ?>
+        <p class="acc-flash acc-flash--err">No hemos podido cobrar la última cuota. Actualiza tu tarjeta para que el servicio siga activo; Stripe lo volverá a intentar en los próximos días.</p>
+      <?php elseif (!$viva): ?>
+        <p class="acc-flash acc-flash--info">Esta suscripción ha terminado y ya no se cobrará más. Si quieres volver, escríbenos a hola@thenovis.com.</p>
+      <?php elseif ($p['sub_cancela']): ?>
+        <p class="acc-flash acc-flash--info">Te has dado de baja. Seguirá activa hasta el <?= e($fin) ?> y no se te cobrará nada más.</p>
+      <?php endif; ?>
+
+      <?php if ($viva): ?>
+        <div class="acc-subactions">
+          <?php if ($p['sub_cancela']): ?>
+            <form method="post"><input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+              <button class="btn" name="accion" value="reanudar">Mantener mi suscripción</button></form>
+          <?php endif; ?>
+          <?php if ($p['stripe_customer']): ?>
+            <form method="post"><input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+              <button class="btn <?= $cl === 'error' ? '' : 'btn--ghost' ?>" name="accion" value="tarjeta">Cambiar tarjeta o ver facturas</button></form>
+          <?php endif; ?>
+        </div>
+        <?php if (!$p['sub_cancela']): ?>
+          <details class="acc-danger">
+            <summary>Darme de baja</summary>
+            <p>Sin permanencia ni penalización. Seguirá activa hasta el <?= e($fin ?: 'final del periodo pagado') ?> y después no se te cobrará nada más. Puedes cambiar de idea antes de esa fecha.</p>
+            <form method="post" class="acc-form">
+              <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+              <button class="btn btn--danger" name="accion" value="baja">Confirmar la baja</button>
+            </form>
+          </details>
+        <?php endif; ?>
+      <?php endif; ?>
     </div>
 
 <?php elseif ($vista === 'cuenta'): ?>
@@ -512,7 +613,7 @@ $google = nv_google_ok();
       <p class="acc-desc">Para cambiar tus datos, escríbenos a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a>. También puedes <a href="/datos/">descargar o eliminar todos tus datos</a>, incluidos los mensajes que nos enviaste por el formulario.</p>
       <details class="acc-danger">
         <summary>Eliminar mi cuenta</summary>
-        <p>Se borrarán tus datos de acceso. Los pagos realizados se conservan el tiempo que exige la ley, desvinculados de la cuenta.</p>
+        <p>Se borrarán tus datos de acceso<?php $vs = $db->prepare("SELECT COUNT(*) FROM pagos WHERE usuario_id = ? AND stripe_sub IS NOT NULL AND COALESCE(sub_estado, '') NOT IN ('canceled', 'incomplete_expired')"); $vs->execute([$u['id']]); if ($vs->fetchColumn()): ?> y <strong>tus suscripciones se cancelarán en el momento</strong><?php endif; ?>. Los pagos realizados se conservan el tiempo que exige la ley, desvinculados de la cuenta.</p>
         <form method="post" class="acc-form">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <div class="f"><label for="confirmar">Escribe ELIMINAR para confirmar</label><input id="confirmar" name="confirmar" autocomplete="off" required></div>

@@ -105,3 +105,14 @@
 .datos-actions { margin-top: 26px; }
 .datos-borrar { margin-top: 28px; padding-top: 6px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
 .datos-borrar .btn { justify-self: start; }
+
+/* Suscripciones */
+.pill--error { background: #fdecec; color: #a32020; }
+.pill--cancelado { background: #f0f2f5; color: #5c6573; }
+.acc-subtitle { margin-top: 12px; }
+.acc-subinfo { display: grid; gap: 10px; margin: -8px 0 22px; padding: 16px 18px; border-radius: 14px; background: var(--mist); font-size: 15px; color: var(--body); }
+.acc-subinfo strong { color: var(--text); }
+.acc-subactions { display: flex; flex-wrap: wrap; gap: 10px; }
+.acc-subactions form { flex: 1 1 220px; }
+.acc-subactions .btn { width: 100%; }
+.acc-card--wide > .acc-flash { margin: 0 0 18px; max-width: none; }

@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         volver('id=' . $id . '&ok=verificado');
     }
     if ($accion === 'eliminar') {
+        nv_sub_cancelar_de_usuario($id);   // las suscripciones activas se cancelan para que no se siga cobrando
         // Los pagos se conservan (obligación legal), pero dejan de estar ligados a la cuenta
         $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
@@ -119,7 +120,7 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=12">
+<link rel="stylesheet" href="panel.css?v=13">
 </head>
 <body class="v-cuentas">
 
@@ -195,8 +196,8 @@ if ($vista === 'detalle') {
       <?php else: ?>
         <ul class="mini">
           <?php foreach ($pagos as $p): ?>
-            <li><a href="pagos.php?id=<?= (int)$p['id'] ?>"><span><?= e($p['concepto']) ?><small><?= e($p['codigo']) ?></small></span><b><?= e(nv_euros((int)$p['importe'])) ?></b>
-              <span class="pill pill--<?= $p['estado'] === 'pagado' ? 'cerrada' : ($p['estado'] === 'pendiente' ? 'en_curso' : 'descartada') ?>"><?= ['pendiente' => 'Pendiente', 'pagado' => 'Pagado', 'cancelado' => 'Anulado'][$p['estado']] ?></span></a></li>
+            <li><a href="pagos.php?id=<?= (int)$p['id'] ?>"><span><?= e($p['concepto']) ?><small><?= e($p['codigo']) ?></small></span><b><?= e(nv_importe_txt($p)) ?></b>
+              <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= ['pagado' => 'cerrada', 'pendiente' => 'en_curso', 'error' => 'error'][$cl] ?? 'descartada' ?>"><?= e($tx) ?></span></a></li>
           <?php endforeach; ?>
         </ul>
       <?php endif; ?>
@@ -228,7 +229,7 @@ if ($vista === 'detalle') {
     <section class="card">
       <h2>Eliminar cuenta</h2>
       <p class="muted">Se borran sus datos de acceso. Sus pagos se conservan como registro contable, sin vincular a la cuenta.</p>
-      <form method="post" data-confirm="¿Eliminar la cuenta de <?= e($u['usuario'] ?: $u['email']) ?>? No se puede deshacer.">
+      <form method="post" data-confirm="¿Eliminar la cuenta de <?= e($u['usuario'] ?: $u['email']) ?>? Sus suscripciones activas se cancelarán. No se puede deshacer.">
         <input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
         <button class="btn btn--danger" name="accion" value="eliminar">Eliminar cuenta</button>
       </form>

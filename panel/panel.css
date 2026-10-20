@@ -198,3 +198,13 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .pill--cerrada { color: #1e6b34; }
 .btn--ghost { color: #0060c0; }
 .btn--danger { background: #c62828; }
+
+/* Suscripciones */
+.dot--error { background: var(--red); }
+.pill--error { background: #fdecec; color: #b3261e; }
+.form-pago .tipo { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+.form-pago .tipo legend { font-weight: 600; font-size: 15px; margin-bottom: 8px; padding: 0; }
+.form-pago .tipo label { display: flex; align-items: center; gap: 10px; font-weight: 500; padding: 12px 14px; border: 1px solid #d2d2d7; border-radius: 12px; cursor: pointer; background: #fff; transition: border-color .2s, box-shadow .2s; }
+.form-pago .tipo label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,.15); }
+.form-pago .tipo input { width: 18px; height: 18px; margin: 0; padding: 0; accent-color: var(--accent); flex: none; }
+.form-pago .tipo + .muted { margin: -6px 0 0; }

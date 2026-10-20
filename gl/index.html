@@ -24,7 +24,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://thenovis.com/#negocio", "name": "Novis", "url": "https://thenovis.com/", "logo": "https://thenovis.com/assets/apple-touch-icon.png?v=10", "image": "https://thenovis.com/assets/og-image.png?v=10", "description": "Diseño y desarrollo de páginas web para empresas: webs corporativas, tiendas online, landing pages, SEO y mantenimiento.", "email": "hola@thenovis.com", "priceRange": "€€", "address": {"@type": "PostalAddress", "addressLocality": "Vigo", "addressRegion": "Pontevedra", "addressCountry": "ES"}, "areaServed": [{"@type": "City", "name": "Vigo"}, {"@type": "AdministrativeArea", "name": "Galicia"}, {"@type": "Country", "name": "España"}], "knowsLanguage": ["es", "gl", "en"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Planes de diseño web", "itemListElement": [{"@type": "Offer", "name": "Plan Esencial", "price": "249", "priceCurrency": "EUR", "description": "Web de una página adaptada a móvil"}, {"@type": "Offer", "name": "Plan Profesional", "price": "549", "priceCurrency": "EUR", "description": "Web corporativa a medida de hasta 6 secciones"}, {"@type": "Offer", "name": "Plan Tienda", "price": "990", "priceCurrency": "EUR", "description": "Tienda online con pagos seguros"}, {"@type": "Offer", "name": "Alojamiento y dominio", "price": "120", "priceCurrency": "EUR", "description": "Alojamiento, dominio, https y copias de seguridad (anual; 384 € por 4 años)"}, {"@type": "Offer", "name": "Mantenimiento web", "price": "29", "priceCurrency": "EUR", "description": "Cambios pequeños, actualizaciones y seguridad, mensual y sin permanencia"}]}}, {"@type": "WebSite", "@id": "https://thenovis.com/#web", "url": "https://thenovis.com/gl/", "name": "Novis", "inLanguage": "gl", "publisher": {"@id": "https://thenovis.com/#negocio"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Canto tarda en estar lista a miña web?", "acceptedAnswer": {"@type": "Answer", "text": "Unha web sinxela adoita estar lista nunha semana. Proxectos máis grandes, entre dúas e catro semanas."}}, {"@type": "Question", "name": "Necesito ter dominio e hosting?", "acceptedAnswer": {"@type": "Answer", "text": "Non te preocupes. Se non o tes, axudámosche a contratalo e deixámolo todo configurado."}}, {"@type": "Question", "name": "Poderei facer cambios eu mesmo?", "acceptedAnswer": {"@type": "Answer", "text": "Si. Explicámosche como facer os cambios básicos e, se o prefires, facémolos nós co plan de mantemento."}}, {"@type": "Question", "name": "Verase ben no móbil?", "acceptedAnswer": {"@type": "Answer", "text": "Sempre. Todas as nosas webs se deseñan pensando primeiro no móbil."}}, {"@type": "Question", "name": "Que inclúe o mantemento e podo deixalo?", "acceptedAnswer": {"@type": "Answer", "text": "Por 29 € ao mes facemos os cambios pequenos que precises (ata 2 horas ao mes), as actualizacións e as revisións de seguridade. Non ten permanencia: dáste de baixa cando queiras e a túa web segue en liña. Sen mantemento, cada cambio orzaméntase á parte desde 30 €."}}, {"@type": "Question", "name": "Canto custa ter a web en liña?", "acceptedAnswer": {"@type": "Answer", "text": "O aloxamento e o dominio custan 120 € ao ano, ou 384 € se contratas 4 anos (un 20 % menos). Inclúe o certificado de seguridade e copias de seguridade."}}, {"@type": "Question", "name": "Como é o pagamento?", "acceptedAnswer": {"@type": "Answer", "text": "50 % ao aprobar o deseño e 50 % ao publicar a web. Sen sorpresas."}}]}]}</script>
-  <link rel="stylesheet" href="/css/styles.css?v=19">
+  <link rel="stylesheet" href="/css/styles.css?v=20">
 </head>
 <body>
   <a href="#contenido" class="skip">Ir ao contido</a>
@@ -262,17 +262,24 @@
         <article class="extra">
           <h4>Aloxamento e dominio</h4>
           <p class="extra__desc">A túa web publicada co seu dominio, certificado de seguridade (https) e copias de seguridade.</p>
-          <div class="extra__opts">
-            <p class="extra__opt"><span class="extra__price">120 €</span> <span class="extra__per">ao ano</span></p>
-            <p class="extra__opt extra__opt--best"><span class="extra__badge">Aforra un 20 %</span> <span class="extra__price">384 €</span> <span class="extra__per">por 4 anos (96 € ao ano)</span></p>
-          </div>
+          <fieldset class="seg">
+            <legend class="sr">Duración do aloxamento</legend>
+            <label><input type="radio" name="aloj" value="1" checked> 1 ano</label>
+            <label><input type="radio" name="aloj" value="4"> 4 anos <span class="seg__save">−20 %</span></label>
+            <span class="seg__thumb" aria-hidden="true"></span>
+          </fieldset>
+          <p class="extra__opt extra__opt--host" aria-live="polite">
+            <span class="roll extra__price"><span>120 €</span><span>384 €</span></span>
+            <span class="roll extra__per"><span>ao ano</span><span>por 4 anos</span></span>
+          </p>
+          <p class="extra__ahorro"><span>Sae a <strong>96 € ao ano</strong>: aforras 96 € fronte a renovar cada ano.</span></p>
           <p class="extra__note">Págase por adiantado e renóvase ao rematar o período. Se decides non renovar, entregámosche todos os arquivos da túa web.</p>
         </article>
         <article class="extra">
           <h4>Mantemento</h4>
           <p class="extra__desc">Ocupámonos da túa web para que ti non teñas que facelo.</p>
           <div class="extra__opts">
-            <p class="extra__opt"><span class="extra__price">29 €</span> <span class="extra__per">ao mes</span></p>
+            <p class="extra__opt"><span class="extra__price" data-contar="29">29 €</span> <span class="extra__per">ao mes</span></p>
           </div>
           <ul>
             <li>Cambios pequenos: textos, fotos, prezos ou horarios (ata 2 h ao mes)</li>
@@ -384,7 +391,7 @@
     </div>
   </footer>
 
-  <script src="/js/main.js?v=14" defer></script>
-  <script src="/js/chat.js?v=9" defer></script>
+  <script src="/js/main.js?v=15" defer></script>
+  <script src="/js/chat.js?v=10" defer></script>
 </body>
 </html>
