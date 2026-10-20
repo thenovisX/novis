@@ -76,6 +76,12 @@ Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https:
 Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de redirección
 `https://thenovis.com/pagos/google.php`.
 
+## Área de cliente (`/pagos/`, icono de cuenta en la cabecera)
+
+- Pestañas: **Inicio** (resumen y pendientes), **Servicios** (contratados y catálogo para contratar mantenimiento o alojamiento sin código), **Mensajes** (conversaciones con Novis), **Pagos** (código e historial) y **Cuenta** (descargar datos, eliminar cuenta y datos).
+- Precios del catálogo en `NV_CATALOGO` (`lib/cuentas.php`), sin IVA; el cliente paga con el 21 % incluido.
+- Los mensajes de clientes llegan al panel como solicitudes («Cliente · …»). Se responden desde el detalle de la solicitud: el cliente lo ve en su área y le llega por email.
+
 ## Cumplimiento legal
 
 - Páginas: `aviso-legal.html`, `privacidad.html`, `cookies.html`, `accesibilidad.html`.

@@ -20,26 +20,7 @@ function token_email(string $t): ?string {
     return $st->fetchColumn() ?: null;
 }
 
-/** Todos los datos que Novis guarda de un email. */
-function datos_de(string $email): array {
-    $db = nv_db();
-    $st = $db->prepare('SELECT creado, nombre, empresa, email, plan, mensaje, estado, consentimiento FROM solicitudes WHERE email = ? COLLATE NOCASE ORDER BY id');
-    $st->execute([$email]);
-    $sol = $st->fetchAll();
-    $st = $db->prepare('SELECT id, email, usuario, telefono, email_verificado, creado, ultimo_acceso, (google_sub IS NOT NULL) AS google FROM usuarios WHERE email = ?');
-    $st->execute([$email]);
-    $cuenta = $st->fetch() ?: null;
-    $pagos = [];
-    if ($cuenta) {
-        $st = $db->prepare('SELECT codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela FROM pagos WHERE usuario_id = ? ORDER BY id');
-        $st->execute([$cuenta['id']]);
-        $pagos = $st->fetchAll();
-    }
-    $st = $db->prepare('SELECT codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela FROM pagos WHERE pagador_email = ? COLLATE NOCASE AND usuario_id IS NULL');
-    $st->execute([$email]);
-    $pagos = array_merge($pagos, $st->fetchAll());
-    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'pagos' => $pagos];
-}
+function datos_de(string $email): array { return nv_datos_de($email); }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
@@ -76,12 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = token_email((string)($_POST['t'] ?? ''));
         if (!$email) { $vista = 'caducado'; }
         else {
-            $d = datos_de($email);
-            unset($d['cuenta']['id']);
-            $d = ['generado' => date('c'), 'responsable' => 'Novis (thenovis.com)', 'email' => $email] + $d;
             header('Content-Type: application/json; charset=utf-8');
             header('Content-Disposition: attachment; filename="mis-datos-novis.json"');
-            echo json_encode($d, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo nv_datos_json($email);
             exit;
         }
     }
@@ -93,22 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$email) { $vista = 'caducado'; }
         elseif (empty($_POST['confirmo'])) { $error = 'Marca la casilla para confirmar que quieres eliminar tus datos.'; $_GET['t'] = $t; }
         else {
-            $d = datos_de($email);
-            $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email = ?')->execute([$email]);
-            $db->prepare('DELETE FROM solicitudes WHERE email = ? COLLATE NOCASE')->execute([$email]);
-            if ($d['cuenta']) {
-                $id = (int)$d['cuenta']['id'];
-                nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando
-                $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
-                $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
-                $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
-            }
-            novis_compactar();
-            // Aviso a Novis para borrar también los emails del buzón y las copias de seguridad
-            novis_mail('hola@thenovis.com', 'Solicitud de supresión de datos completada',
-                "Una persona ha eliminado sus datos desde " . nv_url('datos/') . ".\n\nEmail: $email\nSolicitudes borradas: " . count($d['solicitudes'])
-                . "\nCuenta borrada: " . ($d['cuenta'] ? 'sí' : 'no') . "\nPagos conservados por obligación legal: " . count($d['pagos'])
-                . "\n\nPendiente (máximo 30 días): borra del buzón los emails de esta persona.");
+            $d = nv_borrar_datos($email, nv_url('datos/'));
             $vista = 'eliminado';
             $aviso = $d;
         }
@@ -129,7 +92,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <title>Tus datos — Novis</title>
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/styles.css?v=21">
+  <link rel="stylesheet" href="/css/styles.css?v=22">
   <link rel="stylesheet" href="/pagos/pagos.css?v=4">
 </head>
 <body class="acc-page">

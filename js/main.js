@@ -354,3 +354,19 @@ const T = GL ? {
     if (location.hash) a.href = a.getAttribute('href').split('#')[0] + location.hash;
   }));
 })();
+
+// Icono de cuenta: si el cliente tiene la sesión iniciada, muestra su inicial
+(function () {
+  const acct = document.querySelector('.acct');
+  if (!acct || !window.fetch) return;
+  fetch('/pagos/estado.php', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : {})
+    .then(d => {
+      if (!d || !d.inicial) return;
+      acct.classList.add('is-in');
+      acct.querySelector('.acct__ini').textContent = d.inicial;
+      const t = (document.documentElement.lang === 'gl' ? 'A miña conta: ' : 'Mi cuenta: ') + d.nombre;
+      acct.setAttribute('aria-label', t); acct.title = t;
+    })
+    .catch(() => {});
+})();

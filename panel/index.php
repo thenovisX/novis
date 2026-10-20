@@ -1,6 +1,6 @@
 <?php
 // Novis — panel privado de solicitudes
-require_once __DIR__ . '/../lib/novis.php';
+require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
@@ -85,6 +85,26 @@ else {
             $db->prepare('UPDATE solicitudes SET estado = ?, actualizado = ? WHERE id = ?')->execute([$_POST['estado'], date('c'), $id]);
             volver('id=' . $id);
         }
+        // Responder al cliente: queda en la conversación de su área de cliente y le llega por email
+        if ($accion === 'responder') {
+            $texto = trim((string)($_POST['texto'] ?? ''));
+            $st = $db->prepare('SELECT * FROM solicitudes WHERE id = ?');
+            $st->execute([$id]);
+            $sol = $st->fetch();
+            if ($sol && $texto !== '') {
+                nv_db()->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'novis', ?, ?)")->execute([$id, mb_substr($texto, 0, 5000), date('c')]);
+                $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado = 'nueva' THEN 'en_curso' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $id]);
+                $c = $db->prepare('SELECT 1 FROM usuarios WHERE email = ?');
+                $c->execute([$sol['email']]);
+                $conCuenta = (bool)$c->fetchColumn();
+                $url = $conCuenta ? nv_url('pagos/?a=mensaje&id=' . $id) : nv_url('');
+                $parrafos = ['Hola' . ($sol['nombre'] ? ', ' . e($sol['nombre']) : '') . ':', nl2br(e($texto)),
+                    $conCuenta ? 'Puedes contestar desde tu área de cliente.' : 'Puedes contestar respondiendo a este email.'];
+                $html = novis_email_html('Respuesta de Novis', $parrafos, $conCuenta ? 'Ver la conversación' : 'Visitar thenovis.com', $url);
+                novis_mail($sol['email'], 'Respuesta de Novis', "Hola,\n\n$texto\n\n" . ($conCuenta ? "Contesta desde tu área de cliente: $url" : 'Puedes contestar respondiendo a este email.') . "\n\nUn saludo,\nNovis", $html, 'hola@thenovis.com');
+            }
+            volver('id=' . $id . '&respondido=1');
+        }
         if ($accion === 'notas') {
             $db->prepare('UPDATE solicitudes SET notas = ?, actualizado = ? WHERE id = ?')->execute([mb_substr($_POST['notas'] ?? '', 0, 5000), date('c'), $id]);
             volver('id=' . $id . '&guardado=1');
@@ -123,6 +143,10 @@ else {
         if (!$sol) volver();
         $vista = 'detalle';
         if (!empty($_GET['guardado'])) $aviso = 'Notas guardadas';
+        $hilo = nv_hilo($id);
+        $c = $db->prepare('SELECT id FROM usuarios WHERE email = ?');
+        $c->execute([$sol['email']]);
+        $cuentaId = (int)$c->fetchColumn();
     } else {
         $vista = 'lista';
         $filtro = $_GET['f'] ?? 'activas';
@@ -173,7 +197,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=13">
+<link rel="stylesheet" href="panel.css?v=14">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -297,8 +321,22 @@ return [
     </section>
 
     <section class="card">
-      <h2>Mensaje</h2>
-      <p class="msg"><?= nl2br(e($sol['mensaje'])) ?></p>
+      <h2>Conversación</h2>
+      <?php if (!empty($_GET['respondido'])): ?><p class="toast" role="status">Respuesta enviada<?= $cuentaId ? ': el cliente la verá en su área y por email' : ' por email' ?></p><?php endif; ?>
+      <ol class="hilo">
+        <li class="hilo__msg hilo__msg--cliente"><p class="hilo__meta"><?= e($sol['nombre']) ?> · <?= e(date('d/m/Y H:i', strtotime($sol['creado']))) ?></p><p><?= nl2br(e($sol['mensaje'])) ?></p></li>
+        <?php foreach ($hilo as $r): ?>
+          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'Tú (Novis)' : e($sol['nombre']) ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
+        <?php endforeach; ?>
+      </ol>
+      <form method="post" class="responder">
+        <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
+        <input type="hidden" name="id" value="<?= (int)$sol['id'] ?>">
+        <label for="respuesta">Responder<?= $cuentaId ? ' (lo verá en su área de cliente y le llegará por email)' : ' (le llegará por email)' ?></label>
+        <textarea id="respuesta" name="texto" rows="4" required placeholder="Hola, ya está cambiado. ¡Echa un vistazo!"></textarea>
+        <button class="btn" name="accion" value="responder">Enviar respuesta</button>
+      </form>
+      <?php if ($cuentaId): ?><p class="muted small">Tiene cuenta de cliente: <a href="cuentas.php?id=<?= $cuentaId ?>">ver cuenta y servicios</a></p><?php endif; ?>
     </section>
 
     <section class="card">

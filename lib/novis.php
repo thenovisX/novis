@@ -55,6 +55,8 @@ function novis_compactar(): void {
     // Es una optimización: si falla (p. ej. otra consulta en curso), el borrado ya está hecho igualmente
     try {
         $db = novis_db();
+        // Respuestas de mensajes que ya no existen (p. ej. borrados desde el panel)
+        try { $db->exec('DELETE FROM respuestas WHERE solicitud_id NOT IN (SELECT id FROM solicitudes)'); } catch (Throwable $e) {}
         $db->exec('PRAGMA wal_checkpoint(TRUNCATE)');
         $db->exec('VACUUM');
     } catch (Throwable $e) {

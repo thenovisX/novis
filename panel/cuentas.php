@@ -84,6 +84,9 @@ if ($vista === 'detalle') {
     $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
     $st->execute([$u['id']]);
     $pagos = $st->fetchAll();
+    $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email = ? COLLATE NOCASE ORDER BY id DESC');
+    $st->execute([$u['email']]);
+    $msgs = $st->fetchAll();
     $avisos = ['reset' => 'Email enviado: el cliente recibirá un enlace para crear su contraseña.',
                'pass' => 'Contraseña cambiada. Las sesiones abiertas de este cliente se han cerrado.',
                'verificado' => 'Email marcado como verificado.'];
@@ -120,7 +123,7 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=13">
+<link rel="stylesheet" href="panel.css?v=14">
 </head>
 <body class="v-cuentas">
 
@@ -198,6 +201,20 @@ if ($vista === 'detalle') {
           <?php foreach ($pagos as $p): ?>
             <li><a href="pagos.php?id=<?= (int)$p['id'] ?>"><span><?= e($p['concepto']) ?><small><?= e($p['codigo']) ?></small></span><b><?= e(nv_importe_txt($p)) ?></b>
               <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= ['pagado' => 'cerrada', 'pendiente' => 'en_curso', 'error' => 'error'][$cl] ?? 'descartada' ?>"><?= e($tx) ?></span></a></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </section>
+
+    <section class="card">
+      <h2>Mensajes</h2>
+      <?php if (!$msgs): ?>
+        <p class="muted">No te ha escrito todavía.</p>
+      <?php else: ?>
+        <ul class="mini">
+          <?php foreach ($msgs as $mm): ?>
+            <li><a href="./?id=<?= (int)$mm['id'] ?>"><span><?= e(preg_replace('/^Cliente · /', '', (string)($mm['plan'] ?: 'Formulario'))) ?><small><?= e(mb_strimwidth($mm['mensaje'], 0, 60, '…')) ?></small></span>
+              <span class="pill pill--<?= e($mm['estado']) ?>"><?= e(['nueva' => 'Nueva', 'en_curso' => 'En curso', 'cerrada' => 'Cerrada', 'descartada' => 'Descartada'][$mm['estado']] ?? $mm['estado']) ?></span></a></li>
           <?php endforeach; ?>
         </ul>
       <?php endif; ?>

@@ -256,20 +256,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ir($volver);
     }
 
+    // Contratar un servicio del catálogo: se crea (o se reutiliza) un pago pendiente y se va a su resumen
+    if ($accion === 'contratar' && $u) {
+        $k = (string)($_POST['servicio'] ?? '');
+        if (!isset(NV_CATALOGO[$k])) ir('a=servicios');
+        $c = NV_CATALOGO[$k];
+        $st = $db->prepare("SELECT * FROM pagos WHERE usuario_id = ? AND servicio = ? AND estado = 'pagado'");
+        $st->execute([$u['id'], $k]);
+        foreach ($st->fetchAll() as $x) {
+            if (nv_sub_viva($x)) { aviso('Ya tienes «' . $c['nombre'] . '» activo. Si lo necesitas para otra web, escríbenos.', 'info'); ir('a=servicios'); }
+        }
+        $st = $db->prepare("SELECT id FROM pagos WHERE usuario_id = ? AND servicio = ? AND estado = 'pendiente' ORDER BY id DESC LIMIT 1");
+        $st->execute([$u['id'], $k]);
+        $id = (int)$st->fetchColumn();
+        if (!$id) {
+            if (!novis_limite('contratar', 10, 3600)) { aviso('Demasiados intentos. Prueba de nuevo dentro de un rato.', 'err'); ir('a=servicios'); }
+            do { $codigo = nv_generar_codigo(); $ya = $db->prepare('SELECT 1 FROM pagos WHERE codigo = ?'); $ya->execute([$codigo]); } while ($ya->fetch());
+            $db->prepare('INSERT INTO pagos (codigo, concepto, descripcion, importe, email_cliente, creado, periodo, usuario_id, servicio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+               ->execute([$codigo, $c['nombre'], $c['desc'], nv_con_iva($c['base']), $u['email'], date('c'), $c['periodo'], $u['id'], $k]);
+            $id = (int)$db->lastInsertId();
+        }
+        ir('a=resumen&id=' . $id);
+    }
+
+    // Mensaje nuevo a Novis (aparece en el panel como una solicitud más)
+    if ($accion === 'mensaje' && $u) {
+        $viejo = $_POST;
+        $tema = (string)($_POST['tema'] ?? '');
+        $texto = trim((string)($_POST['texto'] ?? ''));
+        if (!isset(NV_TEMAS[$tema])) $errores['tema'] = 'Elige un tema.';
+        if (mb_strlen($texto) < 5) $errores['texto'] = 'Cuéntanos un poco más.';
+        elseif (mb_strlen($texto) > 5000) $errores['texto'] = 'Máximo 5000 caracteres.';
+        if (!$errores && !novis_limite('mensaje', 10, 3600)) $errores['texto'] = 'Has enviado muchos mensajes seguidos. Prueba de nuevo dentro de un rato.';
+        if (!$errores) {
+            $db->prepare("INSERT INTO solicitudes (creado, nombre, empresa, email, plan, mensaje, consentimiento) VALUES (?, ?, '', ?, ?, ?, ?)")
+               ->execute([date('c'), $u['usuario'], $u['email'], 'Cliente · ' . NV_TEMAS[$tema], $texto, date('c')]);
+            $mid = (int)$db->lastInsertId();
+            novis_mail('hola@thenovis.com', 'Mensaje de cliente: ' . NV_TEMAS[$tema] . ' · ' . $u['usuario'],
+                "{$u['usuario']} ({$u['email']}, {$u['telefono']}) te ha escrito desde su área de cliente.\n\nTema: " . NV_TEMAS[$tema] . "\n\n$texto\n\nResponder en el panel: " . nv_url('panel/?id=' . $mid),
+                null, $u['email']);
+            aviso('Mensaje enviado. Te responderemos aquí y por email, normalmente en menos de 24 horas laborables.');
+            ir('a=mensaje&id=' . $mid);
+        }
+        $a = 'mensajes';
+    }
+
+    // El cliente contesta en una conversación
+    if ($accion === 'responder' && $u) {
+        $st = $db->prepare('SELECT * FROM solicitudes WHERE id = ? AND email = ? COLLATE NOCASE');
+        $st->execute([(int)($_POST['id'] ?? 0), $u['email']]);
+        $m = $st->fetch();
+        if (!$m) ir('a=mensajes');
+        $texto = trim((string)($_POST['texto'] ?? ''));
+        if (mb_strlen($texto) < 2 || mb_strlen($texto) > 5000) { aviso('Escribe tu respuesta (máximo 5000 caracteres).', 'err'); ir('a=mensaje&id=' . $m['id']); }
+        if (!novis_limite('responder', 20, 3600)) { aviso('Has enviado muchos mensajes seguidos. Prueba de nuevo dentro de un rato.', 'err'); ir('a=mensaje&id=' . $m['id']); }
+        $db->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'cliente', ?, ?)")->execute([$m['id'], $texto, date('c')]);
+        // Si estaba cerrado se vuelve a abrir, para que Novis lo vea como pendiente
+        $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado IN ('cerrada', 'descartada') THEN 'nueva' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $m['id']]);
+        novis_mail('hola@thenovis.com', 'Respuesta de cliente: ' . preg_replace('/^Cliente · /', '', (string)$m['plan']) . ' · ' . $u['usuario'],
+            "{$u['usuario']} ha contestado:\n\n$texto\n\nVer la conversación: " . nv_url('panel/?id=' . $m['id']), null, $u['email']);
+        ir('a=mensaje&id=' . $m['id']);
+    }
+
+    // Descargar todos sus datos (RGPD: acceso y portabilidad)
+    if ($accion === 'descargar' && $u) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="mis-datos-novis.json"');
+        echo nv_datos_json($u['email']);
+        exit;
+    }
+
+    // Eliminar la cuenta y todos sus datos (RGPD: supresión)
     if ($accion === 'eliminar' && $u) {
         if (strcasecmp(campo('confirmar'), 'ELIMINAR') !== 0) {
             aviso('Para eliminar la cuenta escribe ELIMINAR en la casilla.', 'err');
             ir('a=cuenta');
         }
-        // Las suscripciones activas se cancelan para que no se siga cobrando
-        nv_sub_cancelar_de_usuario((int)$u['id']);
-        // Los pagos se conservan (obligación legal), pero dejan de estar ligados a la cuenta
-        $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$u['id']]);
-        $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$u['id']]);
-        $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$u['id']]);
+        nv_borrar_datos($u['email'], 'su área de cliente (' . nv_url('pagos/') . ')');
         $_SESSION = [];
         session_regenerate_id(true);
-        aviso('Tu cuenta se ha eliminado.');
+        aviso('Hemos eliminado tu cuenta y tus datos. Los emails que nos enviaste se borrarán de nuestro buzón en un plazo máximo de 30 días.');
         ir();
     }
 
@@ -287,7 +353,7 @@ if (!$u) {
 } elseif (!$u['usuario'] || !$u['telefono']) {
     $vista = 'perfil';
 } else {
-    $vista = in_array($a, ['resumen', 'exito', 'cuenta'], true) ? $a : 'inicio';
+    $vista = in_array($a, ['resumen', 'exito', 'cuenta', 'servicios', 'mensajes', 'mensaje', 'pagos'], true) ? $a : 'inicio';
     if ($vista === 'resumen' || $vista === 'exito') {
         $st = $db->prepare('SELECT * FROM pagos WHERE id = ? AND usuario_id = ?');
         $st->execute([(int)($_GET['id'] ?? 0), $u['id']]);
@@ -308,16 +374,39 @@ if (!$u) {
             }
         }
     }
-    if ($vista === 'inicio') {
-        $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
-        $st->execute([$u['id']]);
-        $mis = $st->fetchAll();
+    // Datos para las pestañas
+    $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
+    $st->execute([$u['id']]);
+    $mis = $st->fetchAll();
+    $subs = array_values(array_filter($mis, fn($x) => $x['estado'] === 'pagado' && nv_es_sub($x)));
+    $vivas = array_values(array_filter($subs, 'nv_sub_viva'));
+    $proyectos = array_values(array_filter($mis, fn($x) => $x['estado'] === 'pagado' && !nv_es_sub($x)));
+    $pendientes = array_values(array_filter($mis, fn($x) => $x['estado'] === 'pendiente' && (!$x['caduca'] || $x['caduca'] >= date('Y-m-d'))));
+    $contratados = array_flip(array_filter(array_column($vivas, 'servicio')));
+    $st = $db->prepare("SELECT s.*, (SELECT COUNT(*) FROM respuestas r WHERE r.solicitud_id = s.id) AS n,
+        (SELECT autor FROM respuestas r WHERE r.solicitud_id = s.id ORDER BY r.id DESC LIMIT 1) AS ultimo
+        FROM solicitudes s WHERE s.email = ? COLLATE NOCASE ORDER BY COALESCE(s.actualizado, s.creado) DESC");
+    $st->execute([$u['email']]);
+    $mensajes = $st->fetchAll();
+    $abiertos = count(array_filter($mensajes, fn($m) => in_array($m['estado'], ['nueva', 'en_curso'], true)));
+    if ($vista === 'mensaje') {
+        $m = null;
+        foreach ($mensajes as $x) if ((int)$x['id'] === (int)($_GET['id'] ?? 0)) $m = $x;
+        if (!$m) ir('a=mensajes');
+        $hilo = nv_hilo((int)$m['id']);
     }
+    // Pestaña marcada en el menú
+    $pestana = match ($vista) {
+        'resumen', 'exito', 'suscripcion' => (isset($p) && nv_es_sub($p)) ? 'servicios' : 'pagos',
+        'mensaje' => 'mensajes',
+        default => $vista,
+    };
 }
 
 $titulos = [
-    'entrar' => 'Iniciar sesión', 'registro' => 'Crear cuenta', 'olvide' => 'Recuperar contraseña', 'restablecer' => 'Contraseña nueva',
-    'pendiente' => 'Confirma tu email', 'perfil' => 'Completa tu perfil', 'inicio' => 'Pagos', 'resumen' => 'Resumen del pago',
+    'entrar' => 'Mi cuenta', 'registro' => 'Crear cuenta', 'olvide' => 'Recuperar contraseña', 'restablecer' => 'Contraseña nueva',
+    'pendiente' => 'Confirma tu email', 'perfil' => 'Completa tu perfil', 'inicio' => 'Mi cuenta', 'resumen' => 'Resumen del pago',
+    'servicios' => 'Tus servicios', 'mensajes' => 'Mensajes', 'mensaje' => 'Mensaje', 'pagos' => 'Pagos',
     'exito' => 'Pago', 'cuenta' => 'Tu cuenta', 'suscripcion' => 'Tu suscripción',
 ];
 $v = fn(string $k) => e($viejo[$k] ?? '');
@@ -338,8 +427,8 @@ $google = nv_google_ok();
   <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../css/styles.css?v=21">
-  <link rel="stylesheet" href="pagos.css?v=4">
+  <link rel="stylesheet" href="../css/styles.css?v=22">
+  <link rel="stylesheet" href="pagos.css?v=5">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -361,11 +450,18 @@ $google = nv_google_ok();
   <main id="contenido" tabindex="-1" class="acc acc--<?= e($vista) ?>">
     <?php if ($flash): ?><p class="acc-flash acc-flash--<?= e($flash[0]) ?>" role="status"><?= e($flash[1]) ?></p><?php endif; ?>
     <?php if (!empty($errores['general'])): ?><p class="acc-flash acc-flash--err" role="alert"><?= e($errores['general']) ?></p><?php endif; ?>
+    <?php if (isset($pestana)): ?>
+      <nav class="acc-tabs" aria-label="Tu cuenta">
+        <?php foreach (['inicio' => 'Inicio', 'servicios' => 'Servicios', 'mensajes' => 'Mensajes', 'pagos' => 'Pagos', 'cuenta' => 'Cuenta'] as $k => $t): ?>
+          <a href="<?= $k === 'inicio' ? './' : '?a=' . $k ?>"<?= $pestana === $k ? ' aria-current="page"' : '' ?>><?= $t ?><?php if ($k === 'pagos' && $pendientes): ?> <span class="acc-tabs__n" aria-label="(<?= count($pendientes) ?> pendientes)"><?= count($pendientes) ?></span><?php endif; ?></a>
+        <?php endforeach; ?>
+      </nav>
+    <?php endif; ?>
 
 <?php if ($vista === 'entrar'): ?>
     <div class="acc-card">
-      <h1>Pagos</h1>
-      <p class="acc-lead">Inicia sesión para pagar con el código que te hemos enviado.</p>
+      <h1>Mi cuenta</h1>
+      <p class="acc-lead">Entra para ver tus servicios, hacer pagos y escribirnos para cambios en tu web.</p>
       <?php if ($google): ?>
         <a class="btn btn--ghost acc-google" href="google.php">Continuar con Google</a>
         <p class="acc-or"><span>o con tu usuario</span></p>
@@ -385,7 +481,7 @@ $google = nv_google_ok();
 <?php elseif ($vista === 'registro'): ?>
     <div class="acc-card">
       <h1>Crear cuenta</h1>
-      <p class="acc-lead">Necesitas una cuenta para pagar de forma segura y ver tus pagos.</p>
+      <p class="acc-lead">Con tu cuenta puedes pagar de forma segura, contratar servicios y hablar con nosotros.</p>
       <?php if ($google): ?>
         <a class="btn btn--ghost acc-google" href="google.php">Continuar con Google</a>
         <p class="acc-or"><span>o con tu email</span></p>
@@ -467,8 +563,36 @@ $google = nv_google_ok();
 <?php elseif ($vista === 'inicio'): ?>
     <div class="acc-wide">
       <h1>Hola, <?= e($u['usuario']) ?></h1>
+      <div class="acc-tiles">
+        <a class="acc-tile" href="?a=servicios"><strong><?= count($vivas) ?></strong><span>servicio<?= count($vivas) === 1 ? '' : 's' ?> activo<?= count($vivas) === 1 ? '' : 's' ?></span></a>
+        <a class="acc-tile<?= $pendientes ? ' acc-tile--alerta' : '' ?>" href="?a=pagos"><strong><?= e(nv_euros(array_sum(array_map(fn($x) => (int)$x['importe'], $pendientes)))) ?></strong><span>pendiente de pago</span></a>
+        <a class="acc-tile" href="?a=mensajes"><strong><?= $abiertos ?></strong><span>mensaje<?= $abiertos === 1 ? '' : 's' ?> abierto<?= $abiertos === 1 ? '' : 's' ?></span></a>
+      </div>
+
+      <?php if ($pendientes): ?>
+        <section class="acc-list" aria-labelledby="t-pend">
+          <h2 id="t-pend">Pendiente de pago</h2>
+          <ul>
+            <?php foreach ($pendientes as $p): ?>
+              <li>
+                <a href="?a=resumen&amp;id=<?= (int)$p['id'] ?>">
+                  <span class="acc-list__main"><strong><?= e($p['concepto']) ?></strong><small><?= e($p['codigo']) ?><?= $p['pagado_en'] ? ' · ' . e(date('d/m/Y', strtotime($p['pagado_en']))) : '' ?></small></span>
+                  <span class="acc-list__amount"><?= e(nv_importe_txt($p)) ?></span>
+                  <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= e($cl) ?>"><?= e($tx) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <div class="acc-acciones">
+        <a class="acc-accion" href="?a=mensajes&amp;tema=cambio#nuevo"><span class="acc-accion__ico acc-accion__ico--msg" aria-hidden="true"></span><strong>Pedir un cambio en mi web</strong><small>Textos, fotos, precios… Te respondemos aquí.</small></a>
+        <a class="acc-accion" href="?a=servicios#contratar"><span class="acc-accion__ico acc-accion__ico--add" aria-hidden="true"></span><strong>Contratar un servicio</strong><small>Mantenimiento, alojamiento o una web nueva.</small></a>
+      </div>
+
       <section class="acc-card acc-card--code" aria-labelledby="t-codigo">
-        <h2 id="t-codigo">Introduce tu código de pago</h2>
+        <h2 id="t-codigo">¿Tienes un código de pago?</h2>
         <p class="acc-lead">Es el código que te hemos enviado, con el formato NOV-XXXX-XXXX.</p>
         <form method="post" class="acc-code" novalidate>
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
@@ -478,17 +602,142 @@ $google = nv_google_ok();
         </form>
         <?= err($errores, 'codigo') ?>
       </section>
+    </div>
 
+<?php elseif ($vista === 'servicios'): ?>
+    <div class="acc-wide">
+      <h1>Tus servicios</h1>
+      <section class="acc-list" aria-labelledby="t-serv">
+        <h2 id="t-serv">Contratados</h2>
+        <?php if (!$subs && !$proyectos): ?>
+          <p class="acc-empty">Todavía no tienes servicios contratados.</p>
+        <?php else: ?>
+          <ul>
+            <?php foreach (array_merge($subs, $proyectos) as $p): ?>
+              <li>
+                <a href="?a=resumen&amp;id=<?= (int)$p['id'] ?>">
+                  <span class="acc-list__main"><strong><?= e($p['concepto']) ?></strong>
+                    <small><?php if (nv_sub_viva($p) && $p['sub_fin']): ?><?= $p['sub_cancela'] ? 'Termina el ' : 'Se renueva el ' ?><?= e(date('d/m/Y', strtotime($p['sub_fin']))) ?><?php elseif (nv_sub_viva($p)): ?><?= e(NV_PERIODOS_TXT[$p['periodo']]) ?><?php elseif (nv_es_sub($p)): ?>Suscripción terminada<?php else: ?>Pagado el <?= e(date('d/m/Y', strtotime((string)$p['pagado_en']))) ?><?php endif; ?></small></span>
+                  <span class="acc-list__amount"><?= e(nv_importe_txt($p)) ?></span>
+                  <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= e($cl) ?>"><?= e($cl === 'pendiente' && nv_es_sub($p) ? 'Baja programada' : $tx) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </section>
+
+      <section id="contratar" aria-labelledby="t-contratar">
+        <h2 id="t-contratar" class="acc-h2">Contratar</h2>
+        <div class="acc-catalogo">
+          <?php foreach (NV_CATALOGO as $k => $c): $tiene = isset($contratados[$k]); ?>
+            <article class="acc-prod<?= $tiene ? ' is-tiene' : '' ?>">
+              <h3><?= e($c['nombre']) ?></h3>
+              <p class="acc-prod__precio"><strong><?= e(rtrim(rtrim(number_format($c['base'] / 100, 2, ',', '.'), '0'), ',')) ?> €</strong> + IVA / <?= e(NV_PERIODOS[$c['periodo']]) ?></p>
+              <p class="acc-prod__iva"><?= e(nv_euros(nv_con_iva($c['base']))) ?> con IVA</p>
+              <p class="acc-prod__desc"><?= e($c['desc']) ?></p>
+              <?php if ($tiene): ?>
+                <p class="acc-prod__ya">Ya lo tienes activo</p>
+              <?php else: ?>
+                <form method="post"><input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><input type="hidden" name="servicio" value="<?= e($k) ?>">
+                  <button class="btn" name="accion" value="contratar">Contratar</button></form>
+              <?php endif; ?>
+            </article>
+          <?php endforeach; ?>
+          <article class="acc-prod acc-prod--medida">
+            <h3>Una web nueva o algo a medida</h3>
+            <p class="acc-prod__desc">Otra web, una tienda online, más secciones, un rediseño… Cuéntanos qué necesitas y te enviamos un presupuesto cerrado.</p>
+            <a class="btn btn--ghost" href="?a=mensajes&amp;tema=nuevo#nuevo">Pedir presupuesto</a>
+          </article>
+        </div>
+        <p class="acc-secure">Sin permanencia: puedes darte de baja de cualquier suscripción cuando quieras desde esta página.</p>
+      </section>
+    </div>
+
+<?php elseif ($vista === 'mensajes'): ?>
+    <div class="acc-wide">
+      <h1>Mensajes</h1>
+      <section class="acc-card acc-card--code" id="nuevo" aria-labelledby="t-nuevo">
+        <h2 id="t-nuevo">Escríbenos</h2>
+        <p class="acc-lead">Para cambios en tu web, contratar algo nuevo o cualquier duda. Te respondemos aquí y por email, normalmente en menos de 24 horas laborables.</p>
+        <form method="post" class="acc-form" novalidate>
+          <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
+          <div class="f"><label for="tema">Tema</label>
+            <select id="tema" name="tema"<?= inv($errores, 'tema') ?>>
+              <?php $temaSel = $viejo['tema'] ?? ($_GET['tema'] ?? 'cambio'); foreach (NV_TEMAS as $k => $t): ?>
+                <option value="<?= e($k) ?>"<?= $temaSel === $k ? ' selected' : '' ?>><?= e($t) ?></option>
+              <?php endforeach; ?>
+            </select><?= err($errores, 'tema') ?></div>
+          <div class="f"><label for="texto">Mensaje</label>
+            <textarea id="texto" name="texto" rows="5" required maxlength="5000" placeholder="Por ejemplo: cambiar el horario de la página de contacto a L-V de 9 a 14"<?= inv($errores, 'texto') ?>><?= $v('texto') ?></textarea><?= err($errores, 'texto') ?></div>
+          <button class="btn" name="accion" value="mensaje">Enviar mensaje</button>
+        </form>
+      </section>
+
+      <section class="acc-list" aria-labelledby="t-hist">
+        <h2 id="t-hist">Tus conversaciones</h2>
+        <?php if (!$mensajes): ?>
+          <p class="acc-empty">Aquí aparecerán los mensajes que nos envíes.</p>
+        <?php else: ?>
+          <ul>
+            <?php foreach ($mensajes as $m): ?>
+              <li>
+                <a href="?a=mensaje&amp;id=<?= (int)$m['id'] ?>">
+                  <span class="acc-list__main"><strong><?= e(preg_replace('/^Cliente · /', '', (string)($m['plan'] ?: 'Formulario de contacto'))) ?></strong>
+                    <small><?= e(mb_strimwidth($m['mensaje'], 0, 80, '…')) ?></small></span>
+                  <?php if ($m['ultimo'] === 'novis'): ?><span class="pill pill--nuevo">Respuesta de Novis</span><?php endif; ?>
+                  <span class="pill pill--msg-<?= e($m['estado']) ?>"><?= e(NV_ESTADO_MSG[$m['estado']] ?? $m['estado']) ?></span>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </section>
+    </div>
+
+<?php elseif ($vista === 'mensaje'): ?>
+    <div class="acc-card acc-card--wide">
+      <p class="acc-back"><a href="?a=mensajes">‹ Mensajes</a></p>
+      <span class="pill pill--msg-<?= e($m['estado']) ?>"><?= e(NV_ESTADO_MSG[$m['estado']] ?? $m['estado']) ?></span>
+      <h1 class="acc-subtitle"><?= e(preg_replace('/^Cliente · /', '', (string)($m['plan'] ?: 'Formulario de contacto'))) ?></h1>
+      <ol class="hilo">
+        <li class="hilo__msg hilo__msg--cliente"><p class="hilo__meta">Tú · <?= e(date('d/m/Y H:i', strtotime($m['creado']))) ?></p><p><?= nl2br(e($m['mensaje'])) ?></p></li>
+        <?php foreach ($hilo as $r): ?>
+          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'Novis' : 'Tú' ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
+        <?php endforeach; ?>
+      </ol>
+      <?php if (!$hilo): ?><p class="acc-secure datos-nota">Hemos recibido tu mensaje. Te responderemos aquí y te avisaremos por email.</p><?php endif; ?>
+      <form method="post" class="acc-form">
+        <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
+        <div class="f"><label for="resp">Añadir un mensaje</label><textarea id="resp" name="texto" rows="3" required maxlength="5000"></textarea></div>
+        <button class="btn" name="accion" value="responder">Enviar</button>
+      </form>
+    </div>
+
+<?php elseif ($vista === 'pagos'): ?>
+    <div class="acc-wide">
+      <h1>Pagos</h1>
+      <section class="acc-card acc-card--code" aria-labelledby="t-codigo">
+        <h2 id="t-codigo">¿Tienes un código de pago?</h2>
+        <p class="acc-lead">Es el código que te hemos enviado, con el formato NOV-XXXX-XXXX.</p>
+        <form method="post" class="acc-code" novalidate>
+          <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
+          <label for="codigo" class="sr">Código de pago</label>
+          <input id="codigo" name="codigo" placeholder="NOV-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" required value="<?= $v('codigo') ?>"<?= inv($errores, 'codigo') ?>>
+          <button class="btn" name="accion" value="codigo">Continuar</button>
+        </form>
+        <?= err($errores, 'codigo') ?>
+      </section>
       <section class="acc-list" aria-labelledby="t-mis">
-        <h2 id="t-mis">Tus pagos</h2>
+        <h2 id="t-mis">Historial</h2>
         <?php if (!$mis): ?>
-          <p class="acc-empty">Aquí aparecerán los pagos que hagas con tu código.</p>
+          <p class="acc-empty">Aquí aparecerán tus pagos.</p>
         <?php else: ?>
           <ul>
             <?php foreach ($mis as $p): ?>
               <li>
                 <a href="?a=resumen&amp;id=<?= (int)$p['id'] ?>">
-                  <span class="acc-list__main"><strong><?= e($p['concepto']) ?></strong><small><?= e($p['codigo']) ?></small></span>
+                  <span class="acc-list__main"><strong><?= e($p['concepto']) ?></strong><small><?= e($p['codigo']) ?><?= $p['pagado_en'] ? ' · ' . e(date('d/m/Y', strtotime($p['pagado_en']))) : '' ?></small></span>
                   <span class="acc-list__amount"><?= e(nv_importe_txt($p)) ?></span>
                   <?php [$cl, $tx] = nv_estado($p); ?><span class="pill pill--<?= e($cl) ?>"><?= e($tx) ?></span>
                 </a>
@@ -497,12 +746,12 @@ $google = nv_google_ok();
           </ul>
         <?php endif; ?>
       </section>
-      <p class="acc-alt"><a href="?a=cuenta">Datos de tu cuenta</a></p>
+      <p class="acc-secure">Los pagos se hacen con Stripe. Novis nunca ve ni guarda los datos de tu tarjeta. Si necesitas una factura, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.</p>
     </div>
 
 <?php elseif ($vista === 'resumen'): ?>
     <div class="acc-card acc-card--wide">
-      <p class="acc-back"><a href="./">‹ Tus pagos</a></p>
+      <p class="acc-back"><a href="?a=<?= e($pestana) ?>">‹ <?= $pestana === 'servicios' ? 'Tus servicios' : 'Pagos' ?></a></p>
       <?php if (!empty($_GET['cancelado'])): ?><p class="acc-flash acc-flash--info" role="status">Has cancelado el pago. Puedes intentarlo de nuevo cuando quieras.</p><?php endif; ?>
       <h1><?= e($p['concepto']) ?></h1>
       <?php if ($p['descripcion']): ?><p class="acc-desc"><?= nl2br(e($p['descripcion'])) ?></p><?php endif; ?>
@@ -549,7 +798,7 @@ $google = nv_google_ok();
         <p class="acc-lead">Stripe nos está enviando la confirmación. Puede tardar unos segundos; recibirás un email en cuanto esté listo.</p>
         <p><a class="btn btn--ghost" href="?a=exito&amp;id=<?= (int)$p['id'] ?>">Actualizar</a></p>
       <?php endif; ?>
-      <p class="acc-alt"><a href="./">Ver tus pagos</a></p>
+      <p class="acc-alt"><a href="?a=<?= e($pestana) ?>"><?= $pestana === 'servicios' ? 'Ver tus servicios' : 'Ver tus pagos' ?></a></p>
     </div>
 
 <?php elseif ($vista === 'suscripcion'):
@@ -557,7 +806,7 @@ $google = nv_google_ok();
     $fin = $p['sub_fin'] ? date('d/m/Y', strtotime($p['sub_fin'])) : '';
     $viva = nv_sub_viva($p); ?>
     <div class="acc-card acc-card--wide">
-      <p class="acc-back"><a href="./">‹ Tus pagos</a></p>
+      <p class="acc-back"><a href="?a=servicios">‹ Tus servicios</a></p>
       <span class="pill pill--<?= e($cl) ?>"><?= e($tx) ?></span>
       <h1 class="acc-subtitle"><?= e($p['concepto']) ?></h1>
       <?php if ($p['descripcion']): ?><p class="acc-desc"><?= nl2br(e($p['descripcion'])) ?></p><?php endif; ?>
@@ -602,22 +851,30 @@ $google = nv_google_ok();
 
 <?php elseif ($vista === 'cuenta'): ?>
     <div class="acc-card acc-card--wide">
-      <p class="acc-back"><a href="./">‹ Tus pagos</a></p>
       <h1>Tu cuenta</h1>
       <dl class="acc-sum">
         <div><dt>Usuario</dt><dd><?= e($u['usuario']) ?></dd></div>
         <div><dt>Email</dt><dd><?= e($u['email']) ?></dd></div>
         <div><dt>Teléfono</dt><dd><?= e($u['telefono']) ?></dd></div>
         <div><dt>Acceso con Google</dt><dd><?= $u['google_sub'] ? 'Vinculado' : 'No' ?></dd></div>
+        <div><dt>Cliente desde</dt><dd><?= e(date('d/m/Y', strtotime($u['creado']))) ?></dd></div>
       </dl>
-      <p class="acc-desc">Para cambiar tus datos, escríbenos a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a>. También puedes <a href="/datos/">descargar o eliminar todos tus datos</a>, incluidos los mensajes que nos enviaste por el formulario.</p>
+      <p class="acc-desc">¿Algún dato ha cambiado? <a href="?a=mensajes&amp;tema=otro#nuevo">Escríbenos</a> y lo actualizamos.</p>
+
+      <h2 class="datos-h">Tus datos</h2>
+      <p class="acc-desc">Descarga una copia de todo lo que guardamos sobre ti: cuenta, pagos, servicios y mensajes.</p>
+      <form method="post" class="datos-actions">
+        <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
+        <button class="btn btn--ghost" name="accion" value="descargar">Descargar mis datos</button>
+      </form>
+
       <details class="acc-danger">
-        <summary>Eliminar mi cuenta</summary>
-        <p>Se borrarán tus datos de acceso<?php $vs = $db->prepare("SELECT COUNT(*) FROM pagos WHERE usuario_id = ? AND stripe_sub IS NOT NULL AND COALESCE(sub_estado, '') NOT IN ('canceled', 'incomplete_expired')"); $vs->execute([$u['id']]); if ($vs->fetchColumn()): ?> y <strong>tus suscripciones se cancelarán en el momento</strong><?php endif; ?>. Los pagos realizados se conservan el tiempo que exige la ley, desvinculados de la cuenta.</p>
+        <summary>Eliminar mi cuenta y mis datos</summary>
+        <p>Se borrarán tu cuenta y tus mensajes<?php if ($vivas): ?>, y <strong>tus suscripciones se cancelarán en el momento</strong><?php endif; ?>. Los pagos realizados se conservan el tiempo que exige la ley (6 años), sin vincularlos a ti. No se puede deshacer.</p>
         <form method="post" class="acc-form">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <div class="f"><label for="confirmar">Escribe ELIMINAR para confirmar</label><input id="confirmar" name="confirmar" autocomplete="off" required></div>
-          <button class="btn btn--danger" name="accion" value="eliminar">Eliminar mi cuenta</button>
+          <button class="btn btn--danger" name="accion" value="eliminar">Eliminar mi cuenta y mis datos</button>
         </form>
       </details>
     </div>

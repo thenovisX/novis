@@ -673,7 +673,8 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 }
 @keyframes menuLang { from { opacity: 0; transform: translateY(-4px); } }
 @media (max-width: 760px) {
-  .lang { margin-left: auto; margin-right: 6px; }
+  .acct { margin-left: auto; }
+  .lang { margin-left: 8px; margin-right: 6px; }
 }
 
 /* Banderas circulares */
@@ -770,3 +771,15 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .anim-on .extra:not(.is-visto) li { opacity: 1; transform: none; }
   .anim-on .extra:not(.is-visto) li::before { transform: none; }
 }
+
+/* Icono de cuenta en la cabecera */
+.acct { position: relative; display: grid; place-items: center; width: 38px; height: 38px; margin-left: 18px; border-radius: 50%; color: var(--ink); background: #fff; box-shadow: 0 0 0 1px var(--line); transition: box-shadow .2s, transform .2s var(--ease); flex: none; }
+.acct:hover { box-shadow: 0 0 0 1px var(--blue), 0 6px 16px -8px rgba(29,99,237,.5); transform: translateY(-1px); }
+.acct:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.acct svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.acct__ini { display: none; }
+.acct.is-in { background: var(--ink); color: #fff; box-shadow: none; }
+.acct.is-in svg { display: none; }
+.acct.is-in .acct__ini { display: block; font-size: 16px; font-weight: 650; }
+.acct.is-in::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 2px #fff; }
+.nav.menu-open .acct { visibility: hidden; }

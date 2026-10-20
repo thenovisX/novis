@@ -74,6 +74,15 @@ function nv_db(): PDO {
     foreach (['periodo TEXT', 'stripe_sub TEXT', 'stripe_customer TEXT', 'sub_estado TEXT', 'sub_fin TEXT', 'sub_cancela INTEGER NOT NULL DEFAULT 0'] as $col) {
         if (!in_array(strtok($col, ' '), $cols, true)) $db->exec('ALTER TABLE pagos ADD COLUMN ' . $col);
     }
+    if (!in_array('servicio', $cols, true)) $db->exec('ALTER TABLE pagos ADD COLUMN servicio TEXT');
+    // Conversación de cada mensaje (solicitud) entre el cliente y Novis
+    $db->exec('CREATE TABLE IF NOT EXISTS respuestas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        solicitud_id INTEGER NOT NULL,
+        autor TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        fecha TEXT NOT NULL
+    )');
     // Cada renovación cobrada de una suscripción (la primera cuota es el propio pago)
     $db->exec('CREATE TABLE IF NOT EXISTS renovaciones (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,6 +111,89 @@ function nv_normalizar_codigo(string $c): string {
 }
 function nv_euros(int $centimos): string {
     return number_format($centimos / 100, 2, ',', '.') . ' €';
+}
+
+/* ================= Catálogo (lo que el cliente puede contratar él solo) ================= */
+
+const NV_IVA = 0.21;
+/** Precios sin IVA, en céntimos. El cliente paga el precio con IVA. */
+const NV_CATALOGO = [
+    'mantenimiento' => ['nombre' => 'Mantenimiento web', 'periodo' => 'month', 'base' => 2900,
+        'desc' => 'Cambios pequeños (textos, fotos, precios u horarios; hasta 2 h al mes), actualizaciones y revisiones de seguridad. Respuesta en 48 h laborables. Sin permanencia.'],
+    'alojamiento' => ['nombre' => 'Alojamiento y dominio (1 año)', 'periodo' => 'year', 'base' => 12000,
+        'desc' => 'Tu web publicada con su dominio, certificado de seguridad (https) y copias de seguridad. Se renueva cada año.'],
+    'alojamiento3' => ['nombre' => 'Alojamiento y dominio (3 años)', 'periodo' => 'year3', 'base' => 28800,
+        'desc' => 'Lo mismo que el anual con un 20 % de descuento (96 € al año). Se renueva cada 3 años.'],
+];
+function nv_con_iva(int $base): int { return (int)round($base * (1 + NV_IVA)); }
+
+/* ================= Mensajes del cliente ================= */
+
+const NV_TEMAS = ['cambio' => 'Cambio en mi web', 'nuevo' => 'Contratar algo nuevo', 'pagos' => 'Facturas o pagos', 'otro' => 'Otra consulta'];
+const NV_ESTADO_MSG = ['nueva' => 'Recibido', 'en_curso' => 'En curso', 'cerrada' => 'Resuelto', 'descartada' => 'Cerrado'];
+
+function nv_hilo(int $solicitudId): array {
+    $st = nv_db()->prepare('SELECT * FROM respuestas WHERE solicitud_id = ? ORDER BY id');
+    $st->execute([$solicitudId]);
+    return $st->fetchAll();
+}
+
+/** Todos los datos que Novis guarda de un email (RGPD: acceso y portabilidad). */
+function nv_datos_de(string $email): array {
+    $db = nv_db();
+    $st = $db->prepare('SELECT id, creado, nombre, empresa, email, plan, mensaje, estado, consentimiento FROM solicitudes WHERE email = ? COLLATE NOCASE ORDER BY id');
+    $st->execute([$email]);
+    $sol = $st->fetchAll();
+    foreach ($sol as &$x) {
+        $x['conversacion'] = array_map(fn($r) => ['autor' => $r['autor'] === 'novis' ? 'Novis' : 'Tú', 'texto' => $r['texto'], 'fecha' => $r['fecha']], nv_hilo((int)$x['id']));
+        unset($x['id']);
+    }
+    unset($x);
+    $st = $db->prepare('SELECT id, email, usuario, telefono, email_verificado, creado, ultimo_acceso, (google_sub IS NOT NULL) AS google FROM usuarios WHERE email = ?');
+    $st->execute([$email]);
+    $cuenta = $st->fetch() ?: null;
+    $campos = 'codigo, concepto, importe, periodo, estado, pagado_en, sub_estado, sub_fin, sub_cancela';
+    $pagos = [];
+    if ($cuenta) {
+        $st = $db->prepare("SELECT $campos FROM pagos WHERE usuario_id = ? ORDER BY id");
+        $st->execute([$cuenta['id']]);
+        $pagos = $st->fetchAll();
+    }
+    $st = $db->prepare("SELECT $campos FROM pagos WHERE pagador_email = ? COLLATE NOCASE AND usuario_id IS NULL");
+    $st->execute([$email]);
+    $pagos = array_merge($pagos, $st->fetchAll());
+    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'pagos' => $pagos];
+}
+
+/** Archivo JSON con los datos de un email, listo para descargar. */
+function nv_datos_json(string $email): string {
+    $d = nv_datos_de($email);
+    if ($d['cuenta']) unset($d['cuenta']['id']);
+    $d = ['generado' => date('c'), 'responsable' => 'Novis (thenovis.com)', 'email' => $email] + $d;
+    return json_encode($d, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+/** Borra todos los datos de un email (RGPD: supresión). Los pagos se conservan desvinculados (obligación legal). */
+function nv_borrar_datos(string $email, string $desde): array {
+    $db = nv_db();
+    $d = nv_datos_de($email);
+    $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email = ?')->execute([$email]);
+    $db->prepare('DELETE FROM respuestas WHERE solicitud_id IN (SELECT id FROM solicitudes WHERE email = ? COLLATE NOCASE)')->execute([$email]);
+    $db->prepare('DELETE FROM solicitudes WHERE email = ? COLLATE NOCASE')->execute([$email]);
+    if ($d['cuenta']) {
+        $id = (int)$d['cuenta']['id'];
+        nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando
+        $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
+    }
+    novis_compactar();
+    // Aviso a Novis para borrar también los emails del buzón
+    novis_mail('hola@thenovis.com', 'Solicitud de supresión de datos completada',
+        "Una persona ha eliminado sus datos desde $desde.\n\nEmail: $email\nMensajes borrados: " . count($d['solicitudes'])
+        . "\nCuenta borrada: " . ($d['cuenta'] ? 'sí' : 'no') . "\nPagos conservados por obligación legal: " . count($d['pagos'])
+        . "\n\nPendiente (máximo 30 días): borra del buzón los emails de esta persona.");
+    return $d;
 }
 
 /* ================= Suscripciones ================= */
