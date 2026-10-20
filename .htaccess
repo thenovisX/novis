@@ -39,5 +39,16 @@ RedirectMatch 404 /(README\.md|gemini-config\.example\.php)$
   ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 
+# Las páginas siempre se comprueban con el servidor (así los cambios se ven al momento).
+# Los estilos, scripts e imágenes llevan número de versión, por eso esos sí se guardan en caché.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|php)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
 AddType font/woff2 .woff2
 AddType application/manifest+json .webmanifest
