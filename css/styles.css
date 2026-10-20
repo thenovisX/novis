@@ -614,3 +614,35 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .plans__dots button::after { content: ""; position: absolute; inset: -10px; } /* zona táctil más grande */
   .plans__dots button[aria-current="true"] { width: 26px; background: var(--ink); }
 }
+
+/* ===== Página 404 ===== */
+.e404 {
+  max-width: var(--max); margin: 0 auto; min-height: calc(100vh - 150px);
+  padding: 140px var(--gutter) 96px;
+  display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 88px); align-items: center;
+}
+.e404__code { font-size: 16px; font-weight: 550; color: var(--muted); margin-bottom: 14px; }
+.e404 h1 { font-size: clamp(40px, 5.6vw, 72px); letter-spacing: -0.05em; line-height: 1.02; color: var(--ink); }
+.e404__lead { margin-top: 20px; font-size: 19px; max-width: 30em; }
+.e404__cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+.e404__links { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 16px; }
+.e404__links a { color: var(--blue); }
+.e404__links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.e404__art .browser { transform: rotate(-2deg); }
+.e404__screen { aspect-ratio: 4 / 3; display: grid; place-content: center; justify-items: center; gap: 14px; background: var(--mist); }
+.e404__big {
+  display: flex; align-items: center; gap: .06em; font-size: clamp(72px, 10vw, 128px); font-weight: 700; letter-spacing: -0.05em; color: var(--ink); line-height: 1;
+}
+/* El "0" es el punto coral del logo, rodando */
+.e404__zero { width: .62em; height: .62em; border-radius: 50%; background: var(--coral); display: inline-block; animation: rodar 2.4s var(--ease) infinite; }
+@keyframes rodar { 0%, 100% { transform: translateX(0) scale(1); } 45% { transform: translateX(.06em) scale(.86, 1.08); } 55% { transform: translateX(-.04em) scale(1.06, .94); } }
+.e404__line { width: 180px; height: 10px; border-radius: 6px; background: #dfe4ec; }
+.e404__line--short { width: 110px; }
+
+@media (max-width: 860px) {
+  .e404 { grid-template-columns: 1fr; padding-top: 112px; }
+  .e404__art { order: -1; max-width: 360px; }
+  .e404__screen { aspect-ratio: 16 / 9; }
+  .e404__big { font-size: 72px; }
+}

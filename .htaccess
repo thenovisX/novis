@@ -2,6 +2,9 @@
 Options -Indexes
 ServerSignature Off
 
+# Página de error propia
+ErrorDocument 404 /404.html
+
 # Forzar HTTPS
 RewriteEngine On
 RewriteCond %{HTTPS} off
