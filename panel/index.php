@@ -19,6 +19,7 @@ session_start();
 
 $config = novis_config();
 $clave  = (string)($config['panel_password'] ?? '');
+$hashClave = (string)($config['panel_password_hash'] ?? '');   // recomendado: solo el hash, nunca la contraseña
 $usuario = (string)($config['panel_user'] ?? '');
 $error  = '';
 $aviso  = '';
@@ -38,7 +39,7 @@ function volver(string $q = ''): void {
 }
 
 // ---------- Sin contraseña configurada ----------
-if (strlen($clave) < 8 || $usuario === '') {
+if (($hashClave === '' && strlen($clave) < 8) || $usuario === '') {
     $vista = 'sin_config';
 }
 // ---------- Login ----------
@@ -54,7 +55,9 @@ elseif (empty($_SESSION['ok'])) {
             $error = 'Demasiados intentos. Espera 15 minutos.';
         } elseif (
             hash_equals(mb_strtolower($usuario), mb_strtolower(trim((string)($_POST['usuario'] ?? '')))) &
-            hash_equals($clave, (string)($_POST['password'] ?? ''))
+            // Con hash configurado se usa siempre password_verify; la contraseña en texto plano solo sirve si no hay hash
+            ($hashClave !== '' ? password_verify((string)($_POST['password'] ?? ''), $hashClave)
+                               : hash_equals($clave, (string)($_POST['password'] ?? '')))
         ) {
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
@@ -197,7 +200,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=14">
+<link rel="stylesheet" href="panel.css?v=15">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -206,7 +209,7 @@ function hace(string $fecha): string {
     <div class="box">
       <span class="logo"></span>
       <h1>Panel sin configurar</h1>
-      <p class="muted">Añade un usuario y una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>:</p>
+      <p class="muted">Añade un usuario y una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>. Después, desde el panel, podrás sustituirla por su versión cifrada:</p>
       <pre tabindex="0">&lt;?php
 return [
   'key' =&gt; 'TU_CLAVE_DE_GEMINI',
@@ -296,7 +299,7 @@ return [
         <button class="link link--red">Eliminar todas las <?= $filtro === 'cerrada' ? 'cerradas' : 'descartadas' ?> (<?= $cuenta[$filtro] ?>)</button>
       </form>
     <?php endif; ?>
-    <p class="space">Espacio usado: <?= e($espacio) ?> · las solicitudes se borran solas a los 2 años</p>
+    <p class="space">Espacio usado: <?= e($espacio) ?> · las solicitudes se borran solas a los 2 años · <a href="seguridad.php">Seguridad</a></p>
   </main>
 
 <?php elseif ($vista === 'detalle'): ?>

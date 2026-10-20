@@ -221,3 +221,6 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .responder textarea { font: inherit; font-size: 16px; padding: 12px 14px; border: 1px solid #d2d2d7; border-radius: 12px; width: 100%; resize: vertical; }
 .responder textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.15); }
 .responder .btn { justify-self: start; }
+
+.pasos { margin: 10px 0 12px 20px; padding: 0; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; }
+code { font-size: .92em; background: #f0f0f3; padding: 1px 5px; border-radius: 6px; }

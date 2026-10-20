@@ -42,7 +42,9 @@ usando `smtp_user` y `smtp_password` de la configuración privada.
 return [
   'key' => 'CLAVE_GEMINI',          // con facturación activada (obligatorio para usuarios de la UE)
   'panel_user' => 'USUARIO',
-  'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres
+  'panel_password' => 'CONTRASEÑA', // mínimo 8 caracteres (provisional)
+  // Recomendado: en el panel, abajo del todo → «Seguridad», genera esta línea y sustituye la anterior:
+  // 'panel_password_hash' => '$2y$10$...',
   'smtp_user' => 'hola@thenovis.com',
   'smtp_password' => 'CONTRASEÑA_DEL_BUZÓN', // la del email en Hostinger
   // Pagos con Stripe
