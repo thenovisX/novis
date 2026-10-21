@@ -5,40 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Página no encontrada — Novis</title>
+  <meta name="description" content="Esta página no existe. Vuelve al inicio de Novis, diseño y desarrollo web para empresas en Vigo.">
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/css/styles.css?v=22">
+  <link rel="stylesheet" href="/css/styles.css?v=23">
 </head>
 <body class="e404-page">
-  <a href="#contenido" class="skip">Saltar al contenido</a>
+  <a href="#contenido" class="skip" data-gl="Saltar ao contido">Saltar al contenido</a>
   <header class="nav is-scrolled">
     <div class="nav__inner">
-      <a href="/" class="logo" aria-label="Novis, inicio"><span class="logo__mark"></span>novis</a>
-      <a href="/#contacto" class="btn btn--small">Pedir presupuesto</a>
+      <a href="/" class="logo" aria-label="Novis, inicio" data-gl-href="/gl/"><span class="logo__mark"></span>novis</a>
+      <a href="/#contacto" class="btn btn--small" data-gl="Pedir orzamento" data-gl-href="/gl/#contacto">Pedir presupuesto</a>
     </div>
   </header>
 
   <main id="contenido" tabindex="-1" class="e404">
     <div class="e404__text">
       <p class="e404__code">Error 404</p>
-      <h1>Esta página no existe.</h1>
-      <p class="e404__lead">Puede que el enlace esté mal escrito o que la página se haya movido. Lo que buscabas seguramente está en la página de inicio.</p>
+      <h1 data-gl="Esta páxina non existe.">Esta página no existe.</h1>
+      <p class="e404__lead" data-gl="Pode que a ligazón estea mal escrita ou que a páxina se movese. O que buscabas seguramente está na páxina de inicio.">Puede que el enlace esté mal escrito o que la página se haya movido. Lo que buscabas seguramente está en la página de inicio.</p>
+      <p class="e404__sug" id="e404-sug" hidden><span data-gl="Buscabas isto?">¿Buscabas esto?</span> <a href="/"></a></p>
       <div class="e404__cta">
-        <a href="/" class="btn">Ir al inicio</a>
-        <a href="/#contacto" class="btn btn--ghost">Escríbenos</a>
+        <a href="/" class="btn" data-gl="Ir ao inicio" data-gl-href="/gl/">Ir al inicio</a>
+        <a href="/#contacto" class="btn btn--ghost" data-gl="Escríbenos" data-gl-href="/gl/#contacto">Escríbenos</a>
       </div>
       <nav class="e404__links" aria-label="Páginas de Novis">
-        <a href="/#trabajos">Ejemplos de webs</a>
-        <a href="/#servicios">Servicios</a>
-        <a href="/#planes">Precios</a>
-        <a href="/#faq">Preguntas frecuentes</a>
+        <a href="/#trabajos" data-gl="Exemplos de webs" data-gl-href="/gl/#trabajos">Ejemplos de webs</a>
+        <a href="/#servicios" data-gl="Servizos" data-gl-href="/gl/#servicios">Servicios</a>
+        <a href="/#planes" data-gl="Prezos" data-gl-href="/gl/#planes">Precios</a>
+        <a href="/#faq" data-gl="Preguntas frecuentes" data-gl-href="/gl/#faq">Preguntas frecuentes</a>
+        <a href="/pagos/" data-gl="Área de clientes">Área de clientes</a>
       </nav>
     </div>
 
     <div class="e404__art" aria-hidden="true">
       <div class="browser">
-        <div class="browser__bar"><span class="browser__dots"><i></i><i></i><i></i></span><span class="browser__url">thenovis.com/…</span></div>
+        <div class="browser__bar"><span class="browser__dots"><i></i><i></i><i></i></span><span class="browser__url" id="e404-url">thenovis.com/…</span></div>
         <div class="e404__screen">
           <span class="e404__big">4<span class="e404__zero"></span>4</span>
           <span class="e404__line"></span>
@@ -50,14 +53,15 @@
 
   <footer class="footer">
     <div class="footer__inner">
-      <div class="footer__brand"><a href="/" class="logo"><span class="logo__mark"></span>novis</a><p>Diseño y desarrollo web en Vigo.</p></div>
+      <div class="footer__brand"><a href="/" class="logo"><span class="logo__mark"></span>novis</a><p data-gl="Deseño e desenvolvemento web en Vigo.">Diseño y desarrollo web en Vigo.</p></div>
       <nav aria-label="Información legal">
         <a href="/aviso-legal.html">Aviso legal</a>
-        <a href="/privacidad.html">Privacidad</a>
+        <a href="/privacidad.html" data-gl="Privacidade">Privacidad</a>
         <a href="/cookies.html">Cookies</a>
       </nav>
       <p class="footer__copy">© 2026 Novis</p>
     </div>
   </footer>
+  <script src="/js/404.js?v=1" defer></script>
 </body>
 </html>

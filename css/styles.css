@@ -637,6 +637,13 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 /* El "0" es el punto coral del logo, rodando */
 .e404__zero { width: .62em; height: .62em; border-radius: 50%; background: var(--coral); display: inline-block; animation: rodar 2.4s var(--ease) infinite; }
 @keyframes rodar { 0%, 100% { transform: translateX(0) scale(1); } 45% { transform: translateX(.06em) scale(.86, 1.08); } 55% { transform: translateX(-.04em) scale(1.06, .94); } }
+.e404__sug { margin-top: 18px; font-size: 17px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.e404__sug[hidden] { display: none; }
+.e404__sug a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 980px; background: #e8f1fd; color: var(--blue); font-weight: 550; }
+.e404__sug a::after { content: "→"; transition: transform .25s var(--ease); }
+.e404__sug a:hover::after { transform: translateX(3px); }
+.e404__art .browser__url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .e404__zero { animation: none; } }
 .e404__line { width: 180px; height: 10px; border-radius: 6px; background: #dfe4ec; }
 .e404__line--short { width: 110px; }
 

@@ -4,11 +4,17 @@ ServerSignature Off
 
 # Página de error propia
 ErrorDocument 404 /404.html
+# Lo prohibido también muestra la página propia (sin revelar que existe)
+ErrorDocument 403 /404.html
 
 # Forzar HTTPS
 RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
+
+# Un .php que no existe da la página 404 propia (y no el aviso genérico del servidor)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule \.php$ - [R=404,L]
 
 # Bloquear archivos internos (repositorio Git, documentación, ejemplos)
 RedirectMatch 404 /\.git
