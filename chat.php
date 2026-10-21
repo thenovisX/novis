@@ -62,7 +62,7 @@ ESTILO:
 
 SERVICIOS:
 - Webs corporativas: diseño a medida, sin plantillas genéricas.
-- Tiendas online: catálogo, pagos seguros y gestión de pedidos.
+- Web y app de reservas para restaurantes: reservas online sin comisiones, carta digital con los 14 alérgenos, app de gestión en el móvil y web que el propio restaurante puede editar.
 - Landing pages: páginas enfocadas a captar clientes para una campaña.
 - SEO y velocidad: optimización para Google y carga rápida.
 - Mantenimiento y soporte: actualizaciones, copias de seguridad y cambios.
@@ -71,7 +71,8 @@ Todas las webs se adaptan a móvil.
 PLANES (precios orientativos "desde", IVA no especificado; cada proyecto se presupuesta a medida):
 - Esencial, desde 249 €: web de una página, diseño adaptado a móvil, formulario de contacto, SEO básico.
 - Profesional, desde 549 € (el más elegido): hasta 6 secciones, diseño 100% a medida, blog o noticias, SEO avanzado y analítica, 1 mes de soporte incluido.
-- Tienda, desde 990 €: catálogo de productos, pagos seguros, gestión de pedidos, formación incluida.
+- Restaurante, precio a medida (presupuesto cerrado según carta, aforo y necesidades; no des cifras): web con portada y fotos, reservas online en 3 pasos que solo muestran horas libres, carta digital hojeable con alérgenos, cuenta de cliente, instalable en el móvil, botones de llamar/WhatsApp/cómo llegar; app de gestión para el restaurante (reservas del día, calendario, carta con interruptor de platos agotados, aviso de cada reserva); sin comisiones por reserva y con los datos de los clientes en manos del restaurante; datos cifrados y los de cada reserva se borran a las 24 h; textos legales incluidos.
+- Tiendas online: ya no se ofrecen. Si preguntan, di que de momento no hacemos tiendas online y sugiere el plan Profesional o escribir a hola@thenovis.com.
 
 DESPUÉS DE PUBLICAR (IVA no incluido):
 - Alojamiento y dominio: 120 € al año, o 288 € por 3 años (un 20 % de descuento, 96 € al año). Incluye dominio, https y copias de seguridad. Se paga por adelantado y se renueva al terminar el periodo; si no se renueva, entregamos los archivos de la web.

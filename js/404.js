@@ -30,7 +30,7 @@
     [/cookie/, '/cookies.html', 'Cookies'],
     [/accesib/, '/accesibilidad.html', gl ? 'Accesibilidade' : 'Accesibilidad'],
     [/trabajo|traballo|portfolio|proyecto|proxecto|ejemplo|exemplo/, base + '#trabajos', gl ? 'Exemplos de webs' : 'Ejemplos de webs'],
-    [/servicio|servizo|tienda|tenda|seo|mantenimiento|mantemento/, base + '#servicios', gl ? 'Servizos' : 'Servicios'],
+    [/servicio|servizo|restaurante|reserva|seo|mantenimiento|mantemento/, base + '#servicios', gl ? 'Servizos' : 'Servicios'],
     [/faq|pregunta|duda|dubida/, base + '#faq', gl ? 'Preguntas frecuentes' : 'Preguntas frecuentes']
   ];
   var r2 = ruta.toLowerCase();

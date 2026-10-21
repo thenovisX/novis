@@ -282,6 +282,10 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .plan__desc { margin-top: 6px; font-size: 16px; }
 .plan__price { margin: 28px 0 24px; font-size: 44px; font-weight: 650; letter-spacing: -0.04em; color: var(--text); line-height: 1; }
 .plan__price span { font-size: 16px; font-weight: 450; letter-spacing: 0; color: var(--muted); margin-right: 4px; }
+.plan__price--text { font-size: 30px; line-height: 1.1; }
+.plan__price--text span { display: block; margin: 6px 0 0; font-size: 16px; }
+.plan__more { margin-top: 14px; text-align: center; font-size: 15px; color: var(--blue); }
+.plan__more:hover { text-decoration: underline; text-underline-offset: 3px; }
 .plan--featured .plan__price { color: #fff; }
 .plan--featured .plan__price span { color: #a9b8cf; }
 .plan ul { list-style: none; flex: 1; margin-bottom: 32px; display: grid; gap: 12px; align-content: start; font-size: 16px; }
@@ -613,6 +617,26 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   }
   .plans__dots button::after { content: ""; position: absolute; inset: -10px; } /* zona táctil más grande */
   .plans__dots button[aria-current="true"] { width: 26px; background: var(--ink); }
+}
+
+/* ===== Restaurantes ===== */
+.resto { max-width: var(--max); margin: 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.resto__card { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: clamp(24px, 3vw, 36px); }
+.resto__card h3 { font-size: 22px; letter-spacing: -0.03em; color: var(--ink); }
+.resto__sub { margin-top: 4px; font-size: 15px; color: var(--muted); }
+.resto__card ul { list-style: none; margin-top: 18px; display: grid; gap: 14px; font-size: 16px; }
+.resto__card li { padding-left: 26px; position: relative; }
+.resto__card li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--coral); }
+.resto__card strong { color: var(--text); font-weight: 600; }
+.resto__card:first-child { grid-row: span 2; }
+.resto__card:last-child { grid-column: 1 / -1; }
+.resto__card:last-child ul { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.resto__cta { max-width: var(--max); margin: 36px auto 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.resto__cta p { max-width: 32em; font-size: 16px; }
+@media (max-width: 860px) {
+  .resto { grid-template-columns: 1fr; }
+  .resto__card:first-child { grid-row: auto; }
+  .resto__card:last-child ul { grid-template-columns: 1fr; }
 }
 
 /* ===== Página 404 ===== */

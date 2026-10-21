@@ -100,7 +100,7 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     $nombre = preg_replace('/[^\p{L}\s\'\-]/u', '', $nombre);
     $nombre = trim(mb_substr(preg_split('/\s+/', trim($nombre))[0] ?? '', 0, 30));
     $saludo = $gl ? ($nombre !== '' ? "Ola, $nombre:" : 'Ola:') : ($nombre !== '' ? "Hola, $nombre:" : 'Hola:');
-    $planes = ['Esencial', 'Profesional', 'Tienda', 'Mantenimiento'];
+    $planes = ['Esencial', 'Profesional', 'Restaurante', 'Mantenimiento'];
     $plan = in_array($plan, $planes, true) ? $plan : '';
 
     $h = fn($t) => htmlspecialchars($t, ENT_QUOTES, 'UTF-8');
@@ -121,7 +121,7 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     $html = novis_email_html('Hemos recibido tu solicitud', $parrafos, 'Visitar thenovis.com', 'https://thenovis.com',
         'Has recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a> · <a href="https://thenovis.com/datos/" style="color:#1d63ed">Eliminar mis datos</a>');
     if ($gl) {
-        $planGl = ['Esencial' => 'Esencial', 'Profesional' => 'Profesional', 'Tienda' => 'Tenda'][$plan] ?? '';
+        $planGl = ['Esencial' => 'Esencial', 'Profesional' => 'Profesional', 'Restaurante' => 'Restaurante'][$plan] ?? '';
         $lineaGl = $plan === 'Mantenimiento' ? 'Indicáchesnos interese no mantemento mensual.' : ($planGl ? "Indicáchesnos interese no plan $planGl." : '');
         $texto = "$saludo\n\nGrazas por contactar con Novis! Recibimos a túa solicitude e responderémosche canto antes, normalmente en menos de 24 horas.\n\n"
             . ($lineaGl ? "$lineaGl\n\n" : '')
