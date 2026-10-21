@@ -814,3 +814,44 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .acct.is-in .acct__ini { display: block; font-size: 16px; font-weight: 650; }
 .acct.is-in::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 2px #fff; }
 .nav.menu-open .acct { visibility: hidden; }
+
+/* ===== Aviso de cookies ===== */
+.cc { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 200; display: flex; justify-content: center; pointer-events: none; }
+.cc[hidden] { display: none; }
+.cc__box { pointer-events: auto; width: 100%; max-width: 760px; background: #fff; color: var(--body); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; box-shadow: 0 24px 60px -18px rgba(11,37,69,.45); font-size: 15px; animation: cc-in .5s var(--ease); }
+@keyframes cc-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.cc__t { font-size: 18px; letter-spacing: -0.02em; color: var(--ink); }
+.cc__t:focus { outline: none; }
+.cc__p { margin-top: 8px; line-height: 1.55; }
+.cc__p a { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
+.cc__opts { margin-top: 16px; display: grid; gap: 10px; }
+.cc__opts[hidden] { display: none; }
+.cc__row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; background: var(--mist); }
+.cc__row input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--ink); }
+.cc__rt { display: grid; gap: 2px; }
+.cc__rt strong { color: var(--text); font-weight: 600; }
+.cc__rt small { font-size: 14px; color: var(--body); line-height: 1.45; }
+.cc__gpc { font-size: 14px; color: var(--ink); background: #e8f1fd; border-radius: 12px; padding: 10px 12px; }
+.cc__gpc[hidden] { display: none; }
+.cc__btns { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+/* Rechazar y aceptar son idénticos en tamaño, color y peso */
+.cc__btn { flex: 1 1 0; min-width: 130px; min-height: 46px; padding: 10px 18px; border-radius: 12px; border: 1.5px solid var(--ink); background: var(--ink); color: #fff; font: inherit; font-weight: 600; cursor: pointer; transition: background .2s, transform .2s; }
+.cc__btn:hover { background: var(--ink-2); }
+.cc__btn:active { transform: scale(.98); }
+.cc__btn--ghost { background: #fff; color: var(--ink); }
+.cc__btn--ghost:hover { background: var(--mist); }
+.cc__save { width: 100%; margin-top: 10px; background: #fff; color: var(--ink); }
+.cc__save:hover { background: var(--mist); }
+.cc__save[hidden] { display: none; }
+.cc__btn:focus-visible, .cc__row input:focus-visible { outline: 3px solid #5b8cff; outline-offset: 2px; }
+@media (max-width: 560px) {
+  .cc { left: 10px; right: 10px; bottom: 10px; }
+  .cc__box { padding: 18px 16px; max-height: calc(100vh - 20px); overflow-y: auto; }
+  .cc__btn { flex-basis: 100%; }
+}
+/* En pantallas pequeñas, el botón del chat se oculta mientras el aviso está abierto */
+@media (max-width: 900px) { .cc-on .chat { opacity: 0; pointer-events: none; } }
+@media (prefers-reduced-motion: reduce) { .cc__box { animation: none; } }
+.footer nav .foot-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.footer nav .foot-link:hover { color: var(--text); }
+.link-inline { background: none; border: 0; padding: 0; font: inherit; color: var(--blue); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

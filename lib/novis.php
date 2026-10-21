@@ -146,6 +146,7 @@ const NOVIS_CIFRADO = [
     'pagos'        => [['concepto', 'descripcion', 'email_cliente', 'pagador_email'], ['pagador_idx' => 'pagador_email'], []],
     'datos_tokens' => [['email'], ['email_idx' => 'email'], []],
     'incidentes'   => [['descripcion', 'datos', 'medidas'], [], []],
+    'auditoria'    => [['ip', 'agente'], [], []],
 ];
 
 /**
@@ -228,6 +229,8 @@ function novis_sin_cifrar(PDO $db): array {
 /** RGPD: borra solicitudes con más de 2 años (plazo indicado en la política de privacidad). */
 function novis_purgar(): void {
     novis_db()->prepare('DELETE FROM solicitudes WHERE creado < ?')->execute([date('c', strtotime('-2 years'))]);
+    // El registro de auditoría se conserva 3 años (plazo de prescripción de las infracciones leves de protección de datos)
+    try { novis_db()->prepare('DELETE FROM auditoria WHERE fecha < ?')->execute([date('c', strtotime('-3 years'))]); } catch (Throwable $e) {}
 }
 
 /** Libera de verdad el espacio en disco tras borrar (SQLite no encoge el archivo por sí solo). */

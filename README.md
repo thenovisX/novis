@@ -114,3 +114,13 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 - Formulario con consentimiento expreso; las solicitudes se borran solas a los 2 años.
 - Sin cookies de terceros ni Google Fonts externas: no hace falta banner de cookies.
 - Chat identificado como IA (Reglamento UE de IA, art. 50).
+
+## Cookies y Google Analytics
+
+- El aviso de cookies está en `js/consent.js` (todas las páginas públicas). «Rechazar todas» y «Aceptar todas» son iguales; hasta que el visitante elige no se carga nada de Google. Respeta la señal Global Privacy Control. Desde el pie, «Configurar cookies» permite cambiar la elección.
+- Para activar Google Analytics 4: crea una propiedad en analytics.google.com, copia el ID de medición (`G-XXXXXXXXXX`) y pégalo en `var GA_ID = '';` al principio de `js/consent.js`. En Analytics, pon la conservación de datos en 14 meses (o menos) y desactiva las señales de Google (publicidad). Mientras `GA_ID` esté vacío, no se carga nada.
+- El CSP de `.htaccess` ya permite `googletagmanager.com` y `google-analytics.com`.
+
+## Registro de auditoría
+
+Tabla `auditoria` (solo se añaden filas): aceptación de condiciones y privacidad (con la versión `NV_CONDICIONES` de `lib/cuentas.php`), email verificado, contraseña cambiada, alta con Google y baja de cuenta. IP y navegador van cifrados; se borra a los 3 años y, al eliminar una cuenta, se desvincula de la persona. Al cambiar `condiciones.html`, actualiza la fecha de `NV_CONDICIONES`.

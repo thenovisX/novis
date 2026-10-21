@@ -111,6 +111,18 @@ function nv_db(): PDO {
         medidas TEXT,
         cerrado TEXT
     )');
+    // Registro de auditoría: prueba de cuándo se aceptaron las condiciones y la privacidad y de los cambios de seguridad
+    // de una cuenta. Solo se añaden filas (nunca se modifican); IP y navegador van cifrados; se borran a los 3 años.
+    $db->exec('CREATE TABLE IF NOT EXISTS auditoria (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fecha TEXT NOT NULL,
+        evento TEXT NOT NULL,
+        usuario_id INTEGER,
+        detalle TEXT,
+        ip TEXT,
+        agente TEXT
+    )');
+    $db->exec('CREATE INDEX IF NOT EXISTS auditoria_usuario ON auditoria(usuario_id)');
     // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
     foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens'] as $t) novis_cifrar_tabla($db, $t);
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
@@ -119,6 +131,21 @@ function nv_db(): PDO {
     $db->exec('CREATE INDEX IF NOT EXISTS datos_tokens_email_idx ON datos_tokens(email_idx)');
     $listo = true;
     return $db;
+}
+
+/** Versión vigente de las condiciones de contratación (se anota con cada aceptación). */
+const NV_CONDICIONES = '2026-10-21';
+
+/** Anota un hecho importante de una cuenta. Nunca interrumpe la operación si falla. */
+function nv_auditar(string $evento, ?int $usuario, string $detalle = '', bool $anonimo = false): void {
+    try {
+        nv_db()->prepare('INSERT INTO auditoria (fecha, evento, usuario_id, detalle, ip, agente) VALUES (?, ?, ?, ?, ?, ?)')
+            ->execute([date('c'), $evento, $usuario, $detalle ?: null,
+                $anonimo ? null : nv_cifrar((string)($_SERVER['REMOTE_ADDR'] ?? '')),
+                $anonimo ? null : nv_cifrar(mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 250))]);
+    } catch (Throwable $e) {
+        error_log('Novis auditoría: ' . $e->getMessage());
+    }
 }
 
 /* ================= Utilidades ================= */
@@ -213,6 +240,9 @@ function nv_borrar_datos(string $email, string $desde): array {
         $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
+        // La auditoría pierde el vínculo con la persona (sin IP ni navegador) y queda solo la constancia de la baja
+        $db->prepare('UPDATE auditoria SET usuario_id = NULL, ip = NULL, agente = NULL WHERE usuario_id = ?')->execute([$id]);
+        nv_auditar('cuenta_eliminada', null, '', true);
     }
     novis_compactar();
     // Aviso a Novis para borrar también los emails del buzón

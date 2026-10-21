@@ -21,7 +21,9 @@ function campo(string $k): string { return trim((string)($_POST[$k] ?? '')); }
 if ($a === 'verificar') {
     $id = nv_token_usar((string)($_GET['t'] ?? ''), 'verificar');
     if ($id) {
-        $db->prepare('UPDATE usuarios SET email_verificado = ? WHERE id = ? AND email_verificado IS NULL')->execute([date('c'), $id]);
+        $ver = $db->prepare('UPDATE usuarios SET email_verificado = ? WHERE id = ? AND email_verificado IS NULL');
+        $ver->execute([date('c'), $id]);
+        if ($ver->rowCount() > 0) nv_auditar('email_verificado', (int)$id);
         nv_entrar($id);
         aviso('Email confirmado. ¡Tu cuenta ya está activa!');
     } else {
@@ -56,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pass = (string)($_POST['password'] ?? '');
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errores['email'] = 'Escribe un email válido.';
         if (!preg_match('/^[a-z0-9._-]{3,30}$/', $usuario)) $errores['usuario'] = 'Entre 3 y 30 caracteres: letras, números, punto, guion o guion bajo.';
-        if (!preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678.';
+        if ($tel !== '' && !preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678, o déjalo vacío.';
         if (mb_strlen($pass) < 10) $errores['password'] = 'La contraseña debe tener al menos 10 caracteres.';
         elseif ($pass !== (string)($_POST['password2'] ?? '')) $errores['password2'] = 'Las contraseñas no coinciden.';
-        if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar la política de privacidad.';
+        if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar las condiciones de contratación y la política de privacidad.';
         // El límite va antes de comprobar si el email o el usuario existen (si no, el formulario serviría para averiguar quién tiene cuenta)
         if (!$errores && !novis_limite('registro', 8, 3600)) $errores['general'] = 'Demasiados intentos. Prueba de nuevo dentro de un rato.';
         if (!$errores) {
@@ -72,8 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if (!$errores) {
             $db->prepare('INSERT INTO usuarios (email, email_idx, usuario, usuario_idx, telefono, password_hash, creado) VALUES (?, ?, ?, ?, ?, ?, ?)')
-               ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), nv_cifrar($tel), password_hash($pass, PASSWORD_DEFAULT), date('c')]);
+               ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), password_hash($pass, PASSWORD_DEFAULT), date('c')]);
             $id = (int)$db->lastInsertId();
+            nv_auditar('registro_acepta', $id, 'condiciones ' . NV_CONDICIONES . ' + privacidad');
             nv_entrar($id);
             nv_email_verificacion(['id' => $id, 'email' => $email, 'usuario' => $usuario]);
             ir();
@@ -133,6 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Si ha llegado desde el email, el email queda verificado
             $db->prepare('UPDATE usuarios SET password_hash = ?, email_verificado = COALESCE(email_verificado, ?), pass_cambiada = ? WHERE id = ?')
                ->execute([password_hash($pass, PASSWORD_DEFAULT), date('c'), time() - 1, $id]);
+            nv_auditar('password_cambiada', (int)$id);
             nv_entrar($id);
             aviso('Contraseña actualizada.');
             ir();
@@ -156,15 +160,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usuario = strtolower(campo('usuario'));
         $tel = preg_replace('/[^\d+]/', '', campo('telefono'));
         if (!preg_match('/^[a-z0-9._-]{3,30}$/', $usuario)) $errores['usuario'] = 'Entre 3 y 30 caracteres: letras, números, punto, guion o guion bajo.';
-        if (!preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678.';
-        if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar la política de privacidad.';
+        if ($tel !== '' && !preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678, o déjalo vacío.';
+        if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar las condiciones de contratación y la política de privacidad.';
         if (!$errores) {
             $st = $db->prepare('SELECT 1 FROM usuarios WHERE usuario_idx = ? AND id != ?');
             $st->execute([nv_indice($usuario), $u['id']]);
             if ($st->fetch()) $errores['usuario'] = 'Este nombre de usuario ya está en uso.';
         }
         if (!$errores) {
-            $db->prepare('UPDATE usuarios SET usuario = ?, usuario_idx = ?, telefono = ? WHERE id = ?')->execute([nv_cifrar($usuario), nv_indice($usuario), nv_cifrar($tel), $u['id']]);
+            $db->prepare('UPDATE usuarios SET usuario = ?, usuario_idx = ?, telefono = ? WHERE id = ?')->execute([nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), $u['id']]);
+            nv_auditar('perfil_acepta', (int)$u['id'], 'condiciones ' . NV_CONDICIONES . ' + privacidad');
             ir();
         }
     }
@@ -360,7 +365,7 @@ if (!$u) {
     $vista = in_array($a, ['registro', 'olvide', 'restablecer'], true) ? $a : 'entrar';
 } elseif (!$u['email_verificado']) {
     $vista = 'pendiente';
-} elseif (!$u['usuario'] || !$u['telefono']) {
+} elseif (!$u['usuario']) {
     $vista = 'perfil';
 } else {
     $vista = in_array($a, ['resumen', 'exito', 'cuenta', 'servicios', 'mensajes', 'mensaje', 'pagos'], true) ? $a : 'inicio';
@@ -437,7 +442,7 @@ $google = nv_google_ok();
   <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="../css/styles.css?v=24">
+  <link rel="stylesheet" href="../css/styles.css?v=25">
   <link rel="stylesheet" href="pagos.css?v=5">
 </head>
 <body class="acc-page">
@@ -500,8 +505,8 @@ $google = nv_google_ok();
         <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
         <div class="f"><label for="email">Email</label>
           <input id="email" name="email" type="email" autocomplete="email" required value="<?= $v('email') ?>"<?= inv($errores, 'email') ?>><?= err($errores, 'email') ?></div>
-        <div class="f"><label for="telefono">Teléfono</label>
-          <input id="telefono" name="telefono" type="tel" autocomplete="tel" required value="<?= $v('telefono') ?>"<?= inv($errores, 'telefono') ?>><?= err($errores, 'telefono') ?></div>
+        <div class="f"><label for="telefono">Teléfono <span class="f-hint">(opcional)</span></label>
+          <input id="telefono" name="telefono" type="tel" autocomplete="tel" value="<?= $v('telefono') ?>"<?= inv($errores, 'telefono') ?>><?= err($errores, 'telefono') ?></div>
         <div class="f"><label for="usuario">Nombre de usuario</label>
           <input id="usuario" name="usuario" autocomplete="username" autocapitalize="none" required value="<?= $v('usuario') ?>"<?= inv($errores, 'usuario') ?>><?= err($errores, 'usuario') ?></div>
         <div class="f"><label for="password">Contraseña <span class="f-hint">(mínimo 10 caracteres)</span></label>
@@ -509,7 +514,7 @@ $google = nv_google_ok();
         <div class="f"><label for="password2">Repite la contraseña</label>
           <input id="password2" name="password2" type="password" autocomplete="new-password" required<?= inv($errores, 'password2') ?>><?= err($errores, 'password2') ?></div>
         <label class="f-check"><input type="checkbox" name="acepto" value="1"<?= !empty($viejo['acepto']) ? ' checked' : '' ?><?= inv($errores, 'acepto') ?>>
-          <span>He leído y acepto la <a href="../privacidad.html#cuentas">política de privacidad</a>.</span></label>
+          <span>He leído y acepto las <a href="../condiciones.html" target="_blank" rel="noopener">condiciones de contratación</a> y la <a href="../privacidad.html#cuentas" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
         <?= err($errores, 'acepto') ?>
         <button class="btn" name="accion" value="registro">Crear cuenta</button>
       </form>
@@ -561,10 +566,10 @@ $google = nv_google_ok();
         <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
         <div class="f"><label for="usuario">Nombre de usuario</label>
           <input id="usuario" name="usuario" autocomplete="username" autocapitalize="none" required value="<?= e($viejo['usuario'] ?? $u['usuario'] ?? '') ?>"<?= inv($errores, 'usuario') ?>><?= err($errores, 'usuario') ?></div>
-        <div class="f"><label for="telefono">Teléfono</label>
-          <input id="telefono" name="telefono" type="tel" autocomplete="tel" required value="<?= e($viejo['telefono'] ?? $u['telefono'] ?? '') ?>"<?= inv($errores, 'telefono') ?>><?= err($errores, 'telefono') ?></div>
+        <div class="f"><label for="telefono">Teléfono <span class="f-hint">(opcional)</span></label>
+          <input id="telefono" name="telefono" type="tel" autocomplete="tel" value="<?= e($viejo['telefono'] ?? $u['telefono'] ?? '') ?>"<?= inv($errores, 'telefono') ?>><?= err($errores, 'telefono') ?></div>
         <label class="f-check"><input type="checkbox" name="acepto" value="1"<?= inv($errores, 'acepto') ?>>
-          <span>He leído y acepto la <a href="../privacidad.html#cuentas">política de privacidad</a>.</span></label>
+          <span>He leído y acepto las <a href="../condiciones.html" target="_blank" rel="noopener">condiciones de contratación</a> y la <a href="../privacidad.html#cuentas" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
         <?= err($errores, 'acepto') ?>
         <button class="btn" name="accion" value="perfil">Continuar</button>
       </form>
@@ -865,7 +870,7 @@ $google = nv_google_ok();
       <dl class="acc-sum">
         <div><dt>Usuario</dt><dd><?= e($u['usuario']) ?></dd></div>
         <div><dt>Email</dt><dd><?= e($u['email']) ?></dd></div>
-        <div><dt>Teléfono</dt><dd><?= e($u['telefono']) ?></dd></div>
+        <div><dt>Teléfono</dt><dd><?= e($u['telefono'] ?: '—') ?></dd></div>
         <div><dt>Acceso con Google</dt><dd><?= $u['google_sub'] ? 'Vinculado' : 'No' ?></dd></div>
         <div><dt>Cliente desde</dt><dd><?= e(date('d/m/Y', strtotime($u['creado']))) ?></dd></div>
       </dl>

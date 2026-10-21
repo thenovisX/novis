@@ -160,7 +160,7 @@ if ($vista === 'detalle') {
           <div class="badges">
             <?php if (!$u['email_verificado']): ?><span class="pill pill--en_curso">Sin verificar</span><?php endif; ?>
             <?php if ($u['google_sub']): ?><span class="pill">Google</span><?php endif; ?>
-            <?php if (!$u['usuario'] || !$u['telefono']): ?><span class="pill">Perfil incompleto</span><?php endif; ?>
+            <?php if (!$u['usuario']): ?><span class="pill">Perfil incompleto</span><?php endif; ?>
           </div>
         </div>
       </a>

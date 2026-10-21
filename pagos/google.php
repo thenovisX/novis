@@ -53,10 +53,12 @@ if (!$u) {
         $db->prepare('UPDATE usuarios SET google_sub = ?, email_verificado = COALESCE(email_verificado, ?),
             password_hash = CASE WHEN email_verificado IS NULL THEN NULL ELSE password_hash END WHERE id = ?')
            ->execute([$huellaSub, date('c'), $u['id']]);
+        nv_auditar('google_vinculado', (int)$u['id']);
     } else {
         $db->prepare('INSERT INTO usuarios (email, email_idx, google_sub, email_verificado, creado) VALUES (?, ?, ?, ?, ?)')
            ->execute([nv_cifrar($g['email']), nv_indice($g['email']), $huellaSub, date('c'), date('c')]);
         $u = ['id' => (int)$db->lastInsertId()];
+        nv_auditar('alta_google', $u['id']);
     }
 }
 

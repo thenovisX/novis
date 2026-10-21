@@ -15,7 +15,7 @@
   <meta property="og:locale" content="es_ES">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=24">
+  <link rel="stylesheet" href="css/styles.css?v=25">
 </head>
 <body class="legal-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -27,21 +27,25 @@
   </header>
   <main id="contenido" tabindex="-1" class="legal">
     <h1>Política de cookies</h1>
-    <p class="legal__date">Última actualización: 20 de octubre de 2026</p>
+    <p class="legal__date">Última actualización: 21 de octubre de 2026</p>
 
     <section>
-      <h2>1. ¿Usamos cookies?</h2>
-      <p>Este sitio web <strong>no utiliza cookies de análisis, publicidad ni seguimiento</strong>, ni propias ni de terceros. Por eso no te mostramos un aviso de cookies al entrar: no hay nada que tengas que aceptar.</p>
-      <p>Tampoco cargamos recursos de terceros que puedan rastrearte: la tipografía, los iconos y los scripts se sirven desde nuestro propio servidor.</p>
+      <h2>1. ¿Qué son las cookies y cuáles usamos?</h2>
+      <p>Las cookies son pequeños archivos que un sitio web guarda en tu dispositivo. En este sitio usamos solo estos dos tipos:</p>
+      <ul>
+        <li><strong>Técnicas (necesarias):</strong> imprescindibles para que la web funcione, por ejemplo para mantener tu sesión iniciada. No necesitan tu consentimiento.</li>
+        <li><strong>De analítica (opcionales):</strong> las de Google Analytics, que nos ayudan a saber cuántas personas visitan la web y qué partes se usan más. <strong>Solo se instalan si las aceptas</strong>. No usamos cookies de publicidad ni de seguimiento entre sitios.</li>
+      </ul>
+      <p>Al entrar por primera vez te mostramos un aviso con los botones <strong>«Rechazar todas»</strong>, <strong>«Aceptar todas»</strong> y <strong>«Configurar»</strong>, todos igual de fáciles de usar. Hasta que elijas, no se carga nada de Google ni se instala ninguna cookie de analítica. Si tu navegador envía la señal <strong>Global Privacy Control</strong>, la entendemos como un rechazo de la analítica.</p>
     </section>
     <section>
       <h2>2. Cookies técnicas</h2>
-      <p>Solo usamos cookies técnicas de sesión, que se crean únicamente cuando inicias sesión en el área de pagos de clientes o en el panel de administración. Navegar por la web no crea ninguna cookie.</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th scope="col">Cookie</th><th scope="col">Tipo</th><th scope="col">Finalidad</th><th scope="col">Duración</th></tr></thead>
+          <thead><tr><th scope="col">Nombre</th><th scope="col">Tipo</th><th scope="col">Finalidad</th><th scope="col">Duración</th></tr></thead>
           <tbody>
-            <tr><td>novis_cliente</td><td>Propia, técnica</td><td>Mantener la sesión iniciada en el área de pagos de clientes</td><td>Hasta cerrar el navegador</td></tr>
+            <tr><td>novis_consent</td><td>Propia, técnica (almacenamiento local del navegador)</td><td>Recordar tu elección sobre las cookies</td><td>12 meses</td></tr>
+            <tr><td>novis_cliente</td><td>Propia, técnica</td><td>Mantener la sesión iniciada en el área de pagos de clientes (solo si inicias sesión)</td><td>Hasta cerrar el navegador</td></tr>
             <tr><td>novis_panel</td><td>Propia, técnica</td><td>Mantener la sesión del administrador en el panel privado</td><td>30 días</td></tr>
           </tbody>
         </table>
@@ -49,8 +53,22 @@
       <p>Al pagar, Stripe usa sus propias cookies en su página de pago (checkout.stripe.com), que se rigen por su política. Las cookies técnicas estrictamente necesarias están exentas de consentimiento según el artículo 22.2 de la LSSI-CE y la Guía sobre el uso de las cookies de la Agencia Española de Protección de Datos.</p>
     </section>
     <section>
-      <h2>3. Cómo gestionar las cookies</h2>
-      <p>Puedes bloquear o eliminar las cookies desde la configuración de tu navegador (Chrome, Firefox, Safari, Edge…). Si en el futuro incorporamos cookies que requieran tu consentimiento, te lo pediremos antes de instalarlas y actualizaremos esta política.</p>
+      <h2>3. Cookies de analítica (solo con tu consentimiento)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Nombre</th><th scope="col">Proveedor</th><th scope="col">Finalidad</th><th scope="col">Duración</th></tr></thead>
+          <tbody>
+            <tr><td>_ga</td><td>Google Ireland Ltd. (Google Analytics 4)</td><td>Distinguir a los visitantes para contar visitas</td><td>2 años</td></tr>
+            <tr><td>_ga_&lt;ID&gt;</td><td>Google Ireland Ltd. (Google Analytics 4)</td><td>Mantener el estado de la sesión de navegación</td><td>2 años</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Configuramos Google Analytics sin señales de publicidad ni personalización de anuncios y con la dirección IP anonimizada. Los datos se usan solo para estadísticas agregadas del sitio y se conservan, como máximo, 14 meses. Google puede tratar datos en Estados Unidos al amparo del Marco de Privacidad de Datos UE-EE. UU. y de las cláusulas contractuales tipo. Más información en la <a href="privacidad.html#analitica">política de privacidad</a>.</p>
+    </section>
+    <section>
+      <h2>4. Cómo cambiar o retirar tu consentimiento</h2>
+      <p>Puedes cambiar tu elección en cualquier momento con el botón <button type="button" class="link-inline" data-cookies>Configurar cookies</button>, que también encontrarás en el pie de todas las páginas. Si desactivas la analítica, borramos las cookies de Google Analytics de este sitio.</p>
+      <p>También puedes bloquear o eliminar las cookies desde la configuración de tu navegador (Chrome, Firefox, Safari, Edge…). Si en el futuro incorporamos otras cookies que requieran tu consentimiento, te lo pediremos antes de instalarlas y actualizaremos esta política.</p>
     </section>
 
   </main>
@@ -60,7 +78,9 @@
       <nav aria-label="Información legal">
         <a href="aviso-legal.html">Aviso legal</a>
         <a href="privacidad.html">Privacidad</a>
+        <a href="condiciones.html">Condiciones</a>
         <a href="cookies.html">Cookies</a>
+        <button type="button" class="foot-link" data-cookies>Configurar cookies</button>
         <a href="accesibilidad.html">Accesibilidad</a>
         <a href="pagos/">Pagos de clientes</a>
         <a href="datos/">Tus datos</a>
@@ -68,5 +88,6 @@
       <p>© 2026 Novis. Todos los derechos reservados.</p>
     </div>
   </footer>
+  <script src="/js/consent.js?v=1" defer></script>
 </body>
 </html>
