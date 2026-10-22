@@ -654,7 +654,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .rprice__launch { margin-top: 16px; display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px; background: #ffe9ee; color: #8a1f3a; font-size: 14.5px; line-height: 1.4; }
 .rprice__launch::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--coral); }
 .rprice__launch strong { font-weight: 650; }
-.rprice__grid { margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.rprice__grid { margin-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
 .rplan { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; }
 .rplan--featured { background: var(--ink); border-color: var(--ink); color: #c9d4e5; box-shadow: 0 24px 48px -26px rgba(11,37,69,.6); }
 .rplan__type { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); min-height: 26px; }
