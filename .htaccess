@@ -2,6 +2,12 @@
 Options -Indexes
 ServerSignature Off
 
+# Protección temporal frente a PHP2Shell (CVE-2026-109619). Solo en LiteSpeed (Hostinger),
+# para no dar error 500 en servidores que no aceptan php_flag. También está en .user.ini.
+<IfModule LiteSpeed>
+  php_flag session.upload_progress.enabled off
+</IfModule>
+
 # Página de error propia
 ErrorDocument 404 /404.html
 # Lo prohibido también muestra la página propia (sin revelar que existe)

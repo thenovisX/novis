@@ -92,6 +92,22 @@ $cfgPrivado = is_file($cfgArchivo) && (fileperms($cfgArchivo) & 0004) === 0;
 $https = nv_https();
 
 /** estado (ok | aviso | mal), título y detalle */
+// PHP2Shell (CVE-2026-109618 / 109619, 21-10-2026): versiones que ya traen el parche
+$phpParches = ['8.2' => '8.2.35', '8.3' => '8.3.36', '8.4' => '8.4.27', '8.5' => '8.5.12'];
+$phpRama = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+if (isset($phpParches[$phpRama])) {
+    $phpOk = version_compare(PHP_VERSION, $phpParches[$phpRama], '>=');
+} else {
+    $phpOk = version_compare($phpRama, '8.5', '>');   // 8.6+ ya sale corregida; 8.1 o anterior ya no tiene soporte
+}
+$progresoOff = !filter_var(ini_get('session.upload_progress.enabled'), FILTER_VALIDATE_BOOLEAN);
+$phpDetalle = $phpOk
+    ? 'PHP ' . PHP_VERSION . ': ya incluye el parche de PHP2Shell.'
+    : 'PHP ' . PHP_VERSION . ': NO incluye el parche de PHP2Shell (fallo grave publicado el 21-10-2026). '
+      . (isset($phpParches[$phpRama]) ? 'Hace falta ' . $phpParches[$phpRama] . ' o posterior. ' : 'Esta versión ya no recibe parches: cambia a PHP 8.4 o 8.5. ')
+      . 'En hPanel → Avanzado → Configuración de PHP elige la versión más nueva; si sigue igual, pídeselo al soporte de Hostinger (puede que hayan aplicado el parche sin cambiar el número: confírmalo con ellos).';
+$phpDetalle .= $progresoOff ? ' Protección extra activa (barra de progreso de subidas desactivada).' : ' Falta la protección extra: la barra de progreso de subidas sigue activa.';
+
 $comprobaciones = [
     [$fueraDePublic ? 'ok' : 'mal', 'La base de datos está fuera de la parte pública',
         $fueraDePublic ? 'Nadie puede descargarla ni abrirla desde internet: no tiene dirección web.' : 'Está dentro de la carpeta pública. Mueve la carpeta public_html para que no contenga a novis-data.'],
@@ -107,6 +123,7 @@ $comprobaciones = [
         $yaHash ? 'Guardada cifrada (hash): ni viendo el archivo de configuración se puede deducir.' : 'Está escrita tal cual en gemini-config.php. Cámbiala por su versión cifrada más abajo.'],
     [$cfgPrivado ? 'ok' : 'aviso', 'Permisos de gemini-config.php',
         $cfgPrivado ? 'Otros usuarios del servidor no pueden leerlo.' : 'Cualquier usuario del servidor podría leerlo. En el Administrador de archivos de hPanel ponle permisos 600 (si el sitio dejara de funcionar, vuelve a 644).'],
+    [$phpOk ? ($progresoOff ? 'ok' : 'aviso') : 'mal', 'Versión de PHP', $phpDetalle],
     [$https ? 'ok' : 'mal', 'Conexión cifrada (HTTPS)', $https ? 'Esta visita llegó por HTTPS.' : 'Esta visita NO llegó por HTTPS.'],
 ];
 ?><!doctype html>
