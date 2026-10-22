@@ -206,6 +206,19 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .stage--barro { background: #e8dccb; }
 .stage--alameda { background: #dcefeb; }
 .stage--porto { background: #12372a; }
+.stage--link { display: block; color: inherit; text-decoration: none; cursor: pointer; }
+.stage--link::after {
+  content: attr(data-live); position: absolute; left: 18px; bottom: 18px; z-index: 3;
+  padding: 9px 16px; border-radius: 999px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 600;
+  box-shadow: 0 10px 24px -10px rgba(0,0,0,.45); opacity: 0; transform: translateY(6px);
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+.stage--link:hover::after { opacity: 1; transform: none; }
+@media (hover: none) { .stage--link::after { opacity: 1; transform: none; } }
+.work__live { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; padding: 12px 20px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; transition: background .2s, transform .2s var(--ease); }
+.work__live:hover { background: var(--ink-2); }
+.work__live:active { transform: scale(.97); }
+.work__live svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 .phone {
   position: absolute; right: 3.5%; bottom: -6%; width: 21%; aspect-ratio: 9 / 19;
