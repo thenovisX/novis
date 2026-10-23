@@ -117,7 +117,7 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 /* ---------- Portada ---------- */
 .hero {
   max-width: var(--max); margin: 0 auto; padding: 152px var(--gutter) 64px;
-  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 96px); align-items: end;
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 96px); align-items: center;
 }
 .hero__title { font-size: var(--fs-display); letter-spacing: -0.05em; line-height: 1; color: var(--ink); text-align: center; }
 .hero__sub { font-size: var(--fs-lead); line-height: 1.6; }
@@ -197,15 +197,14 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 }
 .work__head h2 { font-size: var(--fs-h2); color: var(--ink); }
 .work__head p { margin-top: 12px; max-width: 52ch; font-size: 17px; }
-/* Pestañas: índice numerado sobre una línea base. La raya de la pestaña activa
+/* Pestañas sobre una línea base. La raya de la pestaña activa
    es a la vez el indicador de selección y la cuenta atrás del cambio automático. */
-.work__tabs { display: inline-flex; gap: 28px; border-bottom: 1px solid var(--line); counter-reset: tab; }
+.work__tabs { display: inline-flex; gap: 28px; border-bottom: 1px solid var(--line); }
 .work__tabs [role="tab"] {
-  position: relative; counter-increment: tab;
+  position: relative;
   font: inherit; font-size: 16px; font-weight: 500; color: var(--muted); background: none; border: 0; cursor: pointer;
   padding: 10px 0 12px; white-space: nowrap; transition: color .2s;
 }
-.work__tabs [role="tab"]::before { content: counter(tab, decimal-leading-zero); margin-right: 8px; font-family: var(--mono); font-size: 12px; font-weight: 500; }
 .work__tabs [role="tab"]:hover { color: var(--ink); }
 .work__tabs [role="tab"][aria-selected="true"] { color: var(--ink); }
 .work__tabs [role="tab"]::after {
@@ -542,7 +541,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .work__controls { width: 100%; }
   .work__tabs { flex: 1; justify-content: space-between; gap: 12px; }
   .work__tabs [role="tab"] { font-size: 15px; }
-  .work__tabs [role="tab"]::before { display: none; }
   .stage { padding: 6% 12% 9% 5%; border-radius: var(--r-md); }
   .phone { width: 24%; border-radius: 14px; padding: 10px 6px 7px; gap: 4px; font-size: 7px; box-shadow: 0 0 0 3px #1c2230; }
   .phone b, .phone--barro b { font-size: 9px; }
