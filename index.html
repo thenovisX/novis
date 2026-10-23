@@ -29,7 +29,7 @@
   <meta name="twitter:image" content="https://thenovis.com/assets/og-image.png?v=10">
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://thenovis.com/#negocio", "name": "Novis", "alternateName": ["TheNovis", "Novis diseño web"], "url": "https://thenovis.com/", "logo": "https://thenovis.com/assets/favicon-512.png?v=12", "image": "https://thenovis.com/assets/og-image.png?v=10", "description": "Diseño y desarrollo de páginas web para empresas: webs corporativas, tiendas online, landing pages, SEO y mantenimiento.", "email": "hola@thenovis.com", "priceRange": "€€", "address": {"@type": "PostalAddress", "addressLocality": "Vigo", "addressRegion": "Pontevedra", "addressCountry": "ES"}, "areaServed": [{"@type": "City", "name": "Vigo"}, {"@type": "AdministrativeArea", "name": "Galicia"}, {"@type": "Country", "name": "España"}], "knowsLanguage": ["es", "gl", "en"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Planes de diseño web", "itemListElement": [{"@type": "Offer", "name": "Plan Esencial", "price": "249", "priceCurrency": "EUR", "description": "Web de una página adaptada a móvil"}, {"@type": "Offer", "name": "Plan Profesional", "price": "549", "priceCurrency": "EUR", "description": "Web corporativa a medida de hasta 6 secciones"}, {"@type": "Offer", "name": "Plan Restaurante", "price": "29", "priceCurrency": "EUR", "description": "Web y app de reservas para restaurantes: alquiler desde 29 € al mes más alta, o compra por 1.200 €"}, {"@type": "Offer", "name": "Alojamiento y dominio", "price": "120", "priceCurrency": "EUR", "description": "Alojamiento, dominio, https y copias de seguridad (anual; 288 € por 3 años)"}, {"@type": "Offer", "name": "Mantenimiento web", "price": "29", "priceCurrency": "EUR", "description": "Cambios pequeños, actualizaciones y seguridad, mensual y sin permanencia"}]}}, {"@type": "WebSite", "@id": "https://thenovis.com/#web", "url": "https://thenovis.com/", "name": "Novis", "alternateName": "TheNovis", "inLanguage": "es", "publisher": {"@id": "https://thenovis.com/#negocio"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto tarda en estar lista mi web?", "acceptedAnswer": {"@type": "Answer", "text": "Una web sencilla suele estar lista en una semana. Proyectos más grandes, entre dos y cuatro semanas."}}, {"@type": "Question", "name": "¿Necesito tener dominio y hosting?", "acceptedAnswer": {"@type": "Answer", "text": "No te preocupes. Si no lo tienes, te ayudamos a contratarlo y lo dejamos todo configurado."}}, {"@type": "Question", "name": "¿Podré hacer cambios yo mismo?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Te explicamos cómo hacer los cambios básicos y, si lo prefieres, los hacemos nosotros con el plan de mantenimiento."}}, {"@type": "Question", "name": "¿Se verá bien en el móvil?", "acceptedAnswer": {"@type": "Answer", "text": "Siempre. Todas nuestras webs se diseñan pensando primero en el móvil."}}, {"@type": "Question", "name": "¿Qué incluye el mantenimiento y puedo dejarlo?", "acceptedAnswer": {"@type": "Answer", "text": "Por 29 € al mes hacemos los cambios pequeños que necesites (hasta 2 horas al mes), las actualizaciones y las revisiones de seguridad. No tiene permanencia: te das de baja cuando quieras y tu web sigue online. Sin mantenimiento, cada cambio se presupuesta aparte desde 30 €."}}, {"@type": "Question", "name": "¿Cuánto cuesta tener la web online?", "acceptedAnswer": {"@type": "Answer", "text": "El alojamiento y el dominio cuestan 120 € al año, o 288 € si contratas 3 años (un 20 % menos). Incluye el certificado de seguridad y copias de seguridad."}}, {"@type": "Question", "name": "¿Cómo es el pago?", "acceptedAnswer": {"@type": "Answer", "text": "50% al aprobar el diseño y 50% al publicar la web. Sin sorpresas."}}]}]}</script>
-  <link rel="stylesheet" href="css/styles.css?v=29">
+  <link rel="stylesheet" href="css/styles.css?v=30">
 </head>
 <body>
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -190,13 +190,13 @@
           <h2>Qué hacemos</h2>
           <p>Todo lo necesario para tener una web profesional, sin que tengas que pelearte con nada técnico.</p>
         </div>
-        <dl class="services">
-          <div><dt>Web para tu empresa</dt><dd>Diseño a medida que explica qué haces, por qué elegirte y cómo contactarte.</dd></div>
-          <div><dt>Web y app de reservas</dt><dd>Para restaurantes: reservas online sin comisiones, carta digital con alérgenos y una app para gestionarlo desde el móvil.</dd></div>
-          <div><dt>Página para una campaña</dt><dd>Una sola página centrada en un objetivo: reservas, inscripciones o presupuestos.</dd></div>
-          <div><dt>Aparecer en Google</dt><dd>Textos, velocidad y ficha de Google preparados para que te encuentren en tu zona.</dd></div>
-          <div><dt>Mantenimiento</dt><dd>Copias de seguridad, actualizaciones y los cambios que necesites, sin preocuparte.</dd></div>
-        </dl>
+        <div class="services">
+          <details name="servicios" open><summary>Web para tu empresa</summary><div class="services__body"><p>Diseño a medida que explica qué haces, por qué elegirte y cómo contactarte.</p></div></details>
+          <details name="servicios"><summary>Web y app de reservas</summary><div class="services__body"><p>Para restaurantes: reservas online sin comisiones, carta digital con alérgenos y una app para gestionarlo desde el móvil.</p></div></details>
+          <details name="servicios"><summary>Página para una campaña</summary><div class="services__body"><p>Una sola página centrada en un objetivo: reservas, inscripciones o presupuestos.</p></div></details>
+          <details name="servicios"><summary>Aparecer en Google</summary><div class="services__body"><p>Textos, velocidad y ficha de Google preparados para que te encuentren en tu zona.</p></div></details>
+          <details name="servicios"><summary>Mantenimiento</summary><div class="services__body"><p>Copias de seguridad, actualizaciones y los cambios que necesites, sin preocuparte.</p></div></details>
+        </div>
       </div>
     </section>
 
@@ -518,7 +518,7 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=16" defer></script>
+  <script src="js/main.js?v=17" defer></script>
   <script src="js/modal.js?v=1" defer></script>
   <script src="js/chat.js?v=11" defer></script>
   <script src="/js/consent.js?v=3" defer></script>

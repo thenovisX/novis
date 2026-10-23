@@ -60,6 +60,9 @@
   --max: 1200px;
   --gutter: clamp(20px, 4vw, 40px);
   --ease: cubic-bezier(.22, .61, .36, 1);
+  --ease-out: cubic-bezier(.22, 1, .36, 1);   /* aperturas y entradas cortas */
+  --t-hover: 180ms;
+  --t-ui: 240ms;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -287,10 +290,37 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 .split__aside a { color: var(--blue); text-decoration: underline; text-underline-offset: 3px; }
 
 /* Servicios */
+/* Servicios: desplegable. Se abre uno cada vez (atributo name) y funciona sin JavaScript.
+   La apertura es rápida y pequeña porque se repite muchas veces: 260 ms al abrir, 180 ms al cerrar. */
 .services { border-top: 1px solid var(--line); }
-.services > div { display: grid; grid-template-columns: 2fr 3fr; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--line); }
-.services dt { font-size: 21px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; }
-.services dd { color: var(--body); }
+.services details { border-bottom: 1px solid var(--line); }
+.services summary {
+  position: relative; list-style: none; cursor: pointer; max-width: none;
+  padding: 24px 48px 24px 0; font-size: 21px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; line-height: 1.3;
+}
+.services summary::-webkit-details-marker { display: none; }
+/* Más que pasa a menos: dice si la fila está abierta */
+.services summary::before, .services summary::after {
+  content: ""; position: absolute; right: 6px; top: 50%; width: 14px; height: 1.6px; background: var(--ink);
+  transition: transform var(--t-ui) var(--ease-out), opacity var(--t-hover) ease;
+}
+.services summary::after { transform: rotate(90deg); }
+.services details[open] summary::after { transform: rotate(0); }
+.services details:not([open]) summary::before, .services details:not([open]) summary::after { opacity: .55; }
+.services summary:hover::before, .services summary:hover::after { opacity: 1; }
+.services__body p { padding: 0 48px 26px 0; max-width: 46ch; color: var(--body); }
+/* El texto entra desde donde estaba el título: baja 8 px y aparece */
+.services__body { opacity: 0; translate: 0 -8px; transition: opacity var(--t-hover) ease, translate var(--t-ui) var(--ease-out); }
+.services details[open] .services__body { opacity: 1; translate: 0 0; transition-delay: 60ms; }
+/* La altura se anima solo donde el navegador sabe hacerlo; en los demás se abre al instante */
+@supports (interpolate-size: allow-keywords) {
+  .services { interpolate-size: allow-keywords; }
+  .services details::details-content {
+    block-size: 0; overflow: clip;
+    transition: block-size 180ms var(--ease-out), content-visibility 180ms allow-discrete;
+  }
+  .services details[open]::details-content { block-size: auto; transition-duration: 260ms; }
+}
 
 /* Proceso: es una secuencia real, por eso va numerado */
 .steps { list-style: none; max-width: var(--max); margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: paso; }
@@ -502,7 +532,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   .nav__links a:not(.btn) { font-size: 24px; font-weight: 600; color: var(--text); padding: 14px 0; border-bottom: 1px solid var(--line); }
   .nav__links .btn { margin-top: 24px; font-size: 17px; padding: 14px; }
   .hero__sub, .section__head p, .contact__intro > p { font-size: 17px; }
-  .services > div { grid-template-columns: 1fr; gap: 6px; }
   .form { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
@@ -598,9 +627,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 /* Pantallas táctiles: el elemento del centro de la pantalla se activa como si pasaras el ratón */
 @media (hover: none) {
   .step.is-active::before { width: 100%; }
-  .services > div { transition: transform .4s var(--ease); }
-  .services > div.is-active dt { color: var(--blue); }
-  .services dt { transition: color .3s; }
   .btn:active, .work__tabs [role="tab"]:active, .faq summary:active { transform: scale(.97); }
   .btn, .work__tabs [role="tab"] { transition: transform .15s, background .2s, color .2s, box-shadow .2s; }
   .stage { touch-action: pan-y; }

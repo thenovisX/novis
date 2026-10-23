@@ -55,7 +55,7 @@ const T = GL ? {
   if ('IntersectionObserver' in window && !reducir) {
     document.documentElement.classList.add('anim-on');
     const grupos = [
-      ['#servicios .split__aside', '#servicios .services > div'],
+      ['#servicios .split__aside', '#servicios .services > details'],
       ['#proceso .section__head', '#proceso .step'],
       ['#planes .section__head', '#planes .plan'],
       ['#planes .extras__head', '#planes .extra', '#planes .extras__foot'],
@@ -91,7 +91,7 @@ const T = GL ? {
       const grupo = e.target.parentElement;
       grupo.classList.toggle('has-active', !!grupo.querySelector('.is-active'));
     }), { rootMargin: '-42% 0px -42% 0px' });
-    document.querySelectorAll('.step, .services > div, .extra').forEach(el => centro.observe(el));
+    document.querySelectorAll('.step, .extra').forEach(el => centro.observe(el));
   }
 
   // Alojamiento y mantenimiento: foco de luz que sigue al ratón, lista en cascada y precio que cuenta
