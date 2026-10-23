@@ -11,7 +11,7 @@
   'use strict';
 
   // ► Para activar Google Analytics 4, pega aquí tu ID de medición (empieza por G-). Vacío = no se carga nada.
-  var GA_ID = '';
+  var GA_ID = 'G-15CTJ93EKN';
 
   var GL = document.documentElement.lang === 'gl';
   var CLAVE = 'novis_consent';
