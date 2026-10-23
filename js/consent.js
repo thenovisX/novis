@@ -4,6 +4,9 @@
 //    en cualquier momento desde el enlace «Configurar cookies» del pie de página.
 //  · Si el navegador envía la señal Global Privacy Control, se entiende como rechazo de la analítica.
 //  · La elección se guarda 12 meses en el navegador (localStorage, clave «novis_consent»); es una cookie técnica exenta.
+//  · Modo de consentimiento v2 de Google (básico): todo «denied» por defecto; al aceptar solo pasa a «granted»
+//    analytics_storage (no usamos publicidad) y entonces se carga la etiqueta. Al retirar el consentimiento,
+//    se vuelve a «denied» en la misma página y se borran las cookies de Analytics.
 (function () {
   'use strict';
 
@@ -52,24 +55,34 @@
   var gpcActivo = navigator.globalPrivacyControl === true;
 
   /* ---------- Google Analytics (solo con consentimiento) ---------- */
+  var DENEGADO = { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' };
+  var gtag = function () {};
+  if (GA_ID) {
+    // Estado por defecto antes de cualquier otra orden de Google, como pide el modo de consentimiento.
+    window.dataLayer = window.dataLayer || [];
+    gtag = window.gtag = function () { window.dataLayer.push(arguments); };
+    gtag('consent', 'default', DENEGADO);
+    gtag('set', 'ads_data_redaction', true);
+  }
   var gaCargado = false;
   function cargarGA() {
-    if (!GA_ID || gaCargado) return;
-    gaCargado = true;
+    if (!GA_ID) return;
     window['ga-disable-' + GA_ID] = false;
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { window.dataLayer.push(arguments); }
-    window.gtag = gtag;
-    gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted' });
+    gtag('consent', 'update', { analytics_storage: 'granted' });
+    if (gaCargado) return;
+    gaCargado = true;
     gtag('js', new Date());
-    gtag('config', GA_ID, { anonymize_ip: true, allow_google_signals: false, allow_ad_personalization_signals: false });
+    gtag('config', GA_ID, { allow_google_signals: false, allow_ad_personalization_signals: false });
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
     document.head.appendChild(s);
   }
   function quitarGA() {
-    if (GA_ID) window['ga-disable-' + GA_ID] = true;
+    if (GA_ID) {
+      if (gaCargado) gtag('consent', 'update', DENEGADO);
+      window['ga-disable-' + GA_ID] = true;
+    }
     var host = location.hostname, partes = host.split('.'), dominios = [host, '.' + host];
     if (partes.length > 2) dominios.push('.' + partes.slice(-2).join('.'));
     document.cookie.split(';').forEach(function (c) {
