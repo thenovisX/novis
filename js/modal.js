@@ -1,4 +1,4 @@
-// Novis — ventanas emergentes (<dialog>): se abren con [data-modal="id"] y se cierran con la X, Escape,
+// The Novis — ventanas emergentes (<dialog>): se abren con [data-modal="id"] y se cierran con la X, Escape,
 // pulsando fuera o al elegir un plan dentro de ellas.
 (function () {
   'use strict';

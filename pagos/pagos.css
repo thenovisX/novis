@@ -1,4 +1,4 @@
-/* Novis — área de clientes (pagos) */
+/* The Novis — área de clientes (pagos) */
 .acc-page { background: var(--mist); }
 .acc-page .footer { background: var(--mist); }
 .acc-user { display: flex; align-items: center; gap: 14px; font-size: 15px; color: var(--body); }

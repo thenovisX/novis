@@ -1,6 +1,6 @@
-# Novis
+# The Novis
 
-Web de Novis — diseño y desarrollo web para empresas.
+Web de The Novis — diseño y desarrollo web para empresas.
 
 ## Estructura
 
@@ -62,7 +62,7 @@ return [
 
 1. En el panel → **Pagos → Nuevo pago** creas un código (concepto, contenido, importe con IVA, email opcional, caducidad opcional).
 2. El cliente entra en `thenovis.com/pagos/`, crea su cuenta (email, teléfono, usuario y contraseña, o Google), confirma su email e introduce el código.
-3. Paga en la página segura de Stripe. Stripe avisa a `pagos/webhook.php` y el pago queda como **Pagado** en el panel; cliente y Novis reciben un email.
+3. Paga en la página segura de Stripe. Stripe avisa a `pagos/webhook.php` y el pago queda como **Pagado** en el panel; cliente y The Novis reciben un email.
 
 Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https://thenovis.com/pagos/webhook.php`, eventos:
 `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`,
@@ -82,7 +82,7 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 
 ## Área de cliente (`/pagos/`, icono de cuenta en la cabecera)
 
-- Pestañas: **Inicio** (resumen y pendientes), **Servicios** (contratados y catálogo para contratar mantenimiento o alojamiento sin código), **Mensajes** (conversaciones con Novis), **Pagos** (código e historial) y **Cuenta** (descargar datos, eliminar cuenta y datos).
+- Pestañas: **Inicio** (resumen y pendientes), **Servicios** (contratados y catálogo para contratar mantenimiento o alojamiento sin código), **Mensajes** (conversaciones con The Novis), **Pagos** (código e historial) y **Cuenta** (descargar datos, eliminar cuenta y datos).
 - Precios del catálogo en `NV_CATALOGO` (`lib/cuentas.php`), sin IVA; el cliente paga con el 21 % incluido.
 - Los mensajes de clientes llegan al panel como solicitudes («Cliente · …»). Se responden desde el detalle de la solicitud: el cliente lo ve en su área y le llega por email.
 

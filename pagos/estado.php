@@ -1,5 +1,5 @@
 <?php
-// Novis — ¿hay un cliente con la sesión iniciada? Lo usa el icono de cuenta de la cabecera.
+// The Novis — ¿hay un cliente con la sesión iniciada? Lo usa el icono de cuenta de la cabecera.
 // Sin cookie de sesión no se crea ninguna: los visitantes normales no reciben cookies.
 require_once __DIR__ . '/../lib/cuentas.php';
 

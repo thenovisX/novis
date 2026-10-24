@@ -1,5 +1,5 @@
 <?php
-// Novis — panel privado: códigos de pago (Stripe)
+// The Novis — panel privado: códigos de pago (Stripe)
 require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -142,7 +142,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Pagos · Novis</title>
+<title>Pagos · The Novis</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
@@ -254,7 +254,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
       <textarea class="msgbox" rows="11" readonly id="msgCliente"><?= e($mensaje) ?></textarea>
       <div class="actions">
         <button class="btn" type="button" data-copy-from="msgCliente" data-copied="Copiado ✓">Copiar mensaje</button>
-        <?php if ($p['email_cliente']): ?><a class="btn btn--ghost" href="mailto:<?= e($p['email_cliente']) ?>?subject=<?= rawurlencode('Pago de ' . $p['concepto'] . ' · Novis') ?>&body=<?= rawurlencode($mensaje) ?>">Abrir en el email</a><?php endif; ?>
+        <?php if ($p['email_cliente']): ?><a class="btn btn--ghost" href="mailto:<?= e($p['email_cliente']) ?>?subject=<?= rawurlencode('Pago de ' . $p['concepto'] . ' · The Novis') ?>&body=<?= rawurlencode($mensaje) ?>">Abrir en el email</a><?php endif; ?>
       </div>
     </section>
     <?php endif; ?>

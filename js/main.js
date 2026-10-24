@@ -1,4 +1,4 @@
-// ===== Novis — interacciones =====
+// ===== The Novis — interacciones =====
 // Textos de la interfaz en castellano y gallego (según <html lang>)
 const GL = document.documentElement.lang === 'gl';
 const T = GL ? {

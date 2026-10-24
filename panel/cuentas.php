@@ -1,5 +1,5 @@
 <?php
-// Novis — panel privado: cuentas de clientes
+// The Novis — panel privado: cuentas de clientes
 require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -117,7 +117,7 @@ if ($vista === 'detalle') {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Cuentas · Novis</title>
+<title>Cuentas · The Novis</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">

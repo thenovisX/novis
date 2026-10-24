@@ -1,5 +1,5 @@
 <?php
-// Novis — panel: seguridad.
+// The Novis — panel: seguridad.
 //  · Estado del cifrado de los datos y de la protección de la base de datos.
 //  · Comprobación de que ningún archivo interno se puede abrir desde internet.
 //  · Copia de la clave de cifrado (hay que guardarla: sin ella los datos no se pueden leer).
@@ -132,7 +132,7 @@ $comprobaciones = [
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Seguridad · Novis</title>
+<title>Seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
 <link rel="stylesheet" href="panel.css?v=19">

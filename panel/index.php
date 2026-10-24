@@ -1,5 +1,5 @@
 <?php
-// Novis — panel privado de solicitudes
+// The Novis — panel privado de solicitudes
 require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -105,8 +105,8 @@ else {
                 $url = $conCuenta ? nv_url('pagos/?a=mensaje&id=' . $id) : nv_url('');
                 $parrafos = ['Hola' . ($sol['nombre'] ? ', ' . e($sol['nombre']) : '') . ':', nl2br(e($texto)),
                     $conCuenta ? 'Puedes contestar desde tu área de cliente.' : 'Puedes contestar respondiendo a este email.'];
-                $html = novis_email_html('Respuesta de Novis', $parrafos, $conCuenta ? 'Ver la conversación' : 'Visitar thenovis.com', $url);
-                novis_mail($sol['email'], 'Respuesta de Novis', "Hola,\n\n$texto\n\n" . ($conCuenta ? "Contesta desde tu área de cliente: $url" : 'Puedes contestar respondiendo a este email.') . "\n\nUn saludo,\nNovis", $html, 'hola@thenovis.com');
+                $html = novis_email_html('Respuesta de The Novis', $parrafos, $conCuenta ? 'Ver la conversación' : 'Visitar thenovis.com', $url);
+                novis_mail($sol['email'], 'Respuesta de The Novis', "Hola,\n\n$texto\n\n" . ($conCuenta ? "Contesta desde tu área de cliente: $url" : 'Puedes contestar respondiendo a este email.') . "\n\nUn saludo,\nNovis", $html, 'hola@thenovis.com');
             }
             volver('id=' . $id . '&respondido=1');
         }
@@ -198,12 +198,12 @@ function hace(string $fecha): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Solicitudes · Novis</title>
+<title>Solicitudes · The Novis</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Novis">
+<meta name="apple-mobile-web-app-title" content="The Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
 <link rel="stylesheet" href="panel.css?v=19">
@@ -324,7 +324,7 @@ return [
         <dt>Privacidad</dt><dd><?= !empty($sol['consentimiento']) ? 'Aceptada el ' . e(date('d/m/Y H:i', strtotime($sol['consentimiento']))) : '—' ?></dd>
       </dl>
       <div class="actions">
-        <a class="btn" href="mailto:<?= e($sol['email']) ?>?subject=<?= rawurlencode('Tu proyecto web con Novis') ?>&body=<?= rawurlencode('Hola ' . $sol['nombre'] . ",\n\nGracias por contactar con Novis. ") ?>">Responder</a>
+        <a class="btn" href="mailto:<?= e($sol['email']) ?>?subject=<?= rawurlencode('Tu proyecto web con The Novis') ?>&body=<?= rawurlencode('Hola ' . $sol['nombre'] . ",\n\nGracias por contactar con The Novis. ") ?>">Responder</a>
         <button class="btn btn--ghost" type="button" data-copy="<?= e($sol['email']) ?>">Copiar email</button>
       </div>
     </section>
@@ -335,7 +335,7 @@ return [
       <ol class="hilo">
         <li class="hilo__msg hilo__msg--cliente"><p class="hilo__meta"><?= e($sol['nombre']) ?> · <?= e(date('d/m/Y H:i', strtotime($sol['creado']))) ?></p><p><?= nl2br(e($sol['mensaje'])) ?></p></li>
         <?php foreach ($hilo as $r): ?>
-          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'Tú (Novis)' : e($sol['nombre']) ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
+          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'Tú (The Novis)' : e($sol['nombre']) ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
         <?php endforeach; ?>
       </ol>
       <form method="post" class="responder">

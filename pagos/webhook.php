@@ -1,5 +1,5 @@
 <?php
-// Novis — webhook de Stripe: Stripe avisa aquí cuando un pago se completa.
+// The Novis — webhook de Stripe: Stripe avisa aquí cuando un pago se completa.
 // URL a configurar en Stripe: https://thenovis.com/pagos/webhook.php
 // Eventos: checkout.session.completed, checkout.session.async_payment_succeeded,
 //          customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
@@ -42,7 +42,7 @@ if (in_array($tipo, ['checkout.session.completed', 'checkout.session.async_payme
     if ($p && (int)($s['amount_total'] ?? -1) === (int)$p['importe'] && strtolower($s['currency'] ?? '') === $p['moneda']) {
         nv_marcar_pagado($pagoId, $s);
     } else {
-        error_log('Novis webhook: pago ' . $pagoId . ' no encontrado o importe distinto');
+        error_log('The Novis webhook: pago ' . $pagoId . ' no encontrado o importe distinto');
     }
 }
 

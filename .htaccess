@@ -1,4 +1,4 @@
-# ===== Novis — configuración del servidor =====
+# ===== The Novis — configuración del servidor =====
 Options -Indexes
 ServerSignature Off
 

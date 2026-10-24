@@ -1,5 +1,5 @@
 <?php
-// Novis — área de clientes: cuenta y pagos con Stripe.
+// The Novis — área de clientes: cuenta y pagos con Stripe.
 require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ir('a=resumen&id=' . $id);
     }
 
-    // Mensaje nuevo a Novis (aparece en el panel como una solicitud más)
+    // Mensaje nuevo a The Novis (aparece en el panel como una solicitud más)
     if ($accion === 'mensaje' && $u) {
         $viejo = $_POST;
         $tema = (string)($_POST['tema'] ?? '');
@@ -326,7 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mb_strlen($texto) < 2 || mb_strlen($texto) > 5000) { aviso('Escribe tu respuesta (máximo 5000 caracteres).', 'err'); ir('a=mensaje&id=' . $m['id']); }
         if (!novis_limite('responder', 20, 3600)) { aviso('Has enviado muchos mensajes seguidos. Prueba de nuevo dentro de un rato.', 'err'); ir('a=mensaje&id=' . $m['id']); }
         $db->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'cliente', ?, ?)")->execute([$m['id'], nv_cifrar($texto), date('c')]);
-        // Si estaba cerrado se vuelve a abrir, para que Novis lo vea como pendiente
+        // Si estaba cerrado se vuelve a abrir, para que The Novis lo vea como pendiente
         $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado IN ('cerrada', 'descartada') THEN 'nueva' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $m['id']]);
         novis_mail('hola@thenovis.com', 'Respuesta de cliente: ' . preg_replace('/^Cliente · /', '', (string)$m['plan']) . ' · ' . $u['usuario'],
             "{$u['usuario']} ha contestado:\n\n$texto\n\nVer la conversación: " . nv_url('panel/?id=' . $m['id']), null, $u['email']);
@@ -438,7 +438,7 @@ $google = nv_google_ok();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title><?= e($titulos[$vista]) ?> — Novis</title>
+  <title><?= e($titulos[$vista]) ?> — The Novis</title>
   <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -449,7 +449,7 @@ $google = nv_google_ok();
   <a href="#contenido" class="skip">Saltar al contenido</a>
   <header class="nav is-scrolled">
     <div class="nav__inner">
-      <a href="../" class="logo" aria-label="Novis, volver a la web"><span class="logo__mark"></span>novis</a>
+      <a href="../" class="logo" aria-label="The Novis, volver a la web"><span class="logo__mark"></span>novis</a>
       <?php if ($u): ?>
         <form method="post" class="acc-user">
           <span><?= e($u['usuario'] ?: $u['email']) ?></span>
@@ -700,7 +700,7 @@ $google = nv_google_ok();
                 <a href="?a=mensaje&amp;id=<?= (int)$m['id'] ?>">
                   <span class="acc-list__main"><strong><?= e(preg_replace('/^Cliente · /', '', (string)($m['plan'] ?: 'Formulario de contacto'))) ?></strong>
                     <small><?= e(mb_strimwidth($m['mensaje'], 0, 80, '…')) ?></small></span>
-                  <?php if ($m['ultimo'] === 'novis'): ?><span class="pill pill--nuevo">Respuesta de Novis</span><?php endif; ?>
+                  <?php if ($m['ultimo'] === 'novis'): ?><span class="pill pill--nuevo">Respuesta de The Novis</span><?php endif; ?>
                   <span class="pill pill--msg-<?= e($m['estado']) ?>"><?= e(NV_ESTADO_MSG[$m['estado']] ?? $m['estado']) ?></span>
                 </a>
               </li>
@@ -718,7 +718,7 @@ $google = nv_google_ok();
       <ol class="hilo">
         <li class="hilo__msg hilo__msg--cliente"><p class="hilo__meta">Tú · <?= e(date('d/m/Y H:i', strtotime($m['creado']))) ?></p><p><?= nl2br(e($m['mensaje'])) ?></p></li>
         <?php foreach ($hilo as $r): ?>
-          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'Novis' : 'Tú' ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
+          <li class="hilo__msg hilo__msg--<?= $r['autor'] === 'novis' ? 'novis' : 'cliente' ?>"><p class="hilo__meta"><?= $r['autor'] === 'novis' ? 'The Novis' : 'Tú' ?> · <?= e(date('d/m/Y H:i', strtotime($r['fecha']))) ?></p><p><?= nl2br(e($r['texto'])) ?></p></li>
         <?php endforeach; ?>
       </ol>
       <?php if (!$hilo): ?><p class="acc-secure datos-nota">Hemos recibido tu mensaje. Te responderemos aquí y te avisaremos por email.</p><?php endif; ?>
@@ -761,7 +761,7 @@ $google = nv_google_ok();
           </ul>
         <?php endif; ?>
       </section>
-      <p class="acc-secure">Los pagos se hacen con Stripe. Novis nunca ve ni guarda los datos de tu tarjeta. Si necesitas una factura, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.</p>
+      <p class="acc-secure">Los pagos se hacen con Stripe. The Novis nunca ve ni guarda los datos de tu tarjeta. Si necesitas una factura, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.</p>
     </div>
 
 <?php elseif ($vista === 'resumen'): ?>
@@ -790,8 +790,8 @@ $google = nv_google_ok();
           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
           <button class="btn acc-pay" name="accion" value="pagar"><?= $esSub ? 'Suscribirme · ' . e(nv_importe_txt($p)) : 'Pagar ' . e(nv_euros((int)$p['importe'])) ?></button>
         </form>
-        <?php if ($esSub): ?><p class="acc-secure">Al suscribirte autorizas a Novis a cobrar esta cuota cada <?= e(NV_PERIODOS[$p['periodo']]) ?> en tu tarjeta hasta que te des de baja.</p><?php endif; ?>
-        <p class="acc-secure">Pago seguro con Stripe: tarjeta, Apple Pay o Google Pay. Novis nunca ve ni guarda los datos de tu tarjeta.</p>
+        <?php if ($esSub): ?><p class="acc-secure">Al suscribirte autorizas a The Novis a cobrar esta cuota cada <?= e(NV_PERIODOS[$p['periodo']]) ?> en tu tarjeta hasta que te des de baja.</p><?php endif; ?>
+        <p class="acc-secure">Pago seguro con Stripe: tarjeta, Apple Pay o Google Pay. The Novis nunca ve ni guarda los datos de tu tarjeta.</p>
       <?php endif; ?>
     </div>
 

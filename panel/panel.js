@@ -1,4 +1,4 @@
-// Novis — panel
+// The Novis — panel
 document.querySelectorAll('[data-copy], [data-copy-from]').forEach(b => b.addEventListener('click', async () => {
   const texto = b.dataset.copy ?? document.getElementById(b.dataset.copyFrom).value;
   const original = b.textContent;

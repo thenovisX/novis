@@ -1,4 +1,4 @@
-// Novis — aviso de cookies y analítica con consentimiento.
+// The Novis — aviso de cookies y analítica con consentimiento.
 //  · Antes de que el visitante elija, NO se carga nada de Google ni se instala ninguna cookie de análisis.
 //  · «Rechazar todas» y «Aceptar todas» tienen el mismo aspecto (como exige la AEPD). Se puede cambiar de opinión
 //    en cualquier momento desde el enlace «Configurar cookies» del pie de página.

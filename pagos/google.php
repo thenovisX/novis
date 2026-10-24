@@ -1,5 +1,5 @@
 <?php
-// Novis — inicio de sesión con Google (OAuth 2.0). Sin scripts de Google en la web.
+// The Novis — inicio de sesión con Google (OAuth 2.0). Sin scripts de Google en la web.
 require_once __DIR__ . '/../lib/cuentas.php';
 
 header('X-Robots-Tag: noindex, nofollow');

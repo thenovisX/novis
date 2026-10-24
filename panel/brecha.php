@@ -1,5 +1,5 @@
 <?php
-// Novis — panel: protocolo ante una brecha de seguridad y registro de incidentes.
+// The Novis — panel: protocolo ante una brecha de seguridad y registro de incidentes.
 //  · Pasos a seguir (contener, evaluar, notificar, registrar, revisar).
 //  · Botón de emergencia: cerrar todas las sesiones abiertas (clientes y panel).
 //  · Registro de incidentes (art. 33.5 RGPD), con los textos cifrados y cuenta atrás de 72 h.
@@ -99,7 +99,7 @@ function horas_restantes(array $i): ?int {
     return (int)floor((strtotime($i['descubierto']) + 72 * 3600 - time()) / 3600);
 }
 
-$plantilla = "Asunto: Información importante sobre tus datos en Novis\n\n"
+$plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
     . "Hola:\n\n"
     . "Te escribimos porque el [FECHA] detectamos un incidente de seguridad en thenovis.com que puede afectar a tus datos.\n\n"
     . "Qué ha pasado: [DESCRIPCIÓN BREVE Y CLARA].\n"
@@ -107,14 +107,14 @@ $plantilla = "Asunto: Información importante sobre tus datos en Novis\n\n"
     . "Qué hemos hecho: [P. EJ. CERRAR EL ACCESO, CAMBIAR CLAVES, AVISAR A LA AEPD].\n"
     . "Qué te recomendamos: [P. EJ. CAMBIAR TU CONTRASEÑA DE NOVIS Y DESCONFIAR DE EMAILS QUE PIDAN DATOS O PAGOS EN NUESTRO NOMBRE].\n\n"
     . "Puedes escribirnos a hola@thenovis.com con cualquier duda o para ejercer tus derechos. También puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).\n\n"
-    . "Sentimos las molestias.\nEl equipo de Novis\n";
+    . "Sentimos las molestias.\nEl equipo de The Novis\n";
 ?><!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Brecha de seguridad · Novis</title>
+<title>Brecha de seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
 <link rel="stylesheet" href="panel.css?v=19">
@@ -154,10 +154,10 @@ $plantilla = "Asunto: Información importante sobre tus datos en Novis\n\n"
     <section class="card">
       <h2>2 · Evaluar el alcance</h2>
       <ul class="pasos">
-        <li><strong>¿Qué datos?</strong> Solicitudes de contacto, cuentas de clientes, pagos, conversaciones… Recuerda que los datos de tarjeta nunca pasan por Novis (los guarda Stripe).</li>
+        <li><strong>¿Qué datos?</strong> Solicitudes de contacto, cuentas de clientes, pagos, conversaciones… Recuerda que los datos de tarjeta nunca pasan por The Novis (los guarda Stripe).</li>
         <li><strong>¿De cuántas personas?</strong> Una cifra aproximada vale.</li>
         <li><strong>¿Estaban cifrados y la clave sigue a salvo?</strong> Si solo se llevaron el archivo de la base de datos, sin la clave, los datos personales son ilegibles y el riesgo es mucho menor.</li>
-        <li><strong>¿Qué daño podría causar?</strong> Spam o suplantación (emails de phishing en nombre de Novis), pérdida de información de clientes, datos de pagos…</li>
+        <li><strong>¿Qué daño podría causar?</strong> Spam o suplantación (emails de phishing en nombre de The Novis), pérdida de información de clientes, datos de pagos…</li>
       </ul>
     </section>
 

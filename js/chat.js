@@ -1,18 +1,18 @@
-// ===== Novis — asistente virtual =====
+// ===== The Novis — asistente virtual =====
 (function () {
   const historial = [];
   const GL = document.documentElement.lang === 'gl';
   const T = GL ? {
-    saludo: 'Ola! Son o asistente virtual de Novis, unha intelixencia artificial. Podo resolver dúbidas sobre os nosos servizos e prezos. En que che axudo?',
+    saludo: 'Ola! Son o asistente virtual de The Novis, unha intelixencia artificial. Podo resolver dúbidas sobre os nosos servizos e prezos. En que che axudo?',
     sugerencias: ['Canto custa unha web?', 'Canto tardades?', 'Facedes webs de reservas para restaurantes?'],
-    panel: 'Asistente de Novis', titulo: 'Asistente Novis', sub: 'Asistente con intelixencia artificial',
+    panel: 'Asistente de The Novis', titulo: 'Asistente de The Novis', sub: 'Asistente con intelixencia artificial',
     cerrar: 'Pechar chat', abrir: 'Abrir chat', nota: 'Respostas xeradas por IA; poden conter erros. Non compartas datos persoais.',
     priv: 'Privacidade', placeholder: 'Escribe a túa pregunta…', mensaje: 'A túa mensaxe', enviar: 'Enviar',
     error: 'Agora mesmo non podo responder. Escríbenos a hola@thenovis.com.',
   } : {
-    saludo: '¡Hola! Soy el asistente virtual de Novis, una inteligencia artificial. Puedo resolver dudas sobre nuestros servicios y precios. ¿En qué te ayudo?',
+    saludo: '¡Hola! Soy el asistente virtual de The Novis, una inteligencia artificial. Puedo resolver dudas sobre nuestros servicios y precios. ¿En qué te ayudo?',
     sugerencias: ['¿Cuánto cuesta una web?', '¿Cuánto tardáis?', '¿Hacéis webs de reservas para restaurantes?'],
-    panel: 'Asistente de Novis', titulo: 'Asistente Novis', sub: 'Asistente con inteligencia artificial',
+    panel: 'Asistente de The Novis', titulo: 'Asistente de The Novis', sub: 'Asistente con inteligencia artificial',
     cerrar: 'Cerrar chat', abrir: 'Abrir chat', nota: 'Respuestas generadas por IA; pueden contener errores. No compartas datos personales.',
     priv: 'Privacidad', placeholder: 'Escribe tu pregunta…', mensaje: 'Tu mensaje', enviar: 'Enviar',
     error: 'Ahora mismo no puedo responder. Escríbenos a hola@thenovis.com.',

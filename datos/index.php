@@ -1,5 +1,5 @@
 <?php
-// Novis — tus datos: ver, descargar y eliminar los datos personales (RGPD, arts. 15, 17 y 20).
+// The Novis — tus datos: ver, descargar y eliminar los datos personales (RGPD, arts. 15, 17 y 20).
 // Funciona sin cuenta: la persona confirma que el email es suyo con un enlace de un solo uso.
 require_once __DIR__ . '/../lib/cuentas.php';
 
@@ -40,14 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->prepare('INSERT INTO datos_tokens (email, email_idx, hash, caduca) VALUES (?, ?, ?, ?)')->execute([nv_cifrar($email), nv_indice($email), hash('sha256', $t), time() + 3600]);
                 $db->prepare('DELETE FROM datos_tokens WHERE caduca < ?')->execute([time() - 86400]);
                 $url = nv_url('datos/?t=' . $t);
-                $html = novis_email_html('Tus datos en Novis', [
-                    'Has pedido ver, descargar o eliminar los datos personales que Novis guarda asociados a este email.',
+                $html = novis_email_html('Tus datos en The Novis', [
+                    'Has pedido ver, descargar o eliminar los datos personales que The Novis guarda asociados a este email.',
                     'Abre el enlace para continuar. Caduca en 1 hora y solo funciona una vez.',
                 ], 'Ver mis datos', $url, 'Si no lo has pedido tú, ignora este mensaje: no se cambiará nada.');
-                $texto = "Has pedido ver, descargar o eliminar tus datos en Novis.\nAbre este enlace (caduca en 1 hora):\n$url\n\nSi no lo has pedido tú, ignora este mensaje.";
-                novis_mail($email, 'Tus datos en Novis', $texto, $html);
+                $texto = "Has pedido ver, descargar o eliminar tus datos en The Novis.\nAbre este enlace (caduca en 1 hora):\n$url\n\nSi no lo has pedido tú, ignora este mensaje.";
+                novis_mail($email, 'Tus datos en The Novis', $texto, $html);
             }
-            // Mismo mensaje haya datos o no, para no revelar quién ha contactado con Novis
+            // Mismo mensaje haya datos o no, para no revelar quién ha contactado con The Novis
             $vista = 'enviado';
         }
     }
@@ -89,7 +89,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Tus datos — Novis</title>
+  <title>Tus datos — The Novis</title>
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/styles.css?v=27">
@@ -99,7 +99,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <a href="#contenido" class="skip">Saltar al contenido</a>
   <header class="nav is-scrolled">
     <div class="nav__inner">
-      <a href="/" class="logo" aria-label="Novis, volver a la web"><span class="logo__mark"></span>novis</a>
+      <a href="/" class="logo" aria-label="The Novis, volver a la web"><span class="logo__mark"></span>novis</a>
       <a href="/" class="link-back">Volver a la web</a>
     </div>
   </header>
@@ -108,7 +108,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
 <?php if ($vista === 'inicio'): ?>
     <div class="acc-card acc-card--wide">
       <h1>Tus datos</h1>
-      <p class="acc-lead">Aquí puedes ver, descargar o eliminar los datos personales que Novis guarda sobre ti: los mensajes que nos enviaste por el formulario y, si la tienes, tu cuenta de pagos.</p>
+      <p class="acc-lead">Aquí puedes ver, descargar o eliminar los datos personales que The Novis guarda sobre ti: los mensajes que nos enviaste por el formulario y, si la tienes, tu cuenta de pagos.</p>
       <?php if ($error): ?><p class="acc-flash acc-flash--err" role="alert"><?= e($error) ?></p><?php endif; ?>
       <form method="post" class="acc-form" novalidate>
         <div class="f"><label for="email">Tu email</label>
@@ -136,7 +136,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
 <?php elseif ($vista === 'datos'): ?>
     <div class="acc-card acc-card--wide">
       <h1>Tus datos</h1>
-      <p class="acc-lead">Estos son los datos que Novis guarda asociados a <strong><?= e($email) ?></strong>.</p>
+      <p class="acc-lead">Estos son los datos que The Novis guarda asociados a <strong><?= e($email) ?></strong>.</p>
 
       <h2 class="datos-h">Mensajes del formulario de contacto</h2>
       <?php if (!$d['solicitudes']): ?><p class="acc-desc">Ninguno.</p><?php else: ?>

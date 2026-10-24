@@ -1,5 +1,5 @@
 <?php
-// Novis — envío del formulario de contacto (funciona en Hostinger con PHP)
+// The Novis — envío del formulario de contacto (funciona en Hostinger con PHP)
 header('Content-Type: application/json; charset=utf-8');
 
 // ====== CONFIGURA AQUÍ ======
@@ -51,7 +51,7 @@ if (!$nombre || !$email || !$mensaje) {
     exit;
 }
 
-// Que el formulario no sirva para llenar de correos a un tercero ni de basura el buzón de Novis
+// Que el formulario no sirva para llenar de correos a un tercero ni de basura el buzón de The Novis
 if (!novis_limite('form-email', 2, 3600, $email) || !novis_limite('form-global', 80, 3600, 'todos')) {
     http_response_code(429);
     echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
@@ -68,20 +68,20 @@ try {
     novis_purgar();
     $guardado = true;
 } catch (Throwable $err) {
-    error_log('Novis contacto (BD): ' . $err->getMessage());
+    error_log('The Novis contacto (BD): ' . $err->getMessage());
 }
 
 $asunto = "Nuevo contacto web: $nombre" . ($empresa ? " ($empresa)" : '');
 $cuerpo = "Nombre: $nombre\nEmpresa: $empresa\nEmail: $email\nPlan: $plan\n\nMensaje:\n$mensaje\n\nVer en el panel: https://thenovis.com/panel/\n";
 $enviado = novis_mail($destino, $asunto, $cuerpo, null, $email);
-if (!$enviado) error_log('Novis contacto: no se pudo enviar el aviso a ' . $destino);
+if (!$enviado) error_log('The Novis contacto: no se pudo enviar el aviso a ' . $destino);
 
 if ($enviado || $guardado) {
     // Confirmación automática al cliente
     try {
         novis_confirmacion($email, $nombre, $plan, ($_POST['idioma'] ?? '') === 'gl' ? 'gl' : 'es');
     } catch (Throwable $err) {
-        error_log('Novis confirmación: ' . $err->getMessage());
+        error_log('The Novis confirmación: ' . $err->getMessage());
     }
     echo json_encode(['ok' => true]);
 } else {
@@ -107,14 +107,14 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     $lineaPlan = $plan === 'Mantenimiento' ? 'Nos has indicado interés en el mantenimiento mensual.' : ($plan ? "Nos has indicado interés en el plan $plan." : '');
 
     $texto = "$saludo\n\n"
-        . "¡Gracias por contactar con Novis! Hemos recibido tu solicitud y te responderemos lo antes posible, normalmente en menos de 24 horas.\n\n"
+        . "¡Gracias por contactar con The Novis! Hemos recibido tu solicitud y te responderemos lo antes posible, normalmente en menos de 24 horas.\n\n"
         . ($lineaPlan ? "$lineaPlan\n\n" : '')
         . "Si quieres añadir algo (ejemplos de webs que te gusten, tu logo, fechas…), responde directamente a este email.\n\n"
-        . "Un saludo,\nEl equipo de Novis\nhttps://thenovis.com\n\n"
+        . "Un saludo,\nEl equipo de The Novis\nhttps://thenovis.com\n\n"
         . "--\nHas recibido este mensaje porque has enviado el formulario de contacto de thenovis.com. Si no has sido tú, puedes ignorarlo.\n"
         . "Política de privacidad: https://thenovis.com/privacidad.html\n";
 
-    $parrafos = [$h($saludo), '¡Gracias por contactar con Novis! Te responderemos <strong>lo antes posible</strong>, normalmente en menos de 24 horas.'];
+    $parrafos = [$h($saludo), '¡Gracias por contactar con The Novis! Te responderemos <strong>lo antes posible</strong>, normalmente en menos de 24 horas.'];
     if ($plan === 'Mantenimiento') $parrafos[] = 'Nos has indicado interés en el <strong>mantenimiento mensual</strong>.';
     elseif ($plan) $parrafos[] = 'Nos has indicado interés en el plan <strong>' . $h($plan) . '</strong>.';
     $parrafos[] = 'Si quieres añadir algo —ejemplos de webs que te gusten, tu logo, fechas…— responde directamente a este email.';
@@ -123,20 +123,20 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     if ($gl) {
         $planGl = ['Esencial' => 'Esencial', 'Profesional' => 'Profesional', 'Restaurante' => 'Restaurante'][$plan] ?? '';
         $lineaGl = $plan === 'Mantenimiento' ? 'Indicáchesnos interese no mantemento mensual.' : ($planGl ? "Indicáchesnos interese no plan $planGl." : '');
-        $texto = "$saludo\n\nGrazas por contactar con Novis! Recibimos a túa solicitude e responderémosche canto antes, normalmente en menos de 24 horas.\n\n"
+        $texto = "$saludo\n\nGrazas por contactar con The Novis! Recibimos a túa solicitude e responderémosche canto antes, normalmente en menos de 24 horas.\n\n"
             . ($lineaGl ? "$lineaGl\n\n" : '')
             . "Se queres engadir algo (exemplos de webs que che gusten, o teu logotipo, datas…), responde directamente a este correo.\n\n"
-            . "Un saúdo,\nO equipo de Novis\nhttps://thenovis.com/gl/\n";
-        $par = [$h($saludo), 'Grazas por contactar con Novis! Responderémosche <strong>canto antes</strong>, normalmente en menos de 24 horas.'];
+            . "Un saúdo,\nO equipo de The Novis\nhttps://thenovis.com/gl/\n";
+        $par = [$h($saludo), 'Grazas por contactar con The Novis! Responderémosche <strong>canto antes</strong>, normalmente en menos de 24 horas.'];
         if ($plan === 'Mantenimiento') $par[] = 'Indicáchesnos interese no <strong>mantemento mensual</strong>.';
         elseif ($planGl) $par[] = 'Indicáchesnos interese no plan <strong>' . $h($planGl) . '</strong>.';
         $par[] = 'Se queres engadir algo —exemplos de webs que che gusten, o teu logotipo, datas…— responde directamente a este correo.';
-        $html = str_replace(['Un saludo,', 'El equipo de Novis'], ['Un saúdo,', 'O equipo de Novis'],
+        $html = str_replace(['Un saludo,', 'El equipo de The Novis'], ['Un saúdo,', 'O equipo de The Novis'],
             novis_email_html('Recibimos a túa solicitude', $par, 'Visitar thenovis.com', 'https://thenovis.com/gl/',
             'Recibiches esta mensaxe porque enviaches o formulario de contacto de thenovis.com. Se non fuches ti, podes ignorala. <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidade</a> · <a href="https://thenovis.com/datos/" style="color:#1d63ed">Eliminar os meus datos</a>'));
-        return novis_mail($para, 'Recibimos a túa solicitude · Novis', $texto, $html, null,
+        return novis_mail($para, 'Recibimos a túa solicitude · The Novis', $texto, $html, null,
             ['Auto-Submitted' => 'auto-replied', 'X-Auto-Response-Suppress' => 'All']);
     }
-    return novis_mail($para, 'Hemos recibido tu solicitud · Novis', $texto, $html, null,
+    return novis_mail($para, 'Hemos recibido tu solicitud · The Novis', $texto, $html, null,
         ['Auto-Submitted' => 'auto-replied', 'X-Auto-Response-Suppress' => 'All']);
 }

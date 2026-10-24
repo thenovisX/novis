@@ -1,4 +1,4 @@
-// Novis — página 404: muestra la dirección que no existe, sugiere la página más probable y se pone en gallego en /gl/
+// The Novis — página 404: muestra la dirección que no existe, sugiere la página más probable y se pone en gallego en /gl/
 (function () {
   var ruta = decodeURI(location.pathname || '/');
   var gl = /^\/gl(\/|$)/.test(ruta);
@@ -13,7 +13,7 @@
 
   if (gl) {
     document.documentElement.lang = 'gl';
-    document.title = 'Páxina non atopada — Novis';
+    document.title = 'Páxina non atopada — The Novis';
     document.querySelectorAll('[data-gl]').forEach(function (el) { el.textContent = el.getAttribute('data-gl'); });
     document.querySelectorAll('[data-gl-href]').forEach(function (el) { el.setAttribute('href', el.getAttribute('data-gl-href')); });
   }
