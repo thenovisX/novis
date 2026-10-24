@@ -208,6 +208,8 @@ body.selecting .selbar { transform: translate(-50%, 0); }
 .form-pago .tipo label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,.15); }
 .form-pago .tipo input { width: 18px; height: 18px; margin: 0; padding: 0; accent-color: var(--accent); flex: none; }
 .form-pago .tipo + .muted { margin: -6px 0 0; }
+.form-pago label.check { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; }
+.form-pago label.check input { width: 18px; height: 18px; margin: 2px 0 0; padding: 0; accent-color: var(--accent); flex: none; }
 
 /* Conversación con el cliente */
 .hilo { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }

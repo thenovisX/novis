@@ -52,6 +52,10 @@ function novis_config(): array {
     $archivo = NOVIS_PRIVATE . '/gemini-config.php';
     $config = is_readable($archivo) ? (include $archivo) : [];
     if (!is_array($config)) $config = [];
+    // Las claves de Stripe también pueden venir de variables de entorno del servidor
+    foreach (['stripe_secret' => 'STRIPE_SECRET_KEY', 'stripe_webhook_secret' => 'STRIPE_WEBHOOK_SECRET'] as $k => $env) {
+        if (empty($config[$k]) && ($v = getenv($env)) !== false && $v !== '') $config[$k] = $v;
+    }
     return $config;
 }
 

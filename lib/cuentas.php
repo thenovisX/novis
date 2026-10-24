@@ -11,6 +11,14 @@ function nv_url(string $ruta = ''): string {
     return $base . '/' . ltrim($ruta, '/');
 }
 function nv_stripe_ok(): bool { return (string)(novis_config()['stripe_secret'] ?? '') !== ''; }
+/** IVA en Stripe: 'auto' (Stripe Tax), un id de tipo impositivo manual (txr_...) o '' (sin desglose). */
+function nv_stripe_iva(): string {
+    $c = novis_config();
+    if (!empty($c['stripe_tax'])) return 'auto';
+    return is_string($c['stripe_tax_rate'] ?? null) && str_starts_with($c['stripe_tax_rate'], 'txr_') ? $c['stripe_tax_rate'] : '';
+}
+/** Factura de Stripe en los pagos únicos (las suscripciones siempre la generan). Activado salvo que se desactive. */
+function nv_stripe_facturas(): bool { return (bool)(novis_config()['stripe_facturas'] ?? true); }
 function nv_google_ok(): bool {
     $c = novis_config();
     return !empty($c['google_client_id']) && !empty($c['google_client_secret']);
@@ -79,6 +87,8 @@ function nv_db(): PDO {
     if (!in_array('pagador_idx', $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN pagador_idx TEXT');
     $colsU = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
     foreach (['email_idx', 'usuario_idx'] as $col) if (!in_array($col, $colsU, true)) novis_alter($db, "ALTER TABLE usuarios ADD COLUMN $col TEXT");
+    // Cliente de Stripe de cada cuenta: todas sus facturas y suscripciones quedan juntas en Stripe
+    if (!in_array('stripe_customer', $colsU, true)) novis_alter($db, 'ALTER TABLE usuarios ADD COLUMN stripe_customer TEXT');
     $colsT = array_column($db->query('PRAGMA table_info(datos_tokens)')->fetchAll(), 'name');
     if (!in_array('email_idx', $colsT, true)) novis_alter($db, 'ALTER TABLE datos_tokens ADD COLUMN email_idx TEXT');
     // Conversación de cada mensaje (solicitud) entre el cliente y Novis
@@ -372,10 +382,10 @@ function nv_emails_pago(array $p): void {
             $sub ? 'Tu suscripción ya está activa. ¡Gracias por confiar en Novis!' : 'Hemos recibido tu pago. ¡Gracias por confiar en Novis!',
             '<strong>Concepto:</strong> ' . e($p['concepto']) . '<br><strong>Importe:</strong> ' . e($importe) . '<br><strong>Referencia:</strong> ' . e($p['codigo']),
             $sub ? 'Se renovará automáticamente cada ' . NV_PERIODOS[$p['periodo']] . '. <strong>No tiene permanencia</strong>: puedes cancelarla cuando quieras desde tu área de cliente.'
-                 : 'Stripe te enviará también su propio recibo. Si necesitas factura o tienes cualquier duda, responde a este email.',
+                 : (nv_stripe_facturas() ? 'Stripe te enviará la factura por email. Si tienes cualquier duda, responde a este email.' : 'Stripe te enviará también su propio recibo. Si necesitas factura o tienes cualquier duda, responde a este email.'),
         ], $sub ? 'Gestionar mi suscripción' : 'Ver mis pagos', nv_url($sub ? 'pagos/?a=resumen&id=' . $p['id'] : 'pagos/'));
         $texto = ($sub ? 'Tu suscripción ya está activa.' : 'Hemos recibido tu pago.') . " ¡Gracias por confiar en Novis!\n\nConcepto: {$p['concepto']}\nImporte: $importe\nReferencia: {$p['codigo']}\n\n"
-            . ($sub ? 'Se renueva automáticamente y puedes cancelarla cuando quieras: ' . nv_url('pagos/?a=resumen&id=' . $p['id']) : 'Si necesitas factura, responde a este email.');
+            . ($sub ? 'Se renueva automáticamente y puedes cancelarla cuando quieras: ' . nv_url('pagos/?a=resumen&id=' . $p['id']) : (nv_stripe_facturas() ? 'Stripe te enviará la factura por email.' : 'Si necesitas factura, responde a este email.'));
         novis_mail($email, ($sub ? 'Suscripción activada' : 'Pago recibido') . ' · Novis', $texto, $html, $destino);
     }
     $texto = (nv_es_sub($p) ? 'Nueva suscripción' : 'Pago recibido por Stripe') . "\n\nConcepto: {$p['concepto']}\nImporte: $importe\nCódigo: {$p['codigo']}\nCliente: $email\n\nVer en el panel: " . nv_url('panel/pagos.php');
@@ -419,6 +429,11 @@ function nv_marcar_pagado(int $pagoId, array $sesion): void {
     $st->execute([date('c'), $sesion['id'] ?? null, is_string($sesion['payment_intent'] ?? null) ? $sesion['payment_intent'] : null,
         is_string($mail) ? nv_cifrar($mail) : null, is_string($mail) ? nv_indice($mail) : null, $pagoId]);
     $primera = $st->rowCount() === 1;
+    // Se recuerda el cliente de Stripe de la cuenta para el próximo pago
+    if (is_string($sesion['customer'] ?? null)) {
+        $db->prepare('UPDATE usuarios SET stripe_customer = ? WHERE id = (SELECT usuario_id FROM pagos WHERE id = ?) AND stripe_customer IS NULL')
+           ->execute([$sesion['customer'], $pagoId]);
+    }
     // Suscripción: se guarda su identificador y su estado (próxima renovación, etc.)
     if (is_string($sesion['subscription'] ?? null)) {
         $db->prepare("UPDATE pagos SET stripe_sub = ?, stripe_customer = COALESCE(stripe_customer, ?), sub_estado = COALESCE(sub_estado, 'active') WHERE id = ?")
