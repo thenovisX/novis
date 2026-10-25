@@ -2,10 +2,8 @@
 // The Novis — envío del formulario de contacto (funciona en Hostinger con PHP)
 header('Content-Type: application/json; charset=utf-8');
 
-// ====== CONFIGURA AQUÍ ======
-$destino = 'hola@thenovis.com';   // Email donde quieres recibir los mensajes
-// Los emails se envían desde el buzón configurado en gemini-config.php (smtp_user / smtp_password).
-// ============================
+// Los mensajes llegan a tu correo (panel → Ajustes) y se envían desde el buzón configurado allí
+// o en gemini-config.php (smtp_user / smtp_password).
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -39,6 +37,7 @@ if (empty($_POST['acepto'])) {
 
 require_once __DIR__ . '/lib/correo.php';
 require_once __DIR__ . '/lib/plantilla.php';
+$destino = nv_email_negocio();   // Email donde recibes los mensajes
 if (!novis_limite('form', 5, 3600)) {
     http_response_code(429);
     echo json_encode(['ok' => false, 'error' => 'Demasiados envíos. Inténtalo más tarde.']);
@@ -100,7 +99,9 @@ function novis_confirmacion(string $para, string $nombre, string $plan, string $
     $nombre = preg_replace('/[^\p{L}\s\'\-]/u', '', $nombre);
     $nombre = trim(mb_substr(preg_split('/\s+/', trim($nombre))[0] ?? '', 0, 30));
     $saludo = $gl ? ($nombre !== '' ? "Ola, $nombre:" : 'Ola:') : ($nombre !== '' ? "Hola, $nombre:" : 'Hola:');
+    // Lista cerrada: los de siempre y los que hay ahora en el panel → Planes
     $planes = ['Esencial', 'Profesional', 'Restaurante', 'Mantenimiento'];
+    try { require_once __DIR__ . '/lib/productos.php'; $planes = array_merge($planes, nv_nombres_productos()); } catch (Throwable $e) {}
     $plan = in_array($plan, $planes, true) ? $plan : '';
 
     $h = fn($t) => htmlspecialchars($t, ENT_QUOTES, 'UTF-8');

@@ -122,14 +122,14 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=19">
+<link rel="stylesheet" href="panel.css?v=20">
 </head>
 <body class="v-cuentas">
 
 <?php if ($vista === 'lista'): ?>
   <header class="top">
     <div class="top__row"><h1>Cuentas</h1></div>
-    <nav class="sw" aria-label="Secciones del panel"><a href="./">Solicitudes</a><a href="pagos.php">Pagos</a><a href="cuentas.php" class="on" aria-current="page">Cuentas</a></nav>
+    <?php $seccionActual = 'cuentas'; include __DIR__ . '/nav.php'; ?>
     <div class="stats">
       <div><strong><?= $c['total'] ?></strong><span>cuentas</span></div>
       <div><strong><?= $c['mes'] ?></strong><span>nuevas este mes</span></div>
@@ -253,6 +253,6 @@ if ($vista === 'detalle') {
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=3" defer></script>
+<script src="panel.js?v=4" defer></script>
 </body>
 </html>

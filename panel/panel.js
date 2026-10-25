@@ -39,3 +39,18 @@ if (btnSel) {
     const c = r.querySelector('.pick input'); c.checked = !c.checked; actualizar();
   }));
 }
+
+// Planes: precio con IVA mientras se escribe
+const precio = document.getElementById('precio');
+const conIva = document.getElementById('conIva');
+if (precio && conIva) {
+  const calc = () => {
+    let t = precio.value.replace(/[\s€]/g, '');
+    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(t);
+    conIva.textContent = t === '' ? 'Sin precio: en la web saldrá «Consultar precio».'
+      : isNaN(n) ? '' : 'Con IVA (21 %): ' + (n * 1.21).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  };
+  precio.addEventListener('input', calc);
+  calc();
+}

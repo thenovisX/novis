@@ -106,7 +106,7 @@ $plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
     . "Qué datos tuyos están afectados: [P. EJ. NOMBRE Y EMAIL]. No están afectados: [P. EJ. DATOS DE TARJETA, QUE NUNCA GUARDAMOS].\n"
     . "Qué hemos hecho: [P. EJ. CERRAR EL ACCESO, CAMBIAR CLAVES, AVISAR A LA AEPD].\n"
     . "Qué te recomendamos: [P. EJ. CAMBIAR TU CONTRASEÑA DE NOVIS Y DESCONFIAR DE EMAILS QUE PIDAN DATOS O PAGOS EN NUESTRO NOMBRE].\n\n"
-    . "Puedes escribirnos a hola@thenovis.com con cualquier duda o para ejercer tus derechos. También puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).\n\n"
+    . "Puedes escribirnos a " . nv_email_negocio() . " con cualquier duda o para ejercer tus derechos. También puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).\n\n"
     . "Sentimos las molestias.\nEl equipo de The Novis\n";
 ?><!doctype html>
 <html lang="es">
@@ -117,7 +117,7 @@ $plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
 <title>Brecha de seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=19">
+<link rel="stylesheet" href="panel.css?v=20">
 </head>
 <body class="v-pagos">
   <header class="top top--detail"><a href="seguridad.php" class="back">‹ Seguridad</a></header>
@@ -243,6 +243,6 @@ $plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
       <?php endif; ?>
     </section>
   </main>
-  <script src="panel.js?v=3" defer></script>
+  <script src="panel.js?v=4" defer></script>
 </body>
 </html>

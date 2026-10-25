@@ -19,8 +19,11 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 function novis_mail(string $para, string $asunto, string $texto, ?string $html = null, ?string $responder = null, array $extra = []): bool {
     $c = novis_config();
-    $usuario = $c['smtp_user'] ?? 'hola@thenovis.com';
-    $clave   = $c['smtp_password'] ?? '';
+    // Lo guardado en el panel → Ajustes manda sobre gemini-config.php
+    $usuario = nv_ajuste('smtp_user') ?? ($c['smtp_user'] ?? 'hola@thenovis.com');
+    $clave   = nv_ajuste('smtp_pass') ?? ($c['smtp_password'] ?? '');
+    $host    = nv_ajuste('smtp_host') ?? ($c['smtp_host'] ?? 'smtp.hostinger.com');
+    $puerto  = (int)(nv_ajuste('smtp_port') ?? ($c['smtp_port'] ?? 465));
 
     $m = new PHPMailer(true);
     try {
@@ -28,8 +31,8 @@ function novis_mail(string $para, string $asunto, string $texto, ?string $html =
         $m->Encoding = 'base64';
         if ($clave !== '') {
             $m->isSMTP();
-            $m->Host = $c['smtp_host'] ?? 'smtp.hostinger.com';
-            $m->Port = (int)($c['smtp_port'] ?? 465);
+            $m->Host = $host;
+            $m->Port = $puerto;
             $m->SMTPSecure = $m->Port === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
             $m->SMTPAuth = true;
             $m->Username = $usuario;
@@ -38,7 +41,7 @@ function novis_mail(string $para, string $asunto, string $texto, ?string $html =
         } else {
             $m->isMail();
         }
-        $m->setFrom($usuario, 'Novis');
+        $m->setFrom($usuario, nv_ajuste('negocio', 'Novis'));
         $m->Sender = $usuario;
         $m->addAddress($para);
         if ($responder) $m->addReplyTo($responder);
@@ -54,6 +57,7 @@ function novis_mail(string $para, string $asunto, string $texto, ?string $html =
         return $m->send();
     } catch (Throwable $e) {
         error_log('Novis correo: ' . $m->ErrorInfo . ' ' . $e->getMessage());
+        $GLOBALS['novis_mail_error'] = $m->ErrorInfo ?: $e->getMessage();
         return false;
     }
 }

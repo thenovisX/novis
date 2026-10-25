@@ -157,6 +157,18 @@ Formulario «Cuéntanos tu proyecto» al final de esta página o email hola@then
 Las respuestas las genera una inteligencia artificial y pueden contener errores. Recomienda no compartir datos personales aquí. Más información en la política de privacidad de la web.
 TXT;
 
+// Precios al día: los que se editan en el panel → Planes mandan sobre los escritos arriba
+try {
+    require_once __DIR__ . '/lib/productos.php';
+    $actuales = nv_productos_texto();
+    if ($actuales !== '') {
+        $instrucciones .= "\n\n# PRECIOS ACTUALES (mandan sobre cualquier precio o plan citado antes; si un plan de arriba no aparece aquí, ya no se ofrece)\n"
+            . "Precios sin IVA (21 %).\n" . $actuales;
+    }
+} catch (Throwable $e) {
+    error_log('Novis chat (precios): ' . $e->getMessage());
+}
+
 $cuerpo = [
     'system_instruction' => ['parts' => [['text' => $instrucciones]]],
     'contents' => $contenidos,

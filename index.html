@@ -29,7 +29,7 @@
   <meta name="twitter:image" content="https://thenovis.com/assets/og-image.png?v=10">
   <link rel="preload" href="assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://thenovis.com/#negocio", "name": "The Novis", "alternateName": ["TheNovis", "Novis", "The Novis diseño web"], "url": "https://thenovis.com/", "logo": "https://thenovis.com/assets/favicon-512.png?v=12", "image": "https://thenovis.com/assets/og-image.png?v=10", "description": "Diseño y desarrollo de páginas web para empresas: webs corporativas, tiendas online, landing pages, SEO y mantenimiento.", "email": "hola@thenovis.com", "priceRange": "€€", "address": {"@type": "PostalAddress", "addressLocality": "Vigo", "addressRegion": "Pontevedra", "addressCountry": "ES"}, "areaServed": [{"@type": "City", "name": "Vigo"}, {"@type": "AdministrativeArea", "name": "Galicia"}, {"@type": "Country", "name": "España"}], "knowsLanguage": ["es", "gl", "en"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Planes de diseño web", "itemListElement": [{"@type": "Offer", "name": "Plan Esencial", "price": "249", "priceCurrency": "EUR", "description": "Web de una página adaptada a móvil"}, {"@type": "Offer", "name": "Plan Profesional", "price": "549", "priceCurrency": "EUR", "description": "Web corporativa a medida de hasta 6 secciones"}, {"@type": "Offer", "name": "Plan Restaurante", "price": "29", "priceCurrency": "EUR", "description": "Web y app de reservas para restaurantes: alquiler desde 29 € al mes más alta, o compra por 1.200 €"}, {"@type": "Offer", "name": "Alojamiento y dominio", "price": "120", "priceCurrency": "EUR", "description": "Alojamiento, dominio, https y copias de seguridad (anual; 288 € por 3 años)"}, {"@type": "Offer", "name": "Mantenimiento web", "price": "29", "priceCurrency": "EUR", "description": "Cambios pequeños, actualizaciones y seguridad, mensual y sin permanencia"}]}}, {"@type": "WebSite", "@id": "https://thenovis.com/#web", "url": "https://thenovis.com/", "name": "The Novis", "alternateName": "TheNovis", "inLanguage": "es", "publisher": {"@id": "https://thenovis.com/#negocio"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Cuánto tarda en estar lista mi web?", "acceptedAnswer": {"@type": "Answer", "text": "Una web sencilla suele estar lista en una semana. Proyectos más grandes, entre dos y cuatro semanas."}}, {"@type": "Question", "name": "¿Necesito tener dominio y hosting?", "acceptedAnswer": {"@type": "Answer", "text": "No te preocupes. Si no lo tienes, te ayudamos a contratarlo y lo dejamos todo configurado."}}, {"@type": "Question", "name": "¿Podré hacer cambios yo mismo?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Te explicamos cómo hacer los cambios básicos y, si lo prefieres, los hacemos nosotros con el plan de mantenimiento."}}, {"@type": "Question", "name": "¿Se verá bien en el móvil?", "acceptedAnswer": {"@type": "Answer", "text": "Siempre. Todas nuestras webs se diseñan pensando primero en el móvil."}}, {"@type": "Question", "name": "¿Qué incluye el mantenimiento y puedo dejarlo?", "acceptedAnswer": {"@type": "Answer", "text": "Por 29 € al mes hacemos los cambios pequeños que necesites (hasta 2 horas al mes), las actualizaciones y las revisiones de seguridad. No tiene permanencia: te das de baja cuando quieras y tu web sigue online. Sin mantenimiento, cada cambio se presupuesta aparte desde 30 €."}}, {"@type": "Question", "name": "¿Cuánto cuesta tener la web online?", "acceptedAnswer": {"@type": "Answer", "text": "El alojamiento y el dominio cuestan 120 € al año, o 288 € si contratas 3 años (un 20 % menos). Incluye el certificado de seguridad y copias de seguridad."}}, {"@type": "Question", "name": "¿Cómo es el pago?", "acceptedAnswer": {"@type": "Answer", "text": "50% al aprobar el diseño y 50% al publicar la web. Sin sorpresas."}}]}]}</script>
-  <link rel="stylesheet" href="css/styles.css?v=31">
+  <link rel="stylesheet" href="css/styles.css?v=32">
 </head>
 <body>
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -220,7 +220,7 @@
         <h2>Precios claros</h2>
         <p>Precios de partida, IVA no incluido. Antes de empezar recibes un presupuesto cerrado para tu caso.</p>
       </div>
-      <div class="plans">
+      <div class="plans"><!-- planes:inicio -->
         <article class="plan">
           <h3>Esencial</h3>
           <p class="plan__desc">Para empezar a estar en internet.</p>
@@ -260,7 +260,7 @@
           <div class="plan__info"><button type="button" class="plan__more" data-modal="restaurante-info" aria-haspopup="dialog" aria-label="Ver precios y detalles del plan Restaurante">Ver precios y detalles</button></div>
           <a href="#contacto" class="btn btn--ghost" data-plan="Restaurante">Pedir el plan Restaurante</a>
         </article>
-      </div>
+      <!-- planes:fin --></div>
       <div class="plans__dots" id="planDots" role="group" aria-label="Elegir plan"></div>
 
       <div class="extras">
@@ -268,6 +268,7 @@
           <h3>Después de publicar</h3>
           <p>Tu web siempre online y al día. IVA no incluido.</p>
         </div>
+<!-- servicios:inicio -->
         <article class="extra">
           <h4>Alojamiento y dominio</h4>
           <p class="extra__desc">Tu web publicada con su dominio, certificado de seguridad (https) y copias de seguridad.</p>
@@ -298,6 +299,7 @@
           <p class="extra__note"><strong>Sin permanencia.</strong> Puedes darte de baja cuando quieras, sin penalización, y tu web sigue online igual.</p>
           <a href="#contacto" class="btn btn--ghost" data-plan="Mantenimiento">Quiero mantenimiento</a>
         </article>
+<!-- servicios:fin -->
         <p class="extras__foot">¿Sin mantenimiento? Cada cambio se presupuesta aparte, <strong>desde 30 €</strong>.</p>
       </div>
     </section>
@@ -465,13 +467,13 @@
           </div>
           <div class="field field--plan">
             <label for="plan">Plan que te interesa</label>
-            <select id="plan" name="plan">
+            <select id="plan" name="plan"><!-- opciones:inicio -->
               <option value="Aún no lo sé">Aún no lo sé</option>
               <option value="Esencial">Esencial</option>
               <option value="Profesional">Profesional</option>
               <option value="Restaurante">Restaurante</option>
               <option value="Mantenimiento">Mantenimiento</option>
-            </select>
+            <!-- opciones:fin --></select>
           </div>
           <div class="field field--full">
             <label for="mensaje">¿Qué necesitas?</label>
