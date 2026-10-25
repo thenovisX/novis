@@ -4,3 +4,4 @@ novis-data/
 *.sqlite
 *.sqlite-*
 *.key
+graphify-out/
