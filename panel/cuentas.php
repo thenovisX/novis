@@ -26,16 +26,33 @@ $errores = [];
 // Lista de clientes que han aceptado recibir publicidad (CSV para tu herramienta de email).
 // Solo ellos: enviar publicidad a quien no la ha aceptado está prohibido (art. 21 LSSI-CE).
 if (($_GET['exportar'] ?? '') === 'publicidad') {
-    $filas = $db->query('SELECT u.email, u.usuario, p.marketing, p.nombre, p.empresa FROM perfiles p JOIN usuarios u ON u.id = p.usuario_id WHERE p.marketing IS NOT NULL ORDER BY p.marketing')->fetchAll();
+    $filas = $db->query("SELECT u.email, u.usuario, p.marketing, p.nombre, p.empresa, 'cliente' AS origen FROM perfiles p JOIN usuarios u ON u.id = p.usuario_id WHERE p.marketing IS NOT NULL ORDER BY p.marketing")->fetchAll();
+    // Más los contactos del formulario que las aceptaron (sin repetir emails)
+    $ya = array_flip(array_map(fn($f) => strtolower((string)$f['email']), $filas));
+    foreach ($db->query("SELECT email, '' AS usuario, marketing, nombre, empresa, 'contacto' AS origen FROM contactos WHERE marketing IS NOT NULL ORDER BY marketing")->fetchAll() as $f) {
+        if (!isset($ya[strtolower((string)$f['email'])])) $filas[] = $f;
+    }
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="publicidad-aceptada-' . date('Y-m-d') . '.csv"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");   // para que Excel lea bien los acentos
-    fputcsv($out, ['email', 'usuario', 'nombre', 'empresa', 'aceptado'], ';');
+    fputcsv($out, ['email', 'usuario', 'nombre', 'empresa', 'aceptado', 'origen'], ';');
     // Un valor que empieza por = + - @ se escapa para que la hoja de cálculo no lo ejecute como fórmula
     $seguro = fn($v) => preg_match('/^[=+\-@\t\r]/', (string)$v) ? "'" . $v : (string)$v;
-    foreach ($filas as $f) fputcsv($out, array_map($seguro, [$f['email'], $f['usuario'], $f['nombre'], $f['empresa'], date('d/m/Y H:i', strtotime($f['marketing']))]), ';');
+    foreach ($filas as $f) fputcsv($out, array_map($seguro, [$f['email'], $f['usuario'], $f['nombre'], $f['empresa'], date('d/m/Y H:i', strtotime($f['marketing'])), $f['origen']]), ';');
     exit;
+}
+
+// Perfiles de contacto (formulario de la web, sin cuenta): retirar permisos o borrar
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contacto'])) {
+    if (!csrf_ok()) volver('f=contactos');
+    $cid = (int)$_POST['contacto'];
+    $accion = (string)($_POST['accion'] ?? '');
+    if ($accion === 'c_publicidad_no') nv_contacto_retirar($cid, 'publicidad', 'panel (a petición)');
+    if ($accion === 'c_perfil_no') nv_contacto_retirar($cid, 'perfil', 'panel (a petición)');
+    if ($accion === 'c_borrar') { $db->prepare('DELETE FROM contactos WHERE id = ?')->execute([$cid]); nv_auditar('contacto_eliminado', null, "contacto #$cid · panel", true); }
+    $st = $db->prepare('SELECT 1 FROM contactos WHERE id = ?'); $st->execute([$cid]);
+    volver($st->fetchColumn() ? 'contacto=' . $cid : 'f=contactos');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -85,7 +102,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errores) volver();
 }
 
-$vista = !empty($_GET['id']) ? 'detalle' : 'lista';
+$vista = !empty($_GET['contacto']) ? 'contacto' : (!empty($_GET['id']) ? 'detalle' : 'lista');
+
+if ($vista === 'contacto') {
+    $st = $db->prepare('SELECT * FROM contactos WHERE id = ?');
+    $st->execute([(int)$_GET['contacto']]);
+    $ct = $st->fetch();
+    if (!$ct) volver('f=contactos');
+    $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email_idx = ? ORDER BY id DESC');
+    $st->execute([$ct['email_idx']]);
+    $msgs = $st->fetchAll();
+    $st = $db->prepare('SELECT id FROM usuarios WHERE email_idx = ?');
+    $st->execute([$ct['email_idx']]);
+    $cuentaId = (int)$st->fetchColumn();
+}
 
 if ($vista === 'detalle') {
     $st = $db->prepare('SELECT * FROM usuarios WHERE id = ?');
@@ -110,6 +140,7 @@ if ($vista === 'detalle') {
     if ($f === 'sin_verificar') $donde[] = 'u.email_verificado IS NULL';
     elseif ($f === 'google') $donde[] = 'u.google_sub IS NOT NULL';
     elseif ($f === 'publicidad') $donde[] = 'p.marketing IS NOT NULL';
+    elseif ($f === 'contactos') $donde[] = '1 = 0';   // esta pestaña lista la tabla contactos (abajo)
     elseif ($f === 'con_pagos') $donde[] = "EXISTS (SELECT 1 FROM pagos p WHERE p.usuario_id = u.id AND p.estado = 'pagado')";
     else $f = 'todas';
     $st = $db->prepare("SELECT u.*, (SELECT COALESCE(SUM(importe),0) FROM pagos pg WHERE pg.usuario_id = u.id AND pg.estado = 'pagado') AS pagado,
@@ -129,8 +160,15 @@ if ($vista === 'detalle') {
         SUM(google_sub IS NOT NULL) google,
         SUM(creado >= '" . date('Y-m-01') . "') mes,
         (SELECT COUNT(DISTINCT usuario_id) FROM pagos WHERE estado = 'pagado' AND usuario_id IS NOT NULL) con_pagos,
-        (SELECT COUNT(*) FROM perfiles WHERE marketing IS NOT NULL) publicidad
+        (SELECT COUNT(*) FROM perfiles WHERE marketing IS NOT NULL) + (SELECT COUNT(*) FROM contactos WHERE marketing IS NOT NULL) publicidad,
+        (SELECT COUNT(*) FROM contactos) contactos
         FROM usuarios")->fetch();
+    $contactos = [];
+    if ($f === 'contactos' || $f === 'publicidad') {
+        $contactos = $db->query('SELECT * FROM contactos' . ($f === 'publicidad' ? ' WHERE marketing IS NOT NULL' : '') . ' ORDER BY id DESC')->fetchAll();
+        if ($q !== '') $contactos = array_values(array_filter($contactos, fn($x) => mb_stripos((string)$x['nombre'] . ' ' . $x['empresa'] . ' ' . $x['email'], $q) !== false));
+        $contactos = array_slice($contactos, 0, 300);
+    }
     $c = array_map('intval', $c);
 }
 ?><!doctype html>
@@ -163,17 +201,29 @@ if ($vista === 'detalle') {
       <input type="search" id="q" name="q" value="<?= e($q) ?>" placeholder="Buscar usuario, email o teléfono">
     </form>
     <nav class="tabs">
-      <?php foreach (['todas' => ['Todas', $c['total']], 'con_pagos' => ['Con pagos', $c['con_pagos']], 'sin_verificar' => ['Sin verificar', $c['sin_verificar']], 'google' => ['Con Google', $c['google']], 'publicidad' => ['Publicidad', $c['publicidad']]] as $k => [$t, $n]): ?>
+      <?php foreach (['todas' => ['Todas', $c['total']], 'con_pagos' => ['Con pagos', $c['con_pagos']], 'sin_verificar' => ['Sin verificar', $c['sin_verificar']], 'google' => ['Con Google', $c['google']], 'contactos' => ['Contactos', $c['contactos']], 'publicidad' => ['Publicidad', $c['publicidad']]] as $k => [$t, $n]): ?>
         <a href="?f=<?= $k ?>" class="<?= $f === $k ? 'on' : '' ?>"><?= $t ?> <small><?= $n ?></small></a>
       <?php endforeach; ?>
     </nav>
   </header>
   <main class="list">
-    <?php if ($f === 'publicidad'): ?><p class="muted small">Solo puedes enviar publicidad a estas cuentas: lo han aceptado con una casilla (la fecha queda guardada). <a href="?exportar=publicidad">Descargar la lista (CSV)</a></p><?php endif; ?>
+    <?php if ($f === 'publicidad'): ?><p class="muted small">Solo puedes enviar publicidad a estas personas (clientes y contactos): lo han aceptado con una casilla (la fecha queda guardada). <a href="?exportar=publicidad">Descargar la lista (CSV)</a></p><?php endif; ?>
     <?php if (!empty($_GET['eliminada'])): ?><p class="toast" role="status">Cuenta eliminada</p><?php endif; ?>
-    <?php if (!$lista): ?>
+    <?php if ($f === 'contactos'): ?><p class="muted small">Personas que escribieron por el formulario y aceptaron guardar su perfil de contacto o recibir promociones. No tienen cuenta.</p><?php endif; ?>
+    <?php if (!$lista && !$contactos): ?>
       <div class="empty"><p><strong><?= $q ? 'Sin resultados' : 'Aún no hay cuentas' ?></strong></p><p class="muted"><?= $q ? 'Prueba con otra búsqueda.' : 'Aparecerán aquí cuando tus clientes se registren en la sección de pagos.' ?></p></div>
     <?php endif; ?>
+    <?php foreach ($contactos as $ct): ?>
+      <a class="item" href="?contacto=<?= (int)$ct['id'] ?>">
+        <span class="avatar" aria-hidden="true"><?= e(mb_strtoupper(mb_substr($ct['nombre'] ?: $ct['email'], 0, 1))) ?></span>
+        <div class="item__main">
+          <div class="item__row"><strong><?= e($ct['nombre'] ?: 'Sin nombre') ?></strong></div>
+          <div class="item__sub"><?= e($ct['email']) ?><?= $ct['empresa'] ? ' · ' . e($ct['empresa']) : '' ?></div>
+          <div class="badges"><span class="pill">Perfil de contacto</span>
+            <?php if ($ct['marketing']): ?><span class="pill pill--cerrada">Publicidad</span><?php endif; ?></div>
+        </div>
+      </a>
+    <?php endforeach; ?>
     <?php foreach ($lista as $u): ?>
       <a class="item" href="?id=<?= (int)$u['id'] ?>">
         <span class="avatar" aria-hidden="true"><?= e(mb_strtoupper(mb_substr($u['usuario'] ?: $u['email'], 0, 1))) ?></span>
@@ -190,6 +240,47 @@ if ($vista === 'detalle') {
         </div>
       </a>
     <?php endforeach; ?>
+  </main>
+
+<?php elseif ($vista === 'contacto'): ?>
+  <header class="top top--detail"><a href="cuentas.php?f=contactos" class="back">‹ Contactos</a></header>
+  <main class="detail">
+    <section class="card">
+      <div class="person">
+        <span class="avatar avatar--big" aria-hidden="true"><?= e(mb_strtoupper(mb_substr($ct['nombre'] ?: $ct['email'], 0, 1))) ?></span>
+        <div><h1><?= e($ct['nombre'] ?: 'Sin nombre') ?></h1><p class="muted"><?= e($ct['email']) ?> · perfil de contacto</p></div>
+      </div>
+      <dl>
+        <dt>Empresa</dt><dd><?= e($ct['empresa'] ?: '—') ?></dd>
+        <dt>Perfil</dt><dd><?= $ct['perfil'] ? 'Aceptado el ' . e(fecha($ct['perfil'])) : 'No aceptado (solo se guarda para las promociones)' ?></dd>
+        <dt>Publicidad</dt><dd><?= $ct['marketing'] ? 'Aceptada el ' . e(fecha($ct['marketing'])) : 'No aceptada: no le envíes publicidad' ?></dd>
+        <dt>Cuenta de cliente</dt><dd><?= $cuentaId ? '<a href="?id=' . $cuentaId . '">Tiene cuenta</a>' : 'No tiene' ?></dd>
+      </dl>
+      <div class="actions">
+        <a class="btn btn--ghost" href="mailto:<?= e($ct['email']) ?>">Escribir email</a>
+        <?php if ($ct['marketing']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="contacto" value="<?= (int)$ct['id'] ?>"><button class="btn btn--ghost" name="accion" value="c_publicidad_no">Dar de baja de la publicidad</button></form><?php endif; ?>
+        <?php if ($ct['perfil']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="contacto" value="<?= (int)$ct['id'] ?>"><button class="btn btn--ghost" name="accion" value="c_perfil_no">Quitar perfil</button></form><?php endif; ?>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Mensajes</h2>
+      <?php if (!$msgs): ?><p class="muted">No quedan mensajes suyos (se borran a los 2 años).</p><?php else: ?>
+        <ul class="mini">
+          <?php foreach ($msgs as $mm): ?>
+            <li><a href="./?id=<?= (int)$mm['id'] ?>"><span><?= e(preg_replace('/^Cliente · /', '', (string)($mm['plan'] ?: 'Formulario'))) ?><small><?= e(mb_strimwidth($mm['mensaje'], 0, 60, '…')) ?></small></span>
+              <span class="pill pill--<?= e($mm['estado']) ?>"><?= e(fecha($mm['creado'])) ?></span></a></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </section>
+    <section class="card">
+      <h2>Borrar perfil de contacto</h2>
+      <p class="muted">Se borra el perfil y su permiso de publicidad. Sus mensajes siguen en Solicitudes hasta que caduquen.</p>
+      <form method="post" data-confirm="¿Borrar el perfil de contacto de <?= e($ct['nombre'] ?: $ct['email']) ?>?">
+        <input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="contacto" value="<?= (int)$ct['id'] ?>">
+        <button class="btn btn--danger" name="accion" value="c_borrar">Borrar perfil de contacto</button>
+      </form>
+    </section>
   </main>
 
 <?php else: ?>

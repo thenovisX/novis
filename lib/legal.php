@@ -69,6 +69,70 @@ function nv_perfiles_preparar(PDO $db): void {
     )');
 }
 
+/** Crea la tabla «contactos» en SQLite (en MySQL se crea en lib/mysql.php). */
+function nv_contactos_preparar(PDO $db): void {
+    if (novis_es_mysql($db)) return;
+    $db->exec('CREATE TABLE IF NOT EXISTS contactos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creado TEXT NOT NULL,
+        nombre TEXT,
+        empresa TEXT,
+        email TEXT NOT NULL,
+        email_idx TEXT NOT NULL UNIQUE,
+        perfil TEXT,
+        marketing TEXT,
+        actualizado TEXT
+    )');
+}
+
+/* ---------- Perfil de contacto (formulario de la web, sin cuenta) ---------- */
+
+function nv_contacto(string $email): ?array {
+    $st = nv_db()->prepare('SELECT * FROM contactos WHERE email_idx = ?');
+    $st->execute([nv_indice($email)]);
+    return $st->fetch() ?: null;
+}
+
+/**
+ * Guarda el perfil de contacto de quien escribe por el formulario, SOLO si marcó alguna casilla opcional:
+ *  · $perfil: guardar su nombre, empresa y email como contacto (sale en panel → Cuentas → Contactos).
+ *  · $publicidad: recibir promociones por email (entonces se guarda el email y el nombre, lo justo para enviarlas).
+ * Desmarcar aquí no retira nada (eso se hace en «Tus datos»). Cada permiso nuevo se anota con fecha en auditoría.
+ */
+function nv_contacto_guardar(string $nombre, string $empresa, string $email, bool $perfil, bool $publicidad, string $origen): void {
+    if (!$perfil && !$publicidad) return;
+    $db = nv_db();
+    $c = nv_contacto($email);
+    $ahora = date('c');
+    if (!$c) {
+        $db->prepare(novis_sql_ignorar($db) . ' INTO contactos (creado, email, email_idx) VALUES (?, ?, ?)')->execute([$ahora, nv_cifrar($email), nv_indice($email)]);
+        $c = nv_contacto($email);
+    }
+    $id = (int)$c['id'];
+    $db->prepare('UPDATE contactos SET nombre = ?, actualizado = ? WHERE id = ?')->execute([nv_cifrar(mb_substr($nombre, 0, 120)), $ahora, $id]);
+    if ($perfil) {
+        $db->prepare('UPDATE contactos SET empresa = ? WHERE id = ?')->execute([$empresa !== '' ? nv_cifrar(mb_substr($empresa, 0, 120)) : null, $id]);
+        if (!$c['perfil']) {
+            $db->prepare('UPDATE contactos SET perfil = ? WHERE id = ?')->execute([$ahora, $id]);
+            nv_auditar('contacto_perfil_acepta', null, "contacto #$id · $origen · privacidad " . NV_PRIVACIDAD);
+        }
+    }
+    if ($publicidad && !$c['marketing']) {
+        $db->prepare('UPDATE contactos SET marketing = ? WHERE id = ?')->execute([$ahora, $id]);
+        nv_auditar('contacto_publicidad_acepta', null, "contacto #$id · $origen · privacidad " . NV_PRIVACIDAD);
+    }
+}
+
+/** Retira un permiso de un contacto ('perfil' o 'publicidad'). Si no le queda ninguno, se borra el contacto. */
+function nv_contacto_retirar(int $id, string $que, string $origen): void {
+    $db = nv_db();
+    if ($que === 'perfil') $db->prepare('UPDATE contactos SET perfil = NULL, empresa = NULL WHERE id = ? AND perfil IS NOT NULL')->execute([$id]);
+    elseif ($que === 'publicidad') $db->prepare('UPDATE contactos SET marketing = NULL WHERE id = ? AND marketing IS NOT NULL')->execute([$id]);
+    else return;
+    $db->prepare('DELETE FROM contactos WHERE id = ? AND perfil IS NULL AND marketing IS NULL')->execute([$id]);
+    nv_auditar($que === 'perfil' ? 'contacto_perfil_retira' : 'contacto_publicidad_retira', null, "contacto #$id · $origen");
+}
+
 /** Preferencias y perfil de un cliente (o una fila vacía si nunca ha aceptado nada). */
 function nv_perfil(int $usuarioId): array {
     $st = nv_db()->prepare('SELECT * FROM perfiles WHERE usuario_id = ?');

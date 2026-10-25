@@ -1,6 +1,7 @@
 // The Novis — aviso de cookies con consentimiento por categorías.
 //  · Antes de que el visitante elija, NO se carga nada de terceros ni se instala ninguna cookie opcional.
-//  · «Rechazar todas» y «Aceptar todas» tienen el mismo aspecto (como exige la AEPD). Se puede cambiar de opinión
+//  · Las cookies necesarias no se pueden rechazar. «Rechazar opcionales» y «Aceptar todas» tienen el mismo aspecto
+//    y están en la primera capa (como exige la AEPD). Se puede cambiar de opinión
 //    en cualquier momento desde el enlace «Configurar cookies» del pie de página.
 //  · Si el navegador envía la señal Global Privacy Control, se entiende como rechazo de todo lo opcional.
 //  · La elección se guarda 12 meses en el navegador (localStorage, clave «novis_consent»); es almacenamiento técnico exento.
@@ -25,18 +26,18 @@
   var DURACION = 365 * 24 * 3600 * 1000;
   var T = GL ? {
     titulo: 'Cookies e privacidade',
-    texto: 'Usamos cookies técnicas, necesarias para que a web funcione, e —só se as aceptas— cookies opcionais para saber como se usa a web e mellorala. Podes aceptalas, rexeitalas ou escoller por categorías.',
-    mas: 'Máis información', rechazar: 'Rexeitar todas', aceptar: 'Aceptar todas', config: 'Configurar', guardar: 'Gardar a miña selección',
-    nec: 'Necesarias', necD: 'Permiten iniciar sesión, pagar con seguridade e lembrar esta elección. Non se poden desactivar.',
+    texto: 'Usamos cookies necesarias para que a web funcione (iniciar sesión, pagar con seguridade, lembrar esta elección): esas están sempre activas. As opcionais, para saber como se usa a web e mellorala, só se activan se as aceptas. Podes aceptalas, rexeitalas ou escoller por categorías.',
+    mas: 'Máis información', rechazar: 'Rexeitar opcionais', aceptar: 'Aceptar todas', config: 'Configurar', guardar: 'Gardar a miña selección',
+    nec: 'Necesarias', necD: 'Sempre activas: sen elas non se pode iniciar sesión, pagar con seguridade nin lembrar esta elección. Non se poden rexeitar.',
     ana: 'Análise', anaD: 'Google Analytics: contan visitas e mostran que partes da web se usan máis. Datos agregados; sen publicidade.',
     mkt: 'Publicidade', mktD: 'Permiten mostrarche anuncios relevantes noutras webs e medir as nosas campañas.',
     gpc: 'O teu navegador envía a sinal «Global Privacy Control» e tomámola como un rexeitamento das cookies opcionais. Podes cambialo aquí.',
     region: 'Aviso de cookies'
   } : {
     titulo: 'Cookies y privacidad',
-    texto: 'Usamos cookies técnicas, necesarias para que la web funcione, y —solo si las aceptas— cookies opcionales para saber cómo se usa la web y mejorarla. Puedes aceptarlas, rechazarlas o elegir por categorías.',
-    mas: 'Más información', rechazar: 'Rechazar todas', aceptar: 'Aceptar todas', config: 'Configurar', guardar: 'Guardar mi selección',
-    nec: 'Necesarias', necD: 'Permiten iniciar sesión, pagar con seguridad y recordar esta elección. No se pueden desactivar.',
+    texto: 'Usamos cookies necesarias para que la web funcione (iniciar sesión, pagar con seguridad, recordar esta elección): esas están siempre activas. Las opcionales, para saber cómo se usa la web y mejorarla, solo se activan si las aceptas. Puedes aceptarlas, rechazarlas o elegir por categorías.',
+    mas: 'Más información', rechazar: 'Rechazar opcionales', aceptar: 'Aceptar todas', config: 'Configurar', guardar: 'Guardar mi selección',
+    nec: 'Necesarias', necD: 'Siempre activas: sin ellas no se puede iniciar sesión, pagar con seguridad ni recordar esta elección. No se pueden rechazar.',
     ana: 'Analítica', anaD: 'Google Analytics: cuentan visitas y muestran qué partes de la web se usan más. Datos agregados; sin publicidad.',
     mkt: 'Publicidad', mktD: 'Permiten mostrarte anuncios relevantes en otras webs y medir nuestras campañas.',
     gpc: 'Tu navegador envía la señal «Global Privacy Control» y la tomamos como un rechazo de las cookies opcionales. Puedes cambiarlo aquí.',

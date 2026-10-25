@@ -76,7 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare('INSERT INTO usuarios (email, email_idx, usuario, usuario_idx, telefono, password_hash, creado) VALUES (?, ?, ?, ?, ?, ?, ?)')
                ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), password_hash($pass, PASSWORD_DEFAULT), date('c')]);
             $id = (int)$db->lastInsertId();
-            nv_auditar('registro_acepta', $id, 'condiciones ' . NV_CONDICIONES . ' + privacidad');
+            nv_auditar('registro_acepta', $id, 'condiciones ' . NV_CONDICIONES . ' + privacidad ' . NV_PRIVACIDAD);
+            if (!empty($_POST['publicidad'])) nv_marketing($id, true, 'registro');
             nv_entrar($id);
             nv_email_verificacion(['id' => $id, 'email' => $email, 'usuario' => $usuario]);
             ir();
@@ -169,7 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if (!$errores) {
             $db->prepare('UPDATE usuarios SET usuario = ?, usuario_idx = ?, telefono = ? WHERE id = ?')->execute([nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), $u['id']]);
-            nv_auditar('perfil_acepta', (int)$u['id'], 'condiciones ' . NV_CONDICIONES . ' + privacidad');
+            nv_auditar('perfil_acepta', (int)$u['id'], 'condiciones ' . NV_CONDICIONES . ' + privacidad ' . NV_PRIVACIDAD);
+            if (!empty($_POST['publicidad'])) nv_marketing((int)$u['id'], true, 'registro con Google');
             ir();
         }
     }
@@ -204,7 +206,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $p = $st->fetch();
         if (!$p) ir();
         if ($p['estado'] !== 'pendiente') ir('a=resumen&id=' . $p['id']);
+        // Casilla obligatoria: condiciones de contratación (con el aviso sobre el desistimiento) y privacidad de esta compra
+        if (empty($_POST['acepto_compra'])) { aviso('Para pagar, marca la casilla de aceptación de las condiciones de contratación y la política de privacidad.', 'err'); ir('a=resumen&id=' . $p['id']); }
         if (!nv_stripe_ok()) { aviso('Los pagos online aún no están activados. Escríbenos a ' . nv_email_negocio() . '.', 'err'); ir('a=resumen&id=' . $p['id']); }
+        nv_auditar('compra_acepta', (int)$u['id'], $p['codigo'] . ' · condiciones ' . NV_CONDICIONES . ' + privacidad ' . NV_PRIVACIDAD);
         // Casillas opcionales (vienen sin marcar): solo se anota lo que el cliente marca, con fecha.
         // No marcarlas no impide pagar; desmarcarlas aquí no retira nada (eso se hace en «Tu cuenta»).
         if (!empty($_POST['publicidad'])) nv_marketing((int)$u['id'], true, 'compra ' . $p['codigo']);
@@ -456,7 +461,7 @@ $google = nv_google_ok();
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../css/styles.css?v=27">
-  <link rel="stylesheet" href="pagos.css?v=6">
+  <link rel="stylesheet" href="pagos.css?v=7">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -529,6 +534,8 @@ $google = nv_google_ok();
         <label class="f-check"><input type="checkbox" name="acepto" value="1"<?= !empty($viejo['acepto']) ? ' checked' : '' ?><?= inv($errores, 'acepto') ?>>
           <span>He leído y acepto las <a href="../condiciones.html" target="_blank" rel="noopener">condiciones de contratación</a> y la <a href="../privacidad.html#cuentas" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
         <?= err($errores, 'acepto') ?>
+        <label class="f-check"><input type="checkbox" name="publicidad" value="1"<?= !empty($viejo['publicidad']) ? ' checked' : '' ?>>
+          <span>Quiero recibir por email promociones, descuentos y novedades. Puedo darme de baja cuando quiera. <small>(opcional)</small></span></label>
         <button class="btn" name="accion" value="registro">Crear cuenta</button>
       </form>
       <p class="acc-alt">¿Ya tienes cuenta? <a href="./">Iniciar sesión</a></p>
@@ -584,6 +591,8 @@ $google = nv_google_ok();
         <label class="f-check"><input type="checkbox" name="acepto" value="1"<?= inv($errores, 'acepto') ?>>
           <span>He leído y acepto las <a href="../condiciones.html" target="_blank" rel="noopener">condiciones de contratación</a> y la <a href="../privacidad.html#cuentas" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
         <?= err($errores, 'acepto') ?>
+        <label class="f-check"><input type="checkbox" name="publicidad" value="1"<?= !empty($viejo['publicidad']) ? ' checked' : '' ?>>
+          <span>Quiero recibir por email promociones, descuentos y novedades. Puedo darme de baja cuando quiera. <small>(opcional)</small></span></label>
         <button class="btn" name="accion" value="perfil">Continuar</button>
       </form>
     </div>
@@ -802,6 +811,8 @@ $google = nv_google_ok();
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+          <label class="f-check acc-req"><input type="checkbox" name="acepto_compra" value="1" required>
+            <span>He leído y acepto las <a href="../condiciones.html" target="_blank" rel="noopener">condiciones de contratación</a> y la <a href="../privacidad.html#compras" target="_blank" rel="noopener">política de privacidad</a>. Si contrato como consumidor, pido que empecéis ya y sé que, si el servicio se completa antes de 14 días, pierdo el derecho de desistimiento (pagando solo la parte hecha si desisto antes). <small>(obligatorio)</small></span></label>
           <?php if (!$pf['perfil'] || !$pf['marketing']): ?>
           <fieldset class="acc-opt">
             <legend>Opcional</legend>
@@ -811,7 +822,7 @@ $google = nv_google_ok();
             <?php endif; ?>
             <?php if (!$pf['marketing']): ?>
             <label class="f-check"><input type="checkbox" name="publicidad" value="1">
-              <span>Quiero recibir por email novedades, ofertas y publicidad de <?= e(nv_ajuste('negocio', 'The Novis')) ?>. Puedo darme de baja cuando quiera.</span></label>
+              <span>Quiero recibir por email promociones, descuentos y novedades de <?= e(nv_ajuste('negocio', 'The Novis')) ?>. Puedo darme de baja cuando quiera.</span></label>
             <?php endif; ?>
             <p class="acc-secure">No marcarlas no cambia nada de tu compra. Si no guardas tu perfil, solo conservamos el registro del pago que exige la ley. <a href="../privacidad.html#compras" target="_blank" rel="noopener">Más información</a>.</p>
           </fieldset>
@@ -910,7 +921,7 @@ $google = nv_google_ok();
       <form method="post" class="acc-form">
         <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
         <label class="f-check"><input type="checkbox" name="publicidad" value="1"<?= $pf['marketing'] ? ' checked' : '' ?>>
-          <span>Recibir por email novedades, ofertas y publicidad.<?= $pf['marketing'] ? ' <small>(aceptado el ' . e(date('d/m/Y', strtotime($pf['marketing']))) . ')</small>' : '' ?></span></label>
+          <span>Recibir por email promociones, descuentos y novedades.<?= $pf['marketing'] ? ' <small>(aceptado el ' . e(date('d/m/Y', strtotime($pf['marketing']))) . ')</small>' : '' ?></span></label>
         <label class="f-check"><input type="checkbox" name="guardar_perfil" value="1"<?= $pf['perfil'] ? ' checked' : '' ?>>
           <span>Guardar mi perfil de cliente con mis datos de facturación.<?= $pf['perfil'] ? ' <small>(aceptado el ' . e(date('d/m/Y', strtotime($pf['perfil']))) . '; si lo desmarcas, lo borramos)</small>' : '' ?></span></label>
         <button class="btn btn--ghost" name="accion" value="preferencias">Guardar preferencias</button>
