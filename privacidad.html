@@ -28,8 +28,10 @@
     </div>
   </header>
   <main id="contenido" tabindex="-1" class="legal">
+    <!-- Estructura basada en la plantilla «Privacy Policy (GDPR Enhanced)» de General Legal, PC (CC0 1.0),
+         adaptada al RGPD, la LOPDGDD y la LSSI-CE. Ver legal/LEEME.md. -->
     <h1>Política de privacidad</h1>
-    <p class="legal__date">Última actualización: 23 de octubre de 2026</p>
+    <p class="legal__date">Última actualización: 25 de octubre de 2026</p>
 
     <section>
       <h2>1. Responsable del tratamiento</h2>
@@ -37,13 +39,24 @@
         <dt>Responsable</dt><dd><!--d:titular--><mark class="pend">[PENDIENTE]</mark><!--/d--> (<!--d:negocio-->The Novis<!--/d-->)</dd>
         <dt>NIF</dt><dd><!--d:nif--><mark class="pend">[PENDIENTE]</mark><!--/d--></dd>
         <dt>Domicilio</dt><dd><!--d:domicilio--><mark class="pend">[PENDIENTE]</mark><!--/d--></dd>
-        <dt>Contacto</dt><dd><a href="mailto:hola@thenovis.com">hola@thenovis.com</a></dd><!--d:tel-legal--><!--/d-->
+        <dt>Contacto</dt><dd><a href="mailto:hola@thenovis.com">hola@thenovis.com</a></dd><!--d:tel-legal--><!--/d--><!--d:dpd-legal--><!--/d-->
       </dl>
-      <p>Esta política cumple el Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD).</p>
+      <p>Esta política explica qué datos personales tratamos cuando visitas thenovis.com, nos escribes, usas el área de clientes o nos compras algo, y cumple el Reglamento (UE) 2016/679 (RGPD), la Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD) y la Ley 34/2002 de servicios de la sociedad de la información y de comercio electrónico (LSSI-CE).</p>
     </section>
 
     <section>
-      <h2>2. Qué datos tratamos y para qué</h2>
+      <h2>2. De dónde obtenemos tus datos</h2>
+      <ul>
+        <li><strong>De ti:</strong> lo que escribes en el formulario, en el chat, al crear tu cuenta, en tus mensajes y al pagar.</li>
+        <li><strong>De Google:</strong> solo tu email y un identificador, si eliges «Continuar con Google».</li>
+        <li><strong>De Stripe:</strong> el resultado del pago y, solo si nos das permiso para guardar tu perfil de cliente, los datos de facturación que escribes en su página de pago.</li>
+        <li><strong>De forma automática:</strong> datos técnicos de tu conexión para proteger la web y, solo si aceptas las cookies de analítica, datos de uso de la web.</li>
+      </ul>
+      <p>Los datos marcados como obligatorios son necesarios para atenderte o prestarte el servicio; si no los das, no podremos hacerlo. Los opcionales los das solo si quieres.</p>
+    </section>
+
+    <section>
+      <h2>3. Qué datos tratamos, para qué y con qué base legal</h2>
       <h3>Formulario de contacto</h3>
       <ul>
         <li><strong>Datos:</strong> nombre, empresa (opcional), email, plan de interés y el mensaje que escribas.</li>
@@ -54,88 +67,117 @@
       <h3 id="chat">Asistente virtual (chat con inteligencia artificial)</h3>
       <ul>
         <li><strong>Datos:</strong> el texto de las preguntas que escribas en el chat. No te pedimos datos personales y te rogamos que no los incluyas.</li>
-        <li><strong>Finalidad:</strong> responder automáticamente a dudas sobre nuestros servicios.</li>
+        <li><strong>Finalidad:</strong> responder automáticamente a dudas sobre nuestros servicios. Es un sistema de inteligencia artificial y así se indica en el propio chat (art. 50 del Reglamento (UE) 2024/1689 de IA).</li>
         <li><strong>Base legal:</strong> aplicación de medidas precontractuales a petición del interesado (art. 6.1.b RGPD), ya que eres tú quien inicia la consulta.</li>
         <li><strong>Cómo funciona:</strong> las respuestas las genera la API Gemini de Google, que actúa como encargado del tratamiento. Nosotros no guardamos las conversaciones: solo existen en tu navegador mientras la página está abierta. Google puede conservarlas durante un tiempo limitado para detectar abusos, según sus condiciones de servicio de pago, y no las usa para entrenar sus modelos.</li>
       </ul>
 
-      <h3 id="cuentas">Área de clientes y pagos</h3>
+      <h3 id="cuentas">Área de clientes</h3>
       <ul>
-        <li><strong>Datos:</strong> email, teléfono (opcional), nombre de usuario y contraseña (guardada cifrada, nunca en claro). Si eliges «Continuar con Google», recibimos de Google solo tu email y un identificador de cuenta. De cada pago guardamos el concepto, el importe, la fecha y la referencia de Stripe; si es una suscripción, también su estado, la fecha de la próxima renovación y cada cuota cobrada.</li>
+        <li><strong>Datos:</strong> email, teléfono (opcional), nombre de usuario y contraseña (guardada cifrada, nunca en claro). Si eliges «Continuar con Google», recibimos de Google solo tu email y un identificador de cuenta.</li>
         <li><strong>Mensajes:</strong> lo que nos escribes desde tu área de cliente y nuestras respuestas, para atender tus peticiones. Se borran a los 2 años o cuando eliminas tu cuenta.</li>
-        <li><strong>Finalidad:</strong> gestionar tu cuenta, verificar tu email, permitirte pagar los servicios contratados y llevar el registro de pagos.</li>
-        <li><strong>Base legal:</strong> ejecución del contrato o de medidas precontractuales (art. 6.1.b RGPD) y cumplimiento de obligaciones legales contables y fiscales (art. 6.1.c RGPD).</li>
-        <li><strong>Datos de la tarjeta:</strong> los introduces directamente en la página segura de Stripe. The Novis nunca ve ni guarda los datos de tu tarjeta.</li>
-        <li><strong>Registro de auditoría:</strong> para poder demostrar que aceptaste las <a href="condiciones.html">condiciones de contratación</a> y esta política, y proteger tu cuenta, anotamos la fecha, la versión aceptada, la dirección IP y el navegador (cifrados) cuando creas la cuenta, confirmas tu email o cambias tu contraseña. Base legal: interés legítimo (art. 6.1.f RGPD) y cumplimiento de obligaciones legales. Se conserva 3 años y se desvincula de ti si eliminas la cuenta.</li>
+        <li><strong>Finalidad:</strong> gestionar tu cuenta, verificar tu email y permitirte contratar y pagar los servicios.</li>
+        <li><strong>Base legal:</strong> ejecución del contrato o de medidas precontractuales (art. 6.1.b RGPD).</li>
+        <li><strong>Registro de auditoría:</strong> para poder demostrar que aceptaste las <a href="condiciones.html">condiciones de contratación</a> y esta política, o que diste o retiraste un permiso (publicidad, perfil), y para proteger tu cuenta, anotamos la fecha, la versión aceptada, la dirección IP y el navegador (cifrados) cuando creas la cuenta, confirmas tu email, cambias tu contraseña o cambias esos permisos. Base legal: interés legítimo (art. 6.1.f RGPD) y la obligación de poder demostrar el consentimiento (art. 7.1 RGPD). Se conserva 3 años y se desvincula de ti si eliminas la cuenta.</li>
+      </ul>
+
+      <h3 id="compras">Compras y pagos</h3>
+      <ul>
+        <li><strong>Lo que guardamos siempre (obligatorio):</strong> de cada pago, el concepto, el importe, la fecha, el email de quien paga y la referencia de Stripe; si es una suscripción, también su estado, la próxima renovación y cada cuota cobrada. Es lo mínimo para prestarte el servicio, emitir la factura y cumplir la ley. Base legal: ejecución del contrato (art. 6.1.b RGPD) y obligaciones legales contables y fiscales (art. 6.1.c RGPD).</li>
+        <li><strong>Datos de la tarjeta y de facturación:</strong> los escribes directamente en la página segura de Stripe. The Novis nunca ve ni guarda los datos de tu tarjeta. Stripe conserva los datos de la factura (nombre, dirección, NIF) para emitirla.</li>
+        <li><strong>Perfil de cliente (opcional, solo si lo aceptas):</strong> al pagar puedes marcar la casilla «Guardar mis datos de facturación en mi perfil de cliente». Si lo haces, guardamos en tu perfil el nombre, la empresa, el NIF, la dirección y el teléfono que escribas en la página de pago, para tenerlos a mano en tus próximos pedidos y en tu atención. <strong>Si no la marcas, no creamos ningún perfil</strong> y solo guardamos lo obligatorio del punto anterior. Base legal: tu consentimiento (art. 6.1.a RGPD). Puedes borrarlo cuando quieras desde «Tu cuenta» o desde <a href="datos/">Tus datos</a>.</li>
+      </ul>
+
+      <h3 id="publicidad">Comunicaciones comerciales (solo si las aceptas)</h3>
+      <ul>
+        <li><strong>Datos:</strong> tu email y, si lo tenemos, tu nombre y tu empresa.</li>
+        <li><strong>Finalidad:</strong> enviarte por email novedades, ofertas y publicidad de nuestros servicios.</li>
+        <li><strong>Base legal:</strong> tu consentimiento expreso (art. 6.1.a RGPD y art. 21 LSSI-CE), que das marcando una casilla <strong>opcional y desmarcada</strong> al comprar o en «Tu cuenta». Guardamos la fecha en que lo diste. Comprar no depende de aceptarla.</li>
+        <li><strong>Cómo darte de baja:</strong> en cualquier momento, gratis y con un clic: desde el enlace que incluiremos en cada email, en «Tu cuenta», en <a href="datos/">Tus datos</a> o escribiéndonos. Seguirás recibiendo los emails necesarios del servicio (pagos, renovaciones, avisos de seguridad), que no son publicidad.</li>
+        <li>No cedemos tu email a otras empresas para que te envíen su publicidad. No hacemos perfiles automatizados con efectos sobre ti.</li>
       </ul>
 
       <h3 id="analitica">Analítica web (solo si la aceptas)</h3>
       <ul>
         <li><strong>Datos:</strong> datos de uso de la web (páginas vistas, duración, tipo de dispositivo, país aproximado) y un identificador aleatorio guardado en una cookie, mediante <strong>Google Analytics 4</strong>, que no registra ni guarda tu dirección IP. Más detalle en la <a href="cookies.html">política de cookies</a>.</li>
-        <li><strong>Finalidad:</strong> conocer cuánta gente visita la web y qué contenidos interesan, para mejorarla. No usamos los datos para publicidad ni para elaborar perfiles.</li>
-        <li><strong>Base legal:</strong> tu consentimiento (art. 6.1.a RGPD), que das en el aviso de cookies y puedes retirar cuando quieras desde «Configurar cookies», en el pie de página. Hasta que aceptes, no se carga ni se instala nada de Google Analytics. Respetamos la señal Global Privacy Control de tu navegador como rechazo.</li>
-        <li><strong>Encargado del tratamiento:</strong> Google Ireland Ltd., según sus <a href="https://business.safety.google/adsprocessorterms/" target="_blank" rel="noopener">condiciones de tratamiento de datos</a>. No le enviamos datos que te identifiquen, como tu nombre o tu email.</li>
-        <li><strong>Cómo trata Google estos datos:</strong> <a href="https://policies.google.com/technologies/partner-sites?hl=es" target="_blank" rel="noopener"><strong>Cómo utiliza Google la información de sitios web o aplicaciones que utilizan sus servicios</strong></a>.</li>
-        <li><strong>Más información:</strong> consulta la <a href="cookies.html">política de cookies</a>, donde están las cookies que usa, su duración y cómo bloquear Google Analytics.</li>
+        <li><strong>Finalidad:</strong> conocer cuánta gente visita la web y qué contenidos interesan, para mejorarla. No usamos estos datos para publicidad ni para elaborar perfiles.</li>
+        <li><strong>Base legal:</strong> tu consentimiento (art. 6.1.a RGPD y art. 22.2 LSSI-CE), que das en el aviso de cookies y puedes retirar cuando quieras desde «Configurar cookies», en el pie de página. Hasta que aceptes, no se carga nada de Google Analytics. Respetamos la señal Global Privacy Control de tu navegador como rechazo.</li>
+        <li><strong>Encargado del tratamiento:</strong> Google Ireland Ltd., según sus <a href="https://business.safety.google/adsprocessorterms/" target="_blank" rel="noopener">condiciones de tratamiento de datos</a>. No le enviamos datos que te identifiquen, como tu nombre o tu email. Más información: <a href="https://policies.google.com/technologies/partner-sites?hl=es" target="_blank" rel="noopener">cómo utiliza Google la información de sitios web que utilizan sus servicios</a>.</li>
       </ul>
 
       <h3>Seguridad del sitio</h3>
       <ul>
         <li><strong>Datos:</strong> dirección IP, transformada en un código irreversible (hash), y los registros técnicos del servidor.</li>
         <li><strong>Finalidad:</strong> limitar envíos abusivos o automatizados del formulario y del chat y proteger el sitio.</li>
-        <li><strong>Base legal:</strong> interés legítimo en garantizar la seguridad del sitio (art. 6.1.f RGPD).</li>
+        <li><strong>Base legal:</strong> interés legítimo en garantizar la seguridad del sitio (art. 6.1.f RGPD y considerando 49).</li>
       </ul>
+
+      <h3>Datos agregados y anónimos</h3>
+      <p>Podemos elaborar estadísticas agregadas y anónimas (por ejemplo, cuántos pedidos recibimos al mes) que ya no permiten identificar a nadie. Esos datos dejan de ser personales.</p>
     </section>
 
     <section>
-      <h2>3. Cuánto tiempo conservamos los datos</h2>
+      <h2>4. Cuánto tiempo conservamos los datos</h2>
       <ul>
         <li><strong>Solicitudes del formulario:</strong> mientras gestionamos tu solicitud y, como máximo, <strong>2 años</strong> desde su recepción. Pasado ese plazo se eliminan automáticamente.</li>
-        <li><strong>Clientes:</strong> los datos necesarios para facturación se conservan durante los plazos que exige la ley (normativa mercantil y tributaria).</li>
+        <li><strong>Cuenta de cliente:</strong> mientras no la elimines. Puedes borrarla tú mismo desde «Tu cuenta» o desde <a href="datos/">Tus datos</a>.</li>
+        <li><strong>Perfil de cliente:</strong> hasta que retires el permiso o elimines tu cuenta.</li>
+        <li><strong>Permiso de publicidad:</strong> hasta que te des de baja o elimines tu cuenta. La constancia de que lo diste y lo retiraste se guarda 3 años en el registro de auditoría.</li>
+        <li><strong>Pagos y facturas:</strong> 6 años, como exige la normativa mercantil (art. 30 del Código de Comercio) y tributaria, aunque elimines tu cuenta; quedan desvinculados de ella.</li>
         <li><strong>Datos de seguridad (IP cifrada):</strong> como máximo 1 hora.</li>
         <li><strong>Analítica web:</strong> hasta 14 meses, y solo si has aceptado las cookies de analítica.</li>
         <li><strong>Registro de auditoría:</strong> 3 años.</li>
-        <li><strong>Chat:</strong> no se conservan en nuestro servidor.</li>
-        <li><strong>Cuenta de cliente:</strong> mientras no la elimines. Puedes borrarla tú mismo desde «Datos de tu cuenta».</li>
-        <li><strong>Pagos:</strong> durante 6 años, como exige la normativa mercantil (art. 30 del Código de Comercio), aunque elimines tu cuenta.</li>
+        <li><strong>Chat:</strong> no se conserva en nuestro servidor.</li>
       </ul>
     </section>
 
-    <section>
-      <h2>4. Destinatarios y encargados del tratamiento</h2>
-      <p>No vendemos ni cedemos tus datos a terceros, salvo obligación legal. Para prestar el servicio contamos con estos proveedores, que tratan los datos solo siguiendo nuestras instrucciones:</p>
-      <ul>
-        <li><strong>Hostinger International Ltd.</strong> (Unión Europea): alojamiento web, base de datos y correo electrónico.</li>
-        <li><strong>Stripe Payments Europe, Ltd.</strong> (Irlanda): procesamiento de los pagos con tarjeta. Stripe trata los datos de pago como responsable independiente según su propia <a href="https://stripe.com/es/privacy" rel="noopener">política de privacidad</a>.</li>
-        <li><strong>Google</strong>: solo si eliges iniciar sesión con tu cuenta de Google, para confirmar tu identidad.</li>
-        <li><strong>Google Ireland Ltd.</strong> (Google Analytics): estadísticas de uso de la web, solo si aceptas las cookies de analítica. Puede implicar transferencias a Estados Unidos, amparadas en el Marco de Privacidad de Datos UE-EE. UU. y en las cláusulas contractuales tipo.</li>
-        <li><strong>Google</strong> (API Gemini): generación de respuestas del asistente virtual. Este tratamiento puede implicar transferencias internacionales a Estados Unidos, amparadas en las garantías adecuadas previstas en el RGPD, como el Marco de Privacidad de Datos UE-EE. UU. y las cláusulas contractuales tipo de la Comisión Europea.</li>
-      </ul>
+    <section id="destinatarios">
+      <h2>5. Destinatarios y servicios externos</h2>
+      <p>No vendemos ni cedemos tus datos a terceros, salvo obligación legal (por ejemplo, a la Agencia Tributaria o a jueces y tribunales). Para prestar el servicio contamos con estos proveedores, que tratan los datos solo siguiendo nuestras instrucciones (encargados del tratamiento, art. 28 RGPD) o, en el caso de Stripe, como responsable independiente:</p>
+      <!--d:proveedores--><ul>
+        <li><strong>Hostinger International Ltd.</strong>: Alojamiento de la web, base de datos y correo electrónico. <em>Ubicación:</em> Unión Europea.</li>
+        <li><strong>Stripe Payments Europe, Ltd.</strong>: Cobro de los pagos con tarjeta y facturas. Stripe trata los datos de pago como responsable independiente. <em>Ubicación:</em> Irlanda (UE). Puede transferir datos a EE. UU. con el Marco de Privacidad de Datos UE-EE. UU. y cláusulas contractuales tipo. <a href="https://stripe.com/es/privacy" target="_blank" rel="noopener">Su política de privacidad</a>.</li>
+        <li><strong>Google Ireland Ltd. (Google Analytics)</strong>: Estadísticas de uso de la web, solo si aceptas las cookies de analítica. <em>Ubicación:</em> Irlanda (UE). Puede transferir datos a EE. UU. con el Marco de Privacidad de Datos UE-EE. UU. y cláusulas contractuales tipo.</li>
+        <li><strong>Google (API Gemini)</strong>: Generar las respuestas del asistente virtual (chat con inteligencia artificial). <em>Ubicación:</em> Puede tratar datos en EE. UU. con el Marco de Privacidad de Datos UE-EE. UU. y cláusulas contractuales tipo.</li>
+        <li><strong>Google (inicio de sesión)</strong>: Confirmar tu identidad, solo si eliges «Continuar con Google».</li>
+      </ul><!--/d-->
+      <p>Si en el futuro el negocio se traspasa o se integra en otra empresa, los datos podrán pasar al nuevo titular, que seguirá obligado por esta política; te avisaremos antes.</p>
     </section>
 
     <section>
-      <h2>5. Tus derechos</h2>
-      <p class="legal__cta">Puedes <a href="datos/">ver, descargar o eliminar tus datos tú mismo</a> en cualquier momento, sin necesidad de escribirnos: solo tienes que confirmar tu email.</p>
-      <p>También puedes ejercer en cualquier momento tus derechos de <strong>acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad</strong>, así como retirar tu consentimiento, escribiendo a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a> con el asunto «Protección de datos». Te responderemos en el plazo máximo de un mes.</p>
+      <h2>6. Transferencias internacionales</h2>
+      <p>Algunos proveedores pueden tratar datos fuera del Espacio Económico Europeo (sobre todo en Estados Unidos). Solo lo permitimos con las garantías del RGPD: empresas adheridas al Marco de Privacidad de Datos UE-EE. UU. (decisión de adecuación de la Comisión Europea de 10 de julio de 2023) o cláusulas contractuales tipo aprobadas por la Comisión (art. 46 RGPD). Puedes pedirnos una copia de esas garantías.</p>
+    </section>
+
+    <section>
+      <h2>7. Tus derechos</h2>
+      <p class="legal__cta">Puedes <a href="datos/">ver, descargar o eliminar tus datos tú mismo</a> en cualquier momento, sin necesidad de escribirnos: solo tienes que confirmar tu email. Desde ahí también puedes darte de baja de la publicidad y borrar tu perfil de cliente.</p>
+      <p>También puedes ejercer en cualquier momento tus derechos de <strong>acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad</strong>, así como <strong>retirar tu consentimiento</strong> (sin que eso afecte a lo hecho antes), escribiendo a <a href="mailto:hola@thenovis.com">hola@thenovis.com</a> con el asunto «Protección de datos». Te responderemos en el plazo máximo de un mes. Es gratuito.</p>
+      <p>No tomamos decisiones basadas únicamente en tratamientos automatizados que produzcan efectos jurídicos sobre ti (art. 22 RGPD).</p>
       <p>Si consideras que no hemos atendido correctamente tus derechos, puedes presentar una reclamación ante la <a href="https://www.aepd.es" rel="noopener">Agencia Española de Protección de Datos</a> (www.aepd.es).</p>
     </section>
 
     <section id="seguridad">
-      <h2>6. Seguridad</h2>
+      <h2>8. Seguridad</h2>
       <p>Aplicamos medidas técnicas y organizativas adecuadas: conexión cifrada (HTTPS), almacenamiento de los datos fuera de la parte pública del servidor y con permisos restringidos, acceso al panel con usuario y contraseña (guardada cifrada) y sesiones que caducan, límites contra envíos y accesos automatizados y borrado automático de los datos que ya no son necesarios.</p>
-      <p>Los datos personales de la base de datos (nombre, empresa, email, teléfono, mensajes, notas y conversaciones) se guardan <strong>cifrados</strong> con un algoritmo moderno (XChaCha20-Poly1305 / AES-256-GCM). La clave de cifrado se conserva aparte de la base de datos, de modo que una copia del archivo por sí sola no permite leer su contenido. Al eliminar datos, el espacio que ocupaban se sobrescribe.</p>
+      <p>Los datos personales de la base de datos (nombre, empresa, email, teléfono, NIF, dirección, mensajes, notas y conversaciones) se guardan <strong>cifrados</strong> con un algoritmo moderno (XChaCha20-Poly1305 / AES-256-GCM). La clave de cifrado se conserva aparte de la base de datos, de modo que una copia de la base de datos por sí sola no permite leer su contenido.</p>
       <p><strong>Si ocurre una brecha de seguridad</strong> (por ejemplo, un acceso no autorizado a los datos), seguimos un protocolo de actuación: la contenemos de inmediato (cerrando accesos y cambiando claves), evaluamos qué datos y personas se han visto afectados, la notificamos a la Agencia Española de Protección de Datos en un plazo máximo de 72 horas cuando pueda suponer un riesgo para tus derechos y, si el riesgo es alto, <strong>te informaremos directamente y sin demora</strong> de lo ocurrido, de sus posibles consecuencias, de las medidas adoptadas y de lo que puedes hacer para protegerte. Todas las incidencias quedan documentadas en un registro interno (arts. 33 y 34 RGPD).</p>
       <p>Si detectas algo que pueda ser un problema de seguridad en esta web, escríbenos a <a href="mailto:hola@thenovis.com?subject=Seguridad">hola@thenovis.com</a> con el asunto «Seguridad».</p>
     </section>
 
     <section>
-      <h2>7. Menores de edad</h2>
-      <p>Nuestros servicios se dirigen a empresas y profesionales. No recogemos de forma consciente datos de menores de 14 años.</p>
+      <h2>9. Enlaces a otras webs</h2>
+      <p>La web contiene enlaces a sitios de terceros (por ejemplo, Stripe o Google). No controlamos esos sitios ni respondemos de cómo tratan tus datos: te recomendamos leer sus políticas de privacidad.</p>
     </section>
 
     <section>
-      <h2>8. Cambios en esta política</h2>
-      <p>Podemos actualizar esta política para adaptarla a cambios legales o del servicio. La fecha de la última actualización figura al inicio de esta página.</p>
+      <h2>10. Menores de edad</h2>
+      <p>Nuestros servicios se dirigen a empresas y profesionales. No recogemos de forma consciente datos de menores de 14 años (art. 7 LOPDGDD). Si crees que un menor nos ha dado sus datos, escríbenos y los borraremos.</p>
+    </section>
+
+    <section>
+      <h2>11. Cambios en esta política</h2>
+      <p>Podemos actualizar esta política para adaptarla a cambios legales o del servicio. La fecha de la última actualización figura al inicio de esta página. Si el cambio es importante y tenemos tu email, te lo comunicaremos. Nunca usaremos tus datos para una finalidad nueva que necesite tu consentimiento sin pedírtelo antes.</p>
     </section>
 
   </main>
@@ -155,6 +197,6 @@
       <p>© 2026 The Novis. Todos los derechos reservados.</p>
     </div>
   </footer>
-  <script src="/js/consent.js?v=3" defer></script>
+  <script src="/js/consent.js?v=4" defer></script>
 </body>
 </html>

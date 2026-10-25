@@ -4,6 +4,7 @@ require_once __DIR__ . '/novis.php';
 require_once __DIR__ . '/correo.php';
 require_once __DIR__ . '/plantilla.php';
 require_once __DIR__ . '/productos.php';
+require_once __DIR__ . '/legal.php';
 
 /* ================= Configuración ================= */
 
@@ -128,8 +129,10 @@ function nv_db(): PDO {
     )');
     $db->exec('CREATE INDEX IF NOT EXISTS auditoria_usuario ON auditoria(usuario_id)');
     }
+    // Perfil de cliente y permiso de publicidad (solo de quien los acepta)
+    nv_perfiles_preparar($db);
     // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
-    foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens'] as $t) novis_cifrar_tabla($db, $t);
+    foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens', 'perfiles'] as $t) novis_cifrar_tabla($db, $t);
     if (!$mysql) {
         $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
         $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_usuario_idx ON usuarios(usuario_idx)');
@@ -142,7 +145,7 @@ function nv_db(): PDO {
 }
 
 /** Versión vigente de las condiciones de contratación (se anota con cada aceptación). */
-const NV_CONDICIONES = '2026-10-21';
+const NV_CONDICIONES = '2026-10-25';
 
 /** Anota un hecho importante de una cuenta. Nunca interrumpe la operación si falla. */
 function nv_auditar(string $evento, ?int $usuario, string $detalle = '', bool $anonimo = false): void {
@@ -212,7 +215,8 @@ function nv_datos_de(string $email): array {
     $st = $db->prepare("SELECT $campos FROM pagos WHERE pagador_idx = ? AND usuario_id IS NULL");
     $st->execute([nv_indice($email)]);
     $pagos = array_merge($pagos, $st->fetchAll());
-    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'pagos' => $pagos];
+    $prefs = $cuenta ? nv_perfil_exportar((int)$cuenta['id']) : null;
+    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'preferencias' => $prefs, 'pagos' => $pagos];
 }
 
 /** Archivo JSON con los datos de un email, listo para descargar. */
@@ -236,6 +240,7 @@ function nv_borrar_datos(string $email, string $desde): array {
         nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando
         $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM perfiles WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
         // La auditoría pierde el vínculo con la persona (sin IP ni navegador) y queda solo la constancia de la baja
         $db->prepare('UPDATE auditoria SET usuario_id = NULL, ip = NULL, agente = NULL WHERE usuario_id = ?')->execute([$id]);
@@ -425,7 +430,10 @@ function nv_marcar_pagado(int $pagoId, array $sesion): void {
     if ($primera) {
         $p = $db->prepare('SELECT * FROM pagos WHERE id = ?');
         $p->execute([$pagoId]);
-        try { nv_emails_pago($p->fetch()); } catch (Throwable $e) { error_log('Novis email pago: ' . $e->getMessage()); }
+        $pago = $p->fetch();
+        // Perfil de cliente: solo si el cliente dio permiso para guardarlo
+        try { if (!empty($pago['usuario_id'])) nv_perfil_desde_stripe((int)$pago['usuario_id'], $sesion); } catch (Throwable $e) { error_log('Novis perfil: ' . $e->getMessage()); }
+        try { nv_emails_pago($pago); } catch (Throwable $e) { error_log('Novis email pago: ' . $e->getMessage()); }
     }
 }
 

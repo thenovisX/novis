@@ -205,6 +205,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$p) ir();
         if ($p['estado'] !== 'pendiente') ir('a=resumen&id=' . $p['id']);
         if (!nv_stripe_ok()) { aviso('Los pagos online aún no están activados. Escríbenos a ' . nv_email_negocio() . '.', 'err'); ir('a=resumen&id=' . $p['id']); }
+        // Casillas opcionales (vienen sin marcar): solo se anota lo que el cliente marca, con fecha.
+        // No marcarlas no impide pagar; desmarcarlas aquí no retira nada (eso se hace en «Tu cuenta»).
+        if (!empty($_POST['publicidad'])) nv_marketing((int)$u['id'], true, 'compra ' . $p['codigo']);
+        if (!empty($_POST['guardar_perfil'])) nv_perfil_permiso((int)$u['id'], true, 'compra ' . $p['codigo']);
         try {
             // Si ya hay una sesión de pago abierta, se reutiliza (evita cobrar dos veces)
             if ($p['stripe_session']) {
@@ -334,6 +338,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ir('a=mensaje&id=' . $m['id']);
     }
 
+    // Preferencias de privacidad: publicidad por email y perfil de cliente (se pueden dar o retirar cuando quiera)
+    if ($accion === 'preferencias' && $u) {
+        nv_marketing((int)$u['id'], !empty($_POST['publicidad']), 'área de cliente');
+        nv_perfil_permiso((int)$u['id'], !empty($_POST['guardar_perfil']), 'área de cliente');
+        aviso('Preferencias guardadas.');
+        ir('a=cuenta');
+    }
+
     // Descargar todos sus datos (RGPD: acceso y portabilidad)
     if ($accion === 'descargar' && $u) {
         header('Content-Type: application/json; charset=utf-8');
@@ -444,7 +456,7 @@ $google = nv_google_ok();
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
   <link rel="preload" href="../assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../css/styles.css?v=27">
-  <link rel="stylesheet" href="pagos.css?v=5">
+  <link rel="stylesheet" href="pagos.css?v=6">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -786,13 +798,29 @@ $google = nv_google_ok();
       <?php if ($p['estado'] === 'cancelado'): ?>
         <p class="acc-flash acc-flash--err">Este pago se ha anulado. Si crees que es un error, escríbenos a <?= e(nv_email_negocio()) ?>.</p>
       <?php else: ?>
+        <?php $pf = nv_perfil((int)$u['id']); ?>
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+          <?php if (!$pf['perfil'] || !$pf['marketing']): ?>
+          <fieldset class="acc-opt">
+            <legend>Opcional</legend>
+            <?php if (!$pf['perfil']): ?>
+            <label class="f-check"><input type="checkbox" name="guardar_perfil" value="1">
+              <span>Guardar mis datos de facturación (nombre, empresa, NIF, dirección y teléfono) en mi perfil de cliente para próximos pedidos.</span></label>
+            <?php endif; ?>
+            <?php if (!$pf['marketing']): ?>
+            <label class="f-check"><input type="checkbox" name="publicidad" value="1">
+              <span>Quiero recibir por email novedades, ofertas y publicidad de <?= e(nv_ajuste('negocio', 'The Novis')) ?>. Puedo darme de baja cuando quiera.</span></label>
+            <?php endif; ?>
+            <p class="acc-secure">No marcarlas no cambia nada de tu compra. Si no guardas tu perfil, solo conservamos el registro del pago que exige la ley. <a href="../privacidad.html#compras" target="_blank" rel="noopener">Más información</a>.</p>
+          </fieldset>
+          <?php endif; ?>
           <button class="btn acc-pay" name="accion" value="pagar"><?= $esSub ? 'Suscribirme · ' . e(nv_importe_txt($p)) : 'Pagar ' . e(nv_euros((int)$p['importe'])) ?></button>
         </form>
         <?php if ($esSub): ?><p class="acc-secure">Al suscribirte autorizas a The Novis a cobrar esta cuota cada <?= e(NV_PERIODOS[$p['periodo']]) ?> en tu tarjeta hasta que te des de baja.</p><?php endif; ?>
-        <p class="acc-secure">Pago seguro con Stripe: tarjeta, Apple Pay o Google Pay. The Novis nunca ve ni guarda los datos de tu tarjeta.</p>
+        <p class="acc-secure">Pago seguro con Stripe: tarjeta, Apple Pay o Google Pay. The Novis nunca ve ni guarda los datos de tu tarjeta.
+          En la página de pago, Stripe usa <a href="../cookies.html#compras" target="_blank" rel="noopener">cookies necesarias</a> para procesar el pago y prevenir el fraude; no se pueden desactivar si quieres pagar.</p>
       <?php endif; ?>
     </div>
 
@@ -877,8 +905,26 @@ $google = nv_google_ok();
       </dl>
       <p class="acc-desc">¿Algún dato ha cambiado? <a href="?a=mensajes&amp;tema=otro#nuevo">Escríbenos</a> y lo actualizamos.</p>
 
+      <?php $pf = nv_perfil((int)$u['id']); ?>
+      <h2 class="datos-h">Privacidad y publicidad</h2>
+      <form method="post" class="acc-form">
+        <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
+        <label class="f-check"><input type="checkbox" name="publicidad" value="1"<?= $pf['marketing'] ? ' checked' : '' ?>>
+          <span>Recibir por email novedades, ofertas y publicidad.<?= $pf['marketing'] ? ' <small>(aceptado el ' . e(date('d/m/Y', strtotime($pf['marketing']))) . ')</small>' : '' ?></span></label>
+        <label class="f-check"><input type="checkbox" name="guardar_perfil" value="1"<?= $pf['perfil'] ? ' checked' : '' ?>>
+          <span>Guardar mi perfil de cliente con mis datos de facturación.<?= $pf['perfil'] ? ' <small>(aceptado el ' . e(date('d/m/Y', strtotime($pf['perfil']))) . '; si lo desmarcas, lo borramos)</small>' : '' ?></span></label>
+        <button class="btn btn--ghost" name="accion" value="preferencias">Guardar preferencias</button>
+      </form>
+      <?php if ($pf['perfil'] && $pf['actualizado']): ?>
+        <dl class="acc-sum">
+          <?php foreach (['nombre' => 'Nombre', 'empresa' => 'Empresa', 'nif' => 'NIF', 'direccion' => 'Dirección', 'telefono' => 'Teléfono'] as $k => $txt): if ($pf[$k]): ?>
+            <div><dt><?= $txt ?></dt><dd><?= e($pf[$k]) ?></dd></div>
+          <?php endif; endforeach; ?>
+        </dl>
+      <?php endif; ?>
+
       <h2 class="datos-h">Tus datos</h2>
-      <p class="acc-desc">Descarga una copia de todo lo que guardamos sobre ti: cuenta, pagos, servicios y mensajes.</p>
+      <p class="acc-desc">Descarga una copia de todo lo que guardamos sobre ti: cuenta, perfil, preferencias, pagos, servicios y mensajes.</p>
       <form method="post" class="datos-actions">
         <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
         <button class="btn btn--ghost" name="accion" value="descargar">Descargar mis datos</button>
@@ -886,7 +932,7 @@ $google = nv_google_ok();
 
       <details class="acc-danger">
         <summary>Eliminar mi cuenta y mis datos</summary>
-        <p>Se borrarán tu cuenta y tus mensajes<?php if ($vivas): ?>, y <strong>tus suscripciones se cancelarán en el momento</strong><?php endif; ?>. Los pagos realizados se conservan el tiempo que exige la ley (6 años), sin vincularlos a ti. No se puede deshacer.</p>
+        <p>Se borrarán tu cuenta, tu perfil de cliente, tus preferencias y tus mensajes<?php if ($vivas): ?>, y <strong>tus suscripciones se cancelarán en el momento</strong><?php endif; ?>. Los pagos realizados se conservan el tiempo que exige la ley (6 años), sin vincularlos a ti. No se puede deshacer.</p>
         <form method="post" class="acc-form">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
           <div class="f"><label for="confirmar">Escribe ELIMINAR para confirmar</label><input id="confirmar" name="confirmar" autocomplete="off" required></div>

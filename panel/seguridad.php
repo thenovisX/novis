@@ -143,7 +143,7 @@ $comprobaciones = [
 <title>Seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=20">
+<link rel="stylesheet" href="panel.css?v=21">
 </head>
 <body class="v-pagos">
   <header class="top top--detail"><a href="ajustes.php" class="back">‹ Ajustes</a></header>

@@ -36,7 +36,7 @@ RewriteRule \.php$ - [R=404,L]
 RedirectMatch 404 /\.git
 RedirectMatch 404 /\.(gitignore|htaccess|env)
 RedirectMatch 404 /(README\.md|gemini-config(\.example)?\.php)$
-RedirectMatch 404 (?i)^/(CLAUDE\.md|\.claude|graphify-out)
+RedirectMatch 404 (?i)^/(CLAUDE\.md|\.claude|graphify-out|legal/)
 
 # Nunca se sirven bases de datos, claves, copias de seguridad ni registros, estén donde estén
 <FilesMatch "(?i)\.(sqlite3?|db|sql|key|pem|bak|old|orig|swp|log|ini|sh|zip|tar|gz|tgz)$">

@@ -273,3 +273,8 @@ code { font-size: .92em; background: #f0f0f3; color: #2b2b30; padding: 1px 5px; 
 .ico--txt { padding: 0 12px; color: var(--accent); }
 .ico:disabled { opacity: .35; cursor: default; }
 .v-planes .item__sub { white-space: normal; }
+
+/* Legal → servicios externos */
+.form-pago fieldset.prov { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.form-pago fieldset.prov legend { padding: 0 6px; font-weight: 600; font-size: 14px; }
+@media (max-width: 560px) { .form-pago fieldset.prov .dos { grid-template-columns: 1fr; } }

@@ -191,3 +191,9 @@
   .acc-tabs a { flex: 1 1 0; min-width: 0; padding: 9px 2px; gap: 3px; font-size: 13px; }
   .acc-tabs__n { min-width: 16px; height: 16px; padding: 0 4px; font-size: 11px; }
 }
+
+/* Casillas opcionales al pagar (perfil de cliente y publicidad): nunca vienen marcadas */
+.acc-opt { border: 1px solid var(--line, #e5e5ea); border-radius: 14px; padding: 14px 16px 6px; margin: 20px 0 16px; display: grid; gap: 12px; min-width: 0; }
+.acc-opt legend { padding: 0 6px; font-size: 13px; color: var(--muted, #6e6e73); }
+.acc-opt .acc-secure { margin: 0; }
+.acc-sum + .acc-form, .acc-form + .acc-sum { margin-top: 16px; }
