@@ -449,7 +449,7 @@ $google = nv_google_ok();
   <a href="#contenido" class="skip">Saltar al contenido</a>
   <header class="nav is-scrolled">
     <div class="nav__inner">
-      <a href="../" class="logo" aria-label="The Novis, volver a la web"><span class="logo__mark"></span>the novis</a>
+      <a href="../" class="logo" aria-label="The Novis, volver a la web"><span class="logo__mark"></span>The Novis</a>
       <?php if ($u): ?>
         <form method="post" class="acc-user">
           <span><?= e($u['usuario'] ?: $u['email']) ?></span>
@@ -898,7 +898,7 @@ $google = nv_google_ok();
 
   <footer class="footer">
     <div class="footer__inner">
-      <div class="footer__brand"><a href="../" class="logo"><span class="logo__mark"></span>the novis</a></div>
+      <div class="footer__brand"><a href="../" class="logo"><span class="logo__mark"></span>The Novis</a></div>
       <nav aria-label="Información legal">
         <a href="../aviso-legal.html">Aviso legal</a>
         <a href="../privacidad.html">Privacidad</a>
