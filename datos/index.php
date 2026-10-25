@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Ya has pedido varios enlaces. Espera un rato e inténtalo de nuevo.';
         } else {
             $d = datos_de($email);
-            if ($d['solicitudes'] || $d['cuenta'] || $d['pagos']) {
+            if ($d['solicitudes'] || $d['cuenta'] || $d['pagos'] || $d['contacto']) {
                 $t = bin2hex(random_bytes(24));
                 $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email_idx = ? AND usado = 0')->execute([nv_indice($email)]);
                 $db->prepare('INSERT INTO datos_tokens (email, email_idx, hash, caduca) VALUES (?, ?, ?, ?)')->execute([nv_cifrar($email), nv_indice($email), hash('sha256', $t), time() + 3600]);
@@ -75,9 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $accion === 'publicidad_no' ? nv_marketing((int)$d['cuenta']['id'], false, 'página Tus datos')
                                             : nv_perfil_permiso((int)$d['cuenta']['id'], false, 'página Tus datos');
             }
+            // También el perfil de contacto del formulario (sin cuenta)
+            if ($d['contacto']) nv_contacto_retirar((int)$d['contacto']['id'], $accion === 'publicidad_no' ? 'publicidad' : 'perfil', 'página Tus datos');
             $_GET['t'] = $t;
             $error = '';
-            $hecho = $accion === 'publicidad_no' ? 'Listo: ya no te enviaremos publicidad.' : 'Listo: hemos borrado tu perfil de cliente.';
+            $hecho = $accion === 'publicidad_no' ? 'Listo: ya no te enviaremos publicidad.' : 'Listo: hemos borrado tu perfil.';
         }
     }
 
@@ -110,7 +112,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/styles.css?v=27">
-  <link rel="stylesheet" href="/pagos/pagos.css?v=6">
+  <link rel="stylesheet" href="/pagos/pagos.css?v=7">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -154,6 +156,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
     <div class="acc-card acc-card--wide">
       <h1>Tus datos</h1>
       <p class="acc-lead">Estos son los datos que The Novis guarda asociados a <strong><?= e($email) ?></strong>.</p>
+      <?php if (!empty($hecho)): ?><p class="acc-flash acc-flash--ok" role="status"><?= e($hecho) ?></p><?php endif; ?>
 
       <h2 class="datos-h">Mensajes del formulario de contacto</h2>
       <?php if (!$d['solicitudes']): ?><p class="acc-desc">Ninguno.</p><?php else: ?>
@@ -173,9 +176,23 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
         </dl>
       <?php endif; ?>
 
+      <?php $ct = $d['contacto']; if ($ct): ?>
+        <h2 class="datos-h">Perfil de contacto</h2>
+        <dl class="acc-sum">
+          <div><dt>Nombre</dt><dd><?= e($ct['nombre'] ?: '—') ?></dd></div>
+          <?php if ($ct['perfil']): ?><div><dt>Empresa</dt><dd><?= e($ct['empresa'] ?: '—') ?></dd></div>
+          <div><dt>Perfil guardado</dt><dd>Desde el <?= e(date('d/m/Y', strtotime($ct['perfil']))) ?></dd></div><?php endif; ?>
+          <div><dt>Promociones por email</dt><dd><?= $ct['marketing'] ? 'Aceptadas el ' . e(date('d/m/Y', strtotime($ct['marketing']))) : 'No' ?></dd></div>
+        </dl>
+        <form method="post" class="datos-actions">
+          <input type="hidden" name="t" value="<?= e($_GET['t']) ?>">
+          <?php if ($ct['marketing']): ?><button class="btn btn--ghost" name="accion" value="publicidad_no">No quiero recibir publicidad</button><?php endif; ?>
+          <?php if ($ct['perfil']): ?><button class="btn btn--ghost" name="accion" value="perfil_no">Borrar mi perfil de contacto</button><?php endif; ?>
+        </form>
+      <?php endif; ?>
+
       <?php if ($d['cuenta']): $pf = nv_perfil((int)$d['cuenta']['id']); ?>
         <h2 class="datos-h">Publicidad y perfil de cliente</h2>
-        <?php if (!empty($hecho)): ?><p class="acc-flash acc-flash--ok" role="status"><?= e($hecho) ?></p><?php endif; ?>
         <dl class="acc-sum">
           <div><dt>Publicidad por email</dt><dd><?= $pf['marketing'] ? 'Aceptada el ' . e(date('d/m/Y', strtotime($pf['marketing']))) : 'No' ?></dd></div>
           <div><dt>Perfil de cliente guardado</dt><dd><?= $pf['perfil'] ? 'Sí, desde el ' . e(date('d/m/Y', strtotime($pf['perfil']))) : 'No' ?></dd></div>
@@ -211,7 +228,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
 
       <form method="post" class="datos-borrar">
         <h2 class="datos-h">Eliminar mis datos</h2>
-        <p class="acc-desc">Se borrarán tus mensajes del formulario<?= $d['cuenta'] ? ', tu cuenta de pagos, tu perfil de cliente y tus preferencias de publicidad' : '' ?>. No se puede deshacer.</p>
+        <p class="acc-desc">Se borrarán tus mensajes del formulario<?= $d['contacto'] ? ', tu perfil de contacto' : '' ?><?= $d['cuenta'] ? ', tu cuenta de pagos, tu perfil de cliente' : '' ?> y tus preferencias de publicidad. No se puede deshacer.</p>
         <?php if ($error): ?><p class="f-err" role="alert"><?= e($error) ?></p><?php endif; ?>
         <input type="hidden" name="t" value="<?= e($_GET['t']) ?>">
         <label class="f-check"><input type="checkbox" name="confirmo" value="1"><span>Entiendo que mis datos se eliminarán de forma permanente.</span></label>

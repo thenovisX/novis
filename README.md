@@ -152,6 +152,11 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 
 ### Perfil de cliente y publicidad (solo con permiso)
 
+- **Formulario de contacto**: casilla obligatoria de privacidad y dos opcionales sin marcar: «perfil de contacto» y «promociones».
+  Tabla `contactos` (cifrada, una fila por email, solo si marcó alguna); se ve en Panel → Cuentas → **Contactos**.
+- **Registro** (también con Google): casilla opcional de promociones. **Pago**: casilla obligatoria de condiciones y privacidad
+  (con la petición de empezar ya, por el desistimiento), anotada en `auditoria` como `compra_acepta`.
+
 - Al pagar (`pagos/`, resumen del pago) salen dos casillas **opcionales y sin marcar**: guardar el perfil de cliente y recibir publicidad.
   Si no se marcan, solo se guarda el pago (obligación legal).
 - Tabla `perfiles` (una fila por cuenta, solo si aceptó algo): `marketing` y `perfil` son la fecha del permiso; nombre, empresa, NIF,

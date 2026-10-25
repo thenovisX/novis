@@ -197,3 +197,5 @@
 .acc-opt legend { padding: 0 6px; font-size: 13px; color: var(--muted, #6e6e73); }
 .acc-opt .acc-secure { margin: 0; }
 .acc-sum + .acc-form, .acc-form + .acc-sum { margin-top: 16px; }
+.acc-req { margin: 20px 0 0; }
+.acc-req small, .acc-form .f-check small { color: var(--muted); }

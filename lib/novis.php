@@ -212,6 +212,7 @@ const NOVIS_CIFRADO = [
     'incidentes'   => [['descripcion', 'datos', 'medidas'], [], []],
     'auditoria'    => [['ip', 'agente'], [], []],
     'perfiles'     => [['nombre', 'empresa', 'nif', 'direccion', 'telefono'], [], []],
+    'contactos'    => [['nombre', 'empresa', 'email'], ['email_idx' => 'email'], []],
 ];
 
 /**

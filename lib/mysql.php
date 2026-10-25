@@ -224,12 +224,23 @@ function novis_esquema_mysql(PDO $db): void {
             telefono TEXT,
             actualizado VARCHAR(40),
             UNIQUE KEY perfiles_usuario (usuario_id)',
+        // Perfil de contacto (formulario de la web, sin cuenta): solo de quien lo acepta
+        'contactos' => 'id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            creado VARCHAR(40) NOT NULL,
+            nombre TEXT,
+            empresa TEXT,
+            email TEXT NOT NULL,
+            email_idx VARCHAR(64) NOT NULL,
+            perfil VARCHAR(40),
+            marketing VARCHAR(40),
+            actualizado VARCHAR(40),
+            UNIQUE KEY contactos_email_idx (email_idx)',
     ];
     foreach ($tablas as $t => $cols) $db->exec("CREATE TABLE IF NOT EXISTS $t ($cols)$fin");
 }
 
 /** Tablas que se copian de SQLite a MySQL, en este orden. */
-const NOVIS_TABLAS = ['ajustes', 'solicitudes', 'respuestas', 'usuarios', 'tokens', 'pagos', 'datos_tokens', 'renovaciones', 'incidentes', 'auditoria', 'productos', 'perfiles'];
+const NOVIS_TABLAS = ['ajustes', 'solicitudes', 'respuestas', 'usuarios', 'tokens', 'pagos', 'datos_tokens', 'renovaciones', 'incidentes', 'auditoria', 'productos', 'perfiles', 'contactos'];
 
 /** ¿Hay una base de datos SQLite de antes con datos? */
 function novis_sqlite_ruta(): ?string {

@@ -484,12 +484,20 @@
           <input type="text" name="web" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <label class="check field--full">
             <input type="checkbox" name="acepto" value="1" required>
-            <span>He leído y acepto la <a href="privacidad.html">política de privacidad</a>.</span>
+            <span>He leído y acepto la <a href="privacidad.html">política de privacidad</a>. <span class="opt">(obligatorio)</span></span>
+          </label>
+          <label class="check field--full">
+            <input type="checkbox" name="perfil_contacto" value="1">
+            <span>Guardad mis datos (nombre, empresa y email) en un perfil de contacto para tenerlos en cuenta en próximas consultas. <span class="opt">(opcional)</span></span>
+          </label>
+          <label class="check field--full">
+            <input type="checkbox" name="publicidad" value="1">
+            <span>Quiero recibir por email promociones, descuentos y novedades. Puedo darme de baja cuando quiera. <span class="opt">(opcional)</span></span>
           </label>
           <p class="legal-info field--full">
             <strong>Responsable:</strong> The Novis (ver <a href="aviso-legal.html">aviso legal</a>).
-            <strong>Finalidad:</strong> responder a tu solicitud y enviarte un presupuesto.
-            <strong>Legitimación:</strong> tu consentimiento.
+            <strong>Finalidad:</strong> responder a tu solicitud y enviarte un presupuesto; si lo marcas, guardar tu perfil de contacto y enviarte promociones.
+            <strong>Legitimación:</strong> tu consentimiento, que puedes retirar en <a href="datos/">Tus datos</a>.
             <strong>Destinatarios:</strong> no se ceden datos a terceros, salvo obligación legal; el alojamiento lo presta Hostinger dentro de la UE.
             <strong>Derechos:</strong> acceso, rectificación, supresión y otros, escribiendo a hola@thenovis.com.
             <a href="privacidad.html">Más información</a>.
@@ -524,6 +532,6 @@
   <script src="js/main.js?v=17" defer></script>
   <script src="js/modal.js?v=1" defer></script>
   <script src="js/chat.js?v=11" defer></script>
-  <script src="/js/consent.js?v=4" defer></script>
+  <script src="/js/consent.js?v=5" defer></script>
 </body>
 </html>

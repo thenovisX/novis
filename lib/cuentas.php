@@ -131,8 +131,9 @@ function nv_db(): PDO {
     }
     // Perfil de cliente y permiso de publicidad (solo de quien los acepta)
     nv_perfiles_preparar($db);
+    nv_contactos_preparar($db);
     // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
-    foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens', 'perfiles'] as $t) novis_cifrar_tabla($db, $t);
+    foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens', 'perfiles', 'contactos'] as $t) novis_cifrar_tabla($db, $t);
     if (!$mysql) {
         $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
         $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_usuario_idx ON usuarios(usuario_idx)');
@@ -216,13 +217,16 @@ function nv_datos_de(string $email): array {
     $st->execute([nv_indice($email)]);
     $pagos = array_merge($pagos, $st->fetchAll());
     $prefs = $cuenta ? nv_perfil_exportar((int)$cuenta['id']) : null;
-    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'preferencias' => $prefs, 'pagos' => $pagos];
+    $contacto = nv_contacto($email);
+    if ($contacto) $contacto = array_intersect_key($contacto, array_flip(['id', 'creado', 'nombre', 'empresa', 'email', 'perfil', 'marketing']));
+    return ['solicitudes' => $sol, 'cuenta' => $cuenta, 'preferencias' => $prefs, 'contacto' => $contacto, 'pagos' => $pagos];
 }
 
 /** Archivo JSON con los datos de un email, listo para descargar. */
 function nv_datos_json(string $email): string {
     $d = nv_datos_de($email);
     if ($d['cuenta']) unset($d['cuenta']['id']);
+    if ($d['contacto']) unset($d['contacto']['id']);
     $d = ['generado' => date('c'), 'responsable' => 'Novis (thenovis.com)', 'email' => $email] + $d;
     return json_encode($d, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
@@ -235,6 +239,8 @@ function nv_borrar_datos(string $email, string $desde): array {
     $db->prepare('UPDATE datos_tokens SET usado = 1 WHERE email_idx = ?')->execute([$idx]);
     $db->prepare('DELETE FROM respuestas WHERE solicitud_id IN (SELECT id FROM solicitudes WHERE email_idx = ?)')->execute([$idx]);
     $db->prepare('DELETE FROM solicitudes WHERE email_idx = ?')->execute([$idx]);
+    $db->prepare('DELETE FROM contactos WHERE email_idx = ?')->execute([$idx]);
+    if ($d['contacto']) nv_auditar('contacto_eliminado', null, 'contacto #' . $d['contacto']['id'], true);
     if ($d['cuenta']) {
         $id = (int)$d['cuenta']['id'];
         nv_sub_cancelar_de_usuario($id);   // que no se le siga cobrando

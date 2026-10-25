@@ -35,8 +35,7 @@ if (empty($_POST['acepto'])) {
     exit;
 }
 
-require_once __DIR__ . '/lib/correo.php';
-require_once __DIR__ . '/lib/plantilla.php';
+require_once __DIR__ . '/lib/cuentas.php';   // incluye correo, plantillas y los perfiles de contacto (lib/legal.php)
 $destino = nv_email_negocio();   // Email donde recibes los mensajes
 if (!novis_limite('form', 5, 3600)) {
     http_response_code(429);
@@ -66,6 +65,12 @@ try {
         mb_substr($plan, 0, 40), nv_cifrar(mb_substr($mensaje, 0, 5000)), date('c')]);
     novis_purgar();
     $guardado = true;
+    // Casillas opcionales (vienen sin marcar): perfil de contacto y promociones. Sin ellas no se guarda nada más.
+    try {
+        nv_contacto_guardar($nombre, $empresa, $email, !empty($_POST['perfil_contacto']), !empty($_POST['publicidad']), 'formulario de contacto');
+    } catch (Throwable $err) {
+        error_log('The Novis contacto (perfil): ' . $err->getMessage());
+    }
 } catch (Throwable $err) {
     error_log('The Novis contacto (BD): ' . $err->getMessage());
 }
