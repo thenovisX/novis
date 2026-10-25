@@ -161,6 +161,11 @@ TXT;
 try {
     require_once __DIR__ . '/lib/productos.php';
     $actuales = nv_productos_texto();
+    require_once __DIR__ . '/lib/pagina.php';
+    $dn = nv_datos_negocio();
+    $instrucciones .= "\n\n# CONTACTO ACTUAL (manda sobre lo citado antes)\nEmail: {$dn['email']}"
+        . ($dn['telefono'] !== '' ? "\nTeléfono: {$dn['telefono']} (ya es público: puedes darlo)" : '')
+        . ($dn['localidad'] !== '' ? "\nZona: {$dn['localidad']}" : '');
     if ($actuales !== '') {
         $instrucciones .= "\n\n# PRECIOS ACTUALES (mandan sobre cualquier precio o plan citado antes; si un plan de arriba no aparece aquí, ya no se ofrece)\n"
             . "Precios sin IVA (21 %).\n" . $actuales;

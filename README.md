@@ -59,6 +59,9 @@ En phpMyAdmin los datos personales se ven cifrados (`nv1:…`): es a propósito.
   `<!-- planes:… -->`, `<!-- servicios:… -->` y `<!-- opciones:… -->` sustituidos), los datos estructurados, el chat y el formulario
   los leen de la tabla `productos`. Los servicios marcados como «se contrata online» forman el catálogo del área de cliente
   (antes `NV_CATALOGO`). La versión gallega (`gl/index.html`) sigue con sus precios escritos.
+- **Ajustes → Tu negocio y contacto**: nombre comercial, titular, NIF, domicilio, localidad, persona de contacto, correo y teléfono (con casilla para mostrarlo).
+  Las páginas públicas llevan marcas `<!--d:clave-->por defecto<!--/d-->` y `pagina.php` (vía `.htaccess`) las cambia por esos datos; `hola@thenovis.com` se sustituye por tu correo.
+  También salen en el pie de los emails y en el chat. Las facturas de Stripe usan los datos de tu cuenta de Stripe.
 - **Ajustes** (`panel/ajustes.php`): nombre del negocio, tu correo (avisos y el que ven los clientes), teléfono, buzón de envío
   (SMTP; la contraseña se guarda cifrada), usuario y contraseña del panel (cambiarla cierra las demás sesiones) y datos de la base de datos.
   Lo guardado aquí manda sobre `gemini-config.php`.
@@ -138,7 +141,7 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 ## Cumplimiento legal
 
 - Páginas: `aviso-legal.html`, `privacidad.html`, `cookies.html`, `accesibilidad.html`.
-- Rellenar los datos marcados como `[PENDIENTE]` (titular, NIF, domicilio) en aviso legal y privacidad.
+- Rellenar titular, NIF y domicilio en el panel → Ajustes (mientras falten, las páginas legales muestran `[PENDIENTE]`).
 - Formulario con consentimiento expreso; las solicitudes se borran solas a los 2 años.
 - Sin cookies de terceros ni Google Fonts externas: no hace falta banner de cookies.
 - Chat identificado como IA (Reglamento UE de IA, art. 50).

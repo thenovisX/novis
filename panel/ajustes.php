@@ -29,12 +29,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre = trim((string)($_POST['nombre'] ?? ''));
         $email = strtolower(trim((string)($_POST['email'] ?? '')));
         $tel = trim((string)($_POST['telefono'] ?? ''));
+        $titular = trim((string)($_POST['titular'] ?? ''));
+        $nif = strtoupper(preg_replace('/[\s.-]/', '', (string)($_POST['nif'] ?? '')));
+        $domicilio = trim(preg_replace('/\s+/', ' ', (string)($_POST['domicilio'] ?? '')));
+        $localidad = trim((string)($_POST['localidad'] ?? ''));
         if ($negocio === '' || mb_strlen($negocio) > 80) $errores['negocio'] = 'Escribe el nombre de tu negocio (máximo 80 caracteres).';
+        if (mb_strlen($titular) > 120) $errores['titular'] = 'Máximo 120 caracteres.';
+        if ($nif !== '' && !preg_match('/^[A-Z0-9]{8,12}$/', $nif)) $errores['nif'] = 'NIF no válido (p. ej. 12345678Z o B12345678).';
+        if (mb_strlen($domicilio) > 200) $errores['domicilio'] = 'Máximo 200 caracteres.';
+        if (mb_strlen($localidad) > 80) $errores['localidad'] = 'Máximo 80 caracteres.';
         if (mb_strlen($nombre) > 80) $errores['nombre'] = 'Máximo 80 caracteres.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errores['email'] = 'Escribe un email válido.';
         if ($tel !== '' && !preg_match('/^[0-9 +()-]{6,20}$/', $tel)) $errores['telefono'] = 'Teléfono no válido.';
         if (!$errores) {
-            nv_ajustes_guardar(['negocio' => $negocio, 'nombre' => $nombre, 'email' => $email, 'telefono' => $tel]);
+            nv_ajustes_guardar(['negocio' => $negocio, 'nombre' => $nombre, 'email' => $email, 'telefono' => $tel,
+                'telefono_publico' => !empty($_POST['telefono_publico']) && $tel !== '' ? '1' : '0',
+                'titular' => $titular, 'nif' => $nif, 'domicilio' => $domicilio, 'localidad' => $localidad]);
             volver('ok=info');
         }
     }
@@ -88,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $a = nv_ajustes();
 $val = fn($k, $def = '') => e(array_key_exists($k, $viejo) ? $viejo[$k] : ($a[$k] ?? $def));
 $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '</p>' : '';
-$avisos = ['info' => 'Tu información se ha guardado.', 'correo' => 'Ajustes del correo guardados.', 'prueba' => 'Correo de prueba enviado a ' . nv_email_negocio() . '. Mira tu bandeja de entrada (y la de spam).',
+$avisos = ['info' => 'Tu información se ha guardado. Ya se ve en la web (aviso legal, privacidad, condiciones y contacto).', 'correo' => 'Ajustes del correo guardados.', 'prueba' => 'Correo de prueba enviado a ' . nv_email_negocio() . '. Mira tu bandeja de entrada (y la de spam).',
     'fallo' => 'No se pudo enviar el correo de prueba. Revisa el buzón y la contraseña.', 'acceso' => 'Acceso al panel actualizado. Las sesiones abiertas en otros dispositivos se han cerrado.',
     'limite' => 'Has enviado varias pruebas seguidas. Espera unos minutos.'];
 $ok = $avisos[$_GET['ok'] ?? ''] ?? '';
@@ -124,17 +134,28 @@ $cred = nv_panel_credenciales();
     <?php if ($ok): ?><p class="<?= in_array($_GET['ok'], ['fallo', 'limite'], true) ? 'warn' : 'toast' ?>" role="status"><?= e($ok) ?><?= $falloCorreo ? ' (' . e(mb_substr($falloCorreo, 0, 160)) . ')' : '' ?></p><?php endif; ?>
 
     <form method="post" class="card form-pago" id="info" novalidate>
-      <h2>Tu información</h2>
+      <h2>Tu negocio y contacto</h2>
+      <p class="muted">Estos datos salen en el aviso legal, la política de privacidad, las condiciones de contratación, el contacto de la web y el pie de los emails.</p>
+      <?php if (($a['titular'] ?? '') === '' || ($a['nif'] ?? '') === '' || ($a['domicilio'] ?? '') === ''): ?><p class="warn">Faltan el titular, el NIF o el domicilio: en tus páginas legales aparece «[PENDIENTE]». La ley (LSSI) obliga a mostrarlos.</p><?php endif; ?>
       <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
-      <label>Nombre del negocio <span class="muted">(aparece como remitente de los emails)</span>
+      <label>Nombre comercial <span class="muted">(también es el remitente de los emails)</span>
         <input name="negocio" required maxlength="80" value="<?= $val('negocio', 'The Novis') ?>"></label><?= $err('negocio') ?>
-      <label>Tu nombre <span class="muted">(opcional)</span>
+      <label>Titular <span class="muted">(tu nombre y apellidos si eres autónomo, o la razón social de tu empresa)</span>
+        <input name="titular" maxlength="120" autocomplete="organization" value="<?= $val('titular') ?>"></label><?= $err('titular') ?>
+      <label>NIF
+        <input name="nif" maxlength="14" autocapitalize="characters" spellcheck="false" placeholder="12345678Z" value="<?= $val('nif') ?>"></label><?= $err('nif') ?>
+      <label>Domicilio <span class="muted">(calle, número, código postal y ciudad)</span>
+        <input name="domicilio" maxlength="200" autocomplete="street-address" value="<?= $val('domicilio') ?>"></label><?= $err('domicilio') ?>
+      <label>Localidad que se ve en el contacto de la web
+        <input name="localidad" maxlength="80" placeholder="Vigo, Galicia" value="<?= $val('localidad', 'Vigo, Galicia') ?>"></label><?= $err('localidad') ?>
+      <label>Persona de contacto <span class="muted">(opcional)</span>
         <input name="nombre" maxlength="80" autocomplete="name" value="<?= $val('nombre') ?>"></label><?= $err('nombre') ?>
-      <label>Tu correo <span class="muted">(aquí te llegan los avisos de mensajes y pagos, y es el que ven tus clientes)</span>
+      <label>Tu correo <span class="muted">(aquí te llegan los avisos de mensajes y pagos, y es el que ven tus clientes en toda la web)</span>
         <input name="email" type="email" required autocomplete="email" value="<?= e(array_key_exists('email', $viejo) ? $viejo['email'] : nv_email_negocio()) ?>"></label><?= $err('email') ?>
-      <label>Teléfono <span class="muted">(opcional, solo para ti)</span>
+      <label>Teléfono <span class="muted">(opcional)</span>
         <input name="telefono" type="tel" autocomplete="tel" value="<?= $val('telefono') ?>"></label><?= $err('telefono') ?>
-      <button class="btn" name="accion" value="info">Guardar mi información</button>
+      <label class="check"><input type="checkbox" name="telefono_publico" value="1"<?= (array_key_exists('telefono', $viejo) ? !empty($viejo['telefono_publico']) : ($a['telefono_publico'] ?? '') === '1') ? ' checked' : '' ?>> Mostrar el teléfono en la web (contacto, aviso legal y privacidad)</label>
+      <button class="btn" name="accion" value="info">Guardar mis datos</button>
     </form>
 
     <form method="post" class="card form-pago" id="correo" novalidate autocomplete="off">

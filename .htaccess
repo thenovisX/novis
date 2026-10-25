@@ -24,6 +24,10 @@ RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
 
+# Las páginas públicas llevan tus datos de negocio (panel → Ajustes): se sirven a través de pagina.php
+RewriteRule ^(index|aviso-legal|privacidad|condiciones|cookies|accesibilidad)\.html$ pagina.php?p=$1 [L,QSA]
+RewriteRule ^gl/(index\.html)?$ pagina.php?p=gl [L,QSA]
+
 # Un .php que no existe da la página 404 propia (y no el aviso genérico del servidor)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule \.php$ - [R=404,L]

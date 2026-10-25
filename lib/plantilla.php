@@ -15,7 +15,17 @@ function novis_email_html(string $titulo, array $parrafos, ?string $boton = null
     $btn = ($boton && $url)
         ? '<p style="margin:8px 0 28px"><a href="' . $h($url) . '" style="display:inline-block;background:#1d63ed;color:#ffffff;text-decoration:none;font-weight:600;padding:13px 24px;border-radius:12px">' . $h($boton) . '</a></p>'
         : '';
-    $pie = $pie ?: 'Este mensaje lo envía Novis (thenovis.com). <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a>';
+    if ($pie === '') {
+        // Quién envía el mensaje, con los datos de panel → Ajustes si ya están puestos
+        $quien = 'Novis';
+        if (function_exists('nv_ajuste')) {
+            $quien = (string)nv_ajuste('negocio', 'Novis');
+            $titular = (string)nv_ajuste('titular', '');
+            $nif = (string)nv_ajuste('nif', '');
+            if ($titular !== '') $quien .= ' · ' . $titular . ($nif !== '' ? ' (NIF ' . $nif . ')' : '');
+        }
+        $pie = 'Este mensaje lo envía ' . $h($quien) . ' (thenovis.com). <a href="https://thenovis.com/privacidad.html" style="color:#1d63ed">Política de privacidad</a>';
+    }
     return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $h($titulo) . '</title></head>'
       . '<body style="margin:0;padding:0;background:#f3f5f8;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;color:#1c2230">'
       . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f8;padding:32px 12px"><tr><td align="center">'
