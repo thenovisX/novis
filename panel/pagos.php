@@ -46,11 +46,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!is_numeric($importeTxt) || $importe < 50 || $importe > 99999900) $errores['importe'] = 'Importe entre 0,50 € y 999.999 €.';
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errores['email_cliente'] = 'Email no válido.';
         if ($caduca !== '' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $caduca) || $caduca < date('Y-m-d'))) $errores['caduca'] = 'Elige una fecha de hoy en adelante.';
+        // Proyecto en dos pagos: 50 % para empezar y 50 % a la entrega (dos códigos; el segundo se envía al entregar la web)
+        $mitades = $periodo === '' && !empty($_POST['mitades']);
+        if ($mitades && $importe < 100) $errores['importe'] = 'Para dividirlo en dos pagos, mínimo 1,00 €.';
+        if ($mitades && mb_strlen($concepto) > 100) $errores['concepto'] = 'Para dividirlo en dos pagos, máximo 100 caracteres.';
         if (!$errores) {
-            do { $codigo = nv_generar_codigo(); $ya = $db->prepare('SELECT 1 FROM pagos WHERE codigo = ?'); $ya->execute([$codigo]); } while ($ya->fetch());
-            $db->prepare('INSERT INTO pagos (codigo, concepto, descripcion, importe, email_cliente, caduca, creado, periodo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-               ->execute([$codigo, nv_cifrar($concepto), $descripcion !== '' ? nv_cifrar($descripcion) : null, $importe, $email !== '' ? nv_cifrar($email) : null, $caduca ?: null, date('c'), $periodo ?: null]);
-            volver('id=' . $db->lastInsertId() . '&nuevo=1');
+            $partes = $mitades
+                ? [[$concepto . ' · 50 % inicial', intdiv($importe, 2)], [$concepto . ' · 50 % a la entrega', $importe - intdiv($importe, 2)]]
+                : [[$concepto, $importe]];
+            $ids = [];
+            foreach ($partes as [$con, $imp]) {
+                do { $codigo = nv_generar_codigo(); $ya = $db->prepare('SELECT 1 FROM pagos WHERE codigo = ?'); $ya->execute([$codigo]); } while ($ya->fetch());
+                $db->prepare('INSERT INTO pagos (codigo, concepto, descripcion, importe, email_cliente, caduca, creado, periodo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                   ->execute([$codigo, nv_cifrar($con), $descripcion !== '' ? nv_cifrar($descripcion) : null, $imp, $email !== '' ? nv_cifrar($email) : null, $caduca ?: null, date('c'), $periodo ?: null]);
+                $ids[] = $db->lastInsertId();
+            }
+            volver('id=' . $ids[0] . '&nuevo=' . count($ids));
         }
     }
     if ($accion === 'anular') {
@@ -196,7 +207,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
       <p class="muted">Se generará un código para que tu cliente pague online.</p>
       <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
       <label>Concepto <span class="muted">(lo verá el cliente)</span>
-        <input name="concepto" maxlength="120" required placeholder="Web corporativa · primer pago (50%)" value="<?= $v('concepto') ?>"></label><?= $err('concepto') ?>
+        <input name="concepto" maxlength="120" required placeholder="Web corporativa" value="<?= $v('concepto') ?>"></label><?= $err('concepto') ?>
       <label>Contenido de la venta <span class="muted">(opcional)</span>
         <textarea name="descripcion" rows="4" maxlength="1000" placeholder="Diseño a medida, 5 secciones, formulario de contacto, SEO básico…"><?= $v('descripcion') ?></textarea></label><?= $err('descripcion') ?>
       <fieldset class="tipo">
@@ -208,6 +219,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
       <p class="muted small">Las suscripciones se cobran solas cada mes, cada año o cada 3 años hasta que el cliente se dé de baja (puede hacerlo desde su área). Para el alojamiento de 3 años elige «cada 3 años».</p>
       <label>Importe en euros <span class="muted">(IVA incluido; en suscripciones, el de cada cuota)</span>
         <input name="importe" inputmode="decimal" required placeholder="332,15" value="<?= $v('importe') ?>"></label><?= $err('importe') ?>
+      <label class="check"><input type="checkbox" name="mitades" value="1"<?= !empty($viejo['mitades']) ? ' checked' : '' ?>> Dividir en dos pagos: 50 % al empezar y 50 % a la entrega <span class="muted">(solo pago único; pon el importe total del proyecto)</span></label>
       <label>Email del cliente <span class="muted">(opcional: solo esa persona podrá usar el código)</span>
         <input name="email_cliente" type="email" placeholder="cliente@empresa.com" value="<?= $v('email_cliente') ?>"></label><?= $err('email_cliente') ?>
       <label>Válido hasta <span class="muted">(opcional)</span>
@@ -219,7 +231,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <?php else: ?>
   <header class="top top--detail"><a href="pagos.php" class="back">‹ Pagos</a></header>
   <main class="detail">
-    <?php if (!empty($_GET['nuevo'])): ?><p class="toast" role="status">Código creado. Envíaselo a tu cliente.</p><?php endif; ?>
+    <?php if (!empty($_GET['nuevo'])): ?><p class="toast" role="status"><?= $_GET['nuevo'] === '2' ? 'Dos códigos creados. Envía este (50 % inicial) ahora; el del 50 % a la entrega está en la lista de pagos.' : 'Código creado. Envíaselo a tu cliente.' ?></p><?php endif; ?>
     <?php if (!empty($_GET['comprobado'])): ?><p class="toast" role="status">Estado comprobado con Stripe</p><?php endif; ?>
     <section class="card">
       <?php [$cl, $tx] = nv_estado($p); ?>

@@ -52,6 +52,11 @@ return [
   // Pagos con Stripe
   'stripe_secret' => 'sk_live_...',          // o sk_test_... para pruebas
   'stripe_webhook_secret' => 'whsec_...',
+  // (Las dos claves anteriores también pueden ir en variables de entorno: STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET)
+  // IVA desglosado en las facturas de Stripe (elige una opción; ver «Facturas e IVA»):
+  // 'stripe_tax' => true,                // Stripe Tax calcula el IVA (coste por transacción)
+  // 'stripe_tax_rate' => 'txr_...',      // o un tipo de IVA 21 % «incluido» creado a mano en Stripe (gratis)
+  // 'stripe_facturas' => false,          // para NO generar factura de Stripe en los pagos únicos
   // Acceso con Google (opcional)
   'google_client_id' => '....apps.googleusercontent.com',
   'google_client_secret' => '...',
@@ -67,6 +72,26 @@ return [
 Configuración en Stripe: *Developers → Webhooks → Add endpoint* → `https://thenovis.com/pagos/webhook.php`, eventos:
 `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.updated`,
 `customer.subscription.deleted`, `invoice.paid` e `invoice.payment_failed`.
+
+- **Proyectos en dos pagos:** al crear el código marca «Dividir en dos pagos» y pon el importe total. Se crean dos códigos
+  («· 50 % inicial» y «· 50 % a la entrega»). Envía el primero al empezar y el segundo cuando el cliente dé el visto bueno.
+
+### Facturas e IVA
+
+- En el pago, Stripe pide la **dirección de facturación** y, si es empresa o autónomo, su **NIF/CIF o IVA intracomunitario**.
+- Cada pago genera una **factura de Stripe** que el cliente recibe por email (las suscripciones, una por cada cuota).
+  En los pagos únicos se puede desactivar con `'stripe_facturas' => false`.
+- Cada cuenta de cliente usa siempre el mismo cliente de Stripe, así todas sus facturas y suscripciones salen juntas en el portal.
+- Los importes de los códigos y del catálogo **ya llevan el IVA**; el total no cambia, Stripe solo lo desglosa (base + IVA 21 %).
+- Configuración en Stripe (una vez):
+  1. *Settings → Business → Public details*: razón social, NIF y dirección fiscal (salen en las facturas).
+  2. *Settings → Billing → Invoices*: numeración **por cuenta** (una sola serie correlativa) y pie de factura.
+  3. *Settings → Customer emails*: activar «Successful payments» y el envío de facturas pagadas.
+  4. IVA, una de dos:
+     - **Stripe Tax:** *Tax → Registrations* → añadir España; *Tax → Settings*: dirección de origen y código por defecto
+       «General – Services». Luego `'stripe_tax' => true`.
+     - **Tipo manual:** *Product catalog → Tax rates* → «IVA», 21 %, España, **Inclusive**. Copia su id (`txr_...`) en `'stripe_tax_rate'`.
+- Antes de usar facturas de Stripe como facturas oficiales, confirma con tu gestoría que cumplen lo que necesitas (Verifactu, series, etc.).
 
 ### Suscripciones (mantenimiento mensual, alojamiento anual o cada 3 años)
 

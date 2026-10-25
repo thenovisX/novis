@@ -213,16 +213,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($s && ($s['status'] ?? '') === 'open' && !empty($s['url'])) { header('Location: ' . $s['url'], true, 303); exit; }
             }
             $sub = nv_es_sub($p);
+            $iva = nv_stripe_iva();
+            $meta = ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo']];
             $datos = [
                 'mode' => $sub ? 'subscription' : 'payment',
                 'locale' => 'es',
-                'customer_email' => $u['email'],
                 'client_reference_id' => (string)$p['id'],
-                'line_items' => [[
+                // Datos para la factura: dirección de facturación y NIF/CIF o IVA intracomunitario
+                'billing_address_collection' => 'required',
+                'tax_id_collection' => ['enabled' => 'true'],
+                'line_items' => [array_filter([
                     'quantity' => 1,
                     'price_data' => array_filter([
                         'currency' => $p['moneda'],
                         'unit_amount' => (int)$p['importe'],
+                        // El importe del código ya lleva el IVA: Stripe lo desglosa en la factura sin cambiar el total
+                        'tax_behavior' => $iva === 'auto' ? 'inclusive' : null,
                         // Suscripción: Stripe lo cobrará solo cada mes o cada año
                         'recurring' => $sub ? ['interval' => NV_PERIODOS_STRIPE[$p['periodo']][0], 'interval_count' => NV_PERIODOS_STRIPE[$p['periodo']][1]] : null,
                         'product_data' => array_filter([
@@ -230,14 +236,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'description' => $p['descripcion'] ? mb_substr($p['descripcion'], 0, 500) : null,
                         ]),
                     ]),
-                ]],
-                'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo'], 'usuario_id' => (string)$u['id']],
+                    'tax_rates' => $iva !== '' && $iva !== 'auto' ? [$iva] : null,
+                ])],
+                'metadata' => $meta + ['usuario_id' => (string)$u['id']],
                 'success_url' => nv_url('pagos/?a=exito&id=' . $p['id']),
                 'cancel_url' => nv_url('pagos/?a=resumen&id=' . $p['id'] . '&cancelado=1'),
             ];
-            $ref = ['description' => mb_substr($p['concepto'] . ' (' . $p['codigo'] . ')', 0, 500), 'metadata' => ['pago_id' => (string)$p['id'], 'codigo' => $p['codigo']]];
-            if ($sub) $datos['subscription_data'] = $ref; else $datos['payment_intent_data'] = $ref;
-            $s = nv_stripe('POST', '/v1/checkout/sessions', $datos);
+            if ($iva === 'auto') $datos['automatic_tax'] = ['enabled' => 'true'];
+            $ref = ['description' => mb_substr($p['concepto'] . ' (' . $p['codigo'] . ')', 0, 500), 'metadata' => $meta];
+            if ($sub) $datos['subscription_data'] = $ref;
+            else {
+                $datos['payment_intent_data'] = $ref;
+                // Pago único: Stripe genera también la factura (las suscripciones ya la generan siempre)
+                if (nv_stripe_facturas()) $datos['invoice_creation'] = ['enabled' => 'true', 'invoice_data' => ['description' => $ref['description'], 'metadata' => $meta]];
+            }
+            // Mismo cliente de Stripe para todos los pagos de la cuenta (facturas y suscripciones juntas)
+            $conCliente = function (?string $cliente) use ($datos, $sub, $u): array {
+                if ($cliente) return $datos + ['customer' => $cliente, 'customer_update' => ['name' => 'auto', 'address' => 'auto']];
+                return $datos + ['customer_email' => $u['email']] + ($sub ? [] : ['customer_creation' => 'always']);
+            };
+            try {
+                $s = nv_stripe('POST', '/v1/checkout/sessions', $conCliente($u['stripe_customer'] ?: null));
+            } catch (Throwable $e) {
+                if (!$u['stripe_customer']) throw $e;
+                // El cliente guardado ya no existe (o es de modo prueba): se crea uno nuevo y se olvida el anterior
+                $s = nv_stripe('POST', '/v1/checkout/sessions', $conCliente(null));
+                $db->prepare('UPDATE usuarios SET stripe_customer = NULL WHERE id = ?')->execute([$u['id']]);
+            }
             $db->prepare('UPDATE pagos SET stripe_session = ?, pagador_email = ?, pagador_idx = ? WHERE id = ?')->execute([$s['id'], nv_cifrar($u['email']), nv_indice($u['email']), $p['id']]);
             header('Location: ' . $s['url'], true, 303);
             exit;
@@ -761,7 +786,7 @@ $google = nv_google_ok();
           </ul>
         <?php endif; ?>
       </section>
-      <p class="acc-secure">Los pagos se hacen con Stripe. The Novis nunca ve ni guarda los datos de tu tarjeta. Si necesitas una factura, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.</p>
+      <p class="acc-secure">Los pagos se hacen con Stripe. The Novis nunca ve ni guarda los datos de tu tarjeta. <?php if (nv_stripe_facturas()): ?>Recibirás la factura de cada pago por email. Si necesitas otra copia, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.<?php else: ?>Si necesitas una factura, <a href="?a=mensajes&amp;tema=pagos#nuevo">escríbenos</a>.<?php endif; ?></p>
     </div>
 
 <?php elseif ($vista === 'resumen'): ?>
