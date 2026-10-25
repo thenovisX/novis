@@ -64,7 +64,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 3) Eliminar los datos (derecho de supresión)
+    // 3) Dejar de recibir publicidad o borrar el perfil de cliente (retirar el consentimiento, art. 7.3 RGPD)
+    if ($accion === 'publicidad_no' || $accion === 'perfil_no') {
+        $t = (string)($_POST['t'] ?? '');
+        $email = token_email($t);
+        if (!$email) { $vista = 'caducado'; }
+        else {
+            $d = datos_de($email);
+            if ($d['cuenta']) {
+                $accion === 'publicidad_no' ? nv_marketing((int)$d['cuenta']['id'], false, 'página Tus datos')
+                                            : nv_perfil_permiso((int)$d['cuenta']['id'], false, 'página Tus datos');
+            }
+            $_GET['t'] = $t;
+            $error = '';
+            $hecho = $accion === 'publicidad_no' ? 'Listo: ya no te enviaremos publicidad.' : 'Listo: hemos borrado tu perfil de cliente.';
+        }
+    }
+
+    // 4) Eliminar los datos (derecho de supresión)
     if ($accion === 'eliminar') {
         $t = (string)($_POST['t'] ?? '');
         $email = token_email($t);
@@ -93,7 +110,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
   <link rel="icon" href="/assets/favicon.svg?v=10" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/styles.css?v=27">
-  <link rel="stylesheet" href="/pagos/pagos.css?v=4">
+  <link rel="stylesheet" href="/pagos/pagos.css?v=6">
 </head>
 <body class="acc-page">
   <a href="#contenido" class="skip">Saltar al contenido</a>
@@ -156,6 +173,25 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
         </dl>
       <?php endif; ?>
 
+      <?php if ($d['cuenta']): $pf = nv_perfil((int)$d['cuenta']['id']); ?>
+        <h2 class="datos-h">Publicidad y perfil de cliente</h2>
+        <?php if (!empty($hecho)): ?><p class="acc-flash acc-flash--ok" role="status"><?= e($hecho) ?></p><?php endif; ?>
+        <dl class="acc-sum">
+          <div><dt>Publicidad por email</dt><dd><?= $pf['marketing'] ? 'Aceptada el ' . e(date('d/m/Y', strtotime($pf['marketing']))) : 'No' ?></dd></div>
+          <div><dt>Perfil de cliente guardado</dt><dd><?= $pf['perfil'] ? 'Sí, desde el ' . e(date('d/m/Y', strtotime($pf['perfil']))) : 'No' ?></dd></div>
+          <?php if ($pf['perfil']): foreach (['nombre' => 'Nombre', 'empresa' => 'Empresa', 'nif' => 'NIF', 'direccion' => 'Dirección', 'telefono' => 'Teléfono'] as $k => $txt): if ($pf[$k]): ?>
+            <div><dt><?= $txt ?></dt><dd><?= e($pf[$k]) ?></dd></div>
+          <?php endif; endforeach; endif; ?>
+        </dl>
+        <?php if ($pf['marketing'] || $pf['perfil']): ?>
+          <form method="post" class="datos-actions">
+            <input type="hidden" name="t" value="<?= e($_GET['t']) ?>">
+            <?php if ($pf['marketing']): ?><button class="btn btn--ghost" name="accion" value="publicidad_no">No quiero recibir publicidad</button><?php endif; ?>
+            <?php if ($pf['perfil']): ?><button class="btn btn--ghost" name="accion" value="perfil_no">Borrar mi perfil de cliente</button><?php endif; ?>
+          </form>
+        <?php endif; ?>
+      <?php endif; ?>
+
       <h2 class="datos-h">Pagos</h2>
       <?php if (!$d['pagos']): ?><p class="acc-desc">Ninguno.</p><?php else: ?>
         <ul class="datos-list">
@@ -175,7 +211,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
 
       <form method="post" class="datos-borrar">
         <h2 class="datos-h">Eliminar mis datos</h2>
-        <p class="acc-desc">Se borrarán tus mensajes del formulario<?= $d['cuenta'] ? ' y tu cuenta de pagos' : '' ?>. No se puede deshacer.</p>
+        <p class="acc-desc">Se borrarán tus mensajes del formulario<?= $d['cuenta'] ? ', tu cuenta de pagos, tu perfil de cliente y tus preferencias de publicidad' : '' ?>. No se puede deshacer.</p>
         <?php if ($error): ?><p class="f-err" role="alert"><?= e($error) ?></p><?php endif; ?>
         <input type="hidden" name="t" value="<?= e($_GET['t']) ?>">
         <label class="f-check"><input type="checkbox" name="confirmo" value="1"><span>Entiendo que mis datos se eliminarán de forma permanente.</span></label>

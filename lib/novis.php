@@ -211,6 +211,7 @@ const NOVIS_CIFRADO = [
     'datos_tokens' => [['email'], ['email_idx' => 'email'], []],
     'incidentes'   => [['descripcion', 'datos', 'medidas'], [], []],
     'auditoria'    => [['ip', 'agente'], [], []],
+    'perfiles'     => [['nombre', 'empresa', 'nif', 'direccion', 'telefono'], [], []],
 ];
 
 /**

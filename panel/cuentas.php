@@ -23,6 +23,21 @@ function fecha(?string $f): string { return $f ? date('d/m/Y H:i', strtotime($f)
 $db = nv_db();
 $errores = [];
 
+// Lista de clientes que han aceptado recibir publicidad (CSV para tu herramienta de email).
+// Solo ellos: enviar publicidad a quien no la ha aceptado está prohibido (art. 21 LSSI-CE).
+if (($_GET['exportar'] ?? '') === 'publicidad') {
+    $filas = $db->query('SELECT u.email, u.usuario, p.marketing, p.nombre, p.empresa FROM perfiles p JOIN usuarios u ON u.id = p.usuario_id WHERE p.marketing IS NOT NULL ORDER BY p.marketing')->fetchAll();
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="publicidad-aceptada-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");   // para que Excel lea bien los acentos
+    fputcsv($out, ['email', 'usuario', 'nombre', 'empresa', 'aceptado'], ';');
+    // Un valor que empieza por = + - @ se escapa para que la hoja de cálculo no lo ejecute como fórmula
+    $seguro = fn($v) => preg_match('/^[=+\-@\t\r]/', (string)$v) ? "'" . $v : (string)$v;
+    foreach ($filas as $f) fputcsv($out, array_map($seguro, [$f['email'], $f['usuario'], $f['nombre'], $f['empresa'], date('d/m/Y H:i', strtotime($f['marketing']))]), ';');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) volver();
     $accion = $_POST['accion'] ?? '';
@@ -54,11 +69,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare('UPDATE usuarios SET email_verificado = ? WHERE id = ? AND email_verificado IS NULL')->execute([date('c'), $id]);
         volver('id=' . $id . '&ok=verificado');
     }
+    // El cliente pide (por email o teléfono) que dejes de enviarle publicidad o que borres su perfil
+    if ($accion === 'publicidad_no') { nv_marketing($id, false, 'panel (a petición del cliente)'); volver('id=' . $id . '&ok=publicidad'); }
+    if ($accion === 'perfil_no') { nv_perfil_permiso($id, false, 'panel (a petición del cliente)'); volver('id=' . $id . '&ok=perfil'); }
     if ($accion === 'eliminar') {
         nv_sub_cancelar_de_usuario($id);   // las suscripciones activas se cancelan para que no se siga cobrando
         // Los pagos se conservan (obligación legal), pero dejan de estar ligados a la cuenta
         $db->prepare('UPDATE pagos SET usuario_id = NULL WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM tokens WHERE usuario_id = ?')->execute([$id]);
+        $db->prepare('DELETE FROM perfiles WHERE usuario_id = ?')->execute([$id]);
         $db->prepare('DELETE FROM usuarios WHERE id = ?')->execute([$id]);
         novis_compactar();
         volver('eliminada=1');
@@ -79,7 +98,8 @@ if ($vista === 'detalle') {
     $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email_idx = ? ORDER BY id DESC');
     $st->execute([nv_indice($u['email'])]);
     $msgs = $st->fetchAll();
-    $avisos = ['reset' => 'Email enviado: el cliente recibirá un enlace para crear su contraseña.',
+    $pf = nv_perfil((int)$u['id']);
+    $avisos = ['publicidad' => 'Ya no recibirá publicidad. Quítalo también de tu herramienta de email si lo tenías allí.', 'perfil' => 'Perfil de cliente borrado.', 'reset' => 'Email enviado: el cliente recibirá un enlace para crear su contraseña.',
                'pass' => 'Contraseña cambiada. Las sesiones abiertas de este cliente se han cerrado.',
                'verificado' => 'Email marcado como verificado.'];
     $aviso = $avisos[$_GET['ok'] ?? ''] ?? '';
@@ -89,10 +109,11 @@ if ($vista === 'detalle') {
     $donde = []; $params = [];
     if ($f === 'sin_verificar') $donde[] = 'u.email_verificado IS NULL';
     elseif ($f === 'google') $donde[] = 'u.google_sub IS NOT NULL';
+    elseif ($f === 'publicidad') $donde[] = 'p.marketing IS NOT NULL';
     elseif ($f === 'con_pagos') $donde[] = "EXISTS (SELECT 1 FROM pagos p WHERE p.usuario_id = u.id AND p.estado = 'pagado')";
     else $f = 'todas';
-    $st = $db->prepare("SELECT u.*, (SELECT COALESCE(SUM(importe),0) FROM pagos p WHERE p.usuario_id = u.id AND p.estado = 'pagado') AS pagado
-        FROM usuarios u" . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY u.id DESC');
+    $st = $db->prepare("SELECT u.*, (SELECT COALESCE(SUM(importe),0) FROM pagos pg WHERE pg.usuario_id = u.id AND pg.estado = 'pagado') AS pagado,
+        p.marketing, p.perfil FROM usuarios u LEFT JOIN perfiles p ON p.usuario_id = u.id" . ($donde ? ' WHERE ' . implode(' AND ', $donde) : '') . ' ORDER BY u.id DESC');
     $st->execute($params);
     $lista = $st->fetchAll();
     // Usuario, email y teléfono están cifrados en la base de datos: la búsqueda se hace aquí, ya descifrados
@@ -107,7 +128,8 @@ if ($vista === 'detalle') {
         SUM(email_verificado IS NULL) sin_verificar,
         SUM(google_sub IS NOT NULL) google,
         SUM(creado >= '" . date('Y-m-01') . "') mes,
-        (SELECT COUNT(DISTINCT usuario_id) FROM pagos WHERE estado = 'pagado' AND usuario_id IS NOT NULL) con_pagos
+        (SELECT COUNT(DISTINCT usuario_id) FROM pagos WHERE estado = 'pagado' AND usuario_id IS NOT NULL) con_pagos,
+        (SELECT COUNT(*) FROM perfiles WHERE marketing IS NOT NULL) publicidad
         FROM usuarios")->fetch();
     $c = array_map('intval', $c);
 }
@@ -122,7 +144,7 @@ if ($vista === 'detalle') {
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=20">
+<link rel="stylesheet" href="panel.css?v=21">
 </head>
 <body class="v-cuentas">
 
@@ -141,12 +163,13 @@ if ($vista === 'detalle') {
       <input type="search" id="q" name="q" value="<?= e($q) ?>" placeholder="Buscar usuario, email o teléfono">
     </form>
     <nav class="tabs">
-      <?php foreach (['todas' => ['Todas', $c['total']], 'con_pagos' => ['Con pagos', $c['con_pagos']], 'sin_verificar' => ['Sin verificar', $c['sin_verificar']], 'google' => ['Con Google', $c['google']]] as $k => [$t, $n]): ?>
+      <?php foreach (['todas' => ['Todas', $c['total']], 'con_pagos' => ['Con pagos', $c['con_pagos']], 'sin_verificar' => ['Sin verificar', $c['sin_verificar']], 'google' => ['Con Google', $c['google']], 'publicidad' => ['Publicidad', $c['publicidad']]] as $k => [$t, $n]): ?>
         <a href="?f=<?= $k ?>" class="<?= $f === $k ? 'on' : '' ?>"><?= $t ?> <small><?= $n ?></small></a>
       <?php endforeach; ?>
     </nav>
   </header>
   <main class="list">
+    <?php if ($f === 'publicidad'): ?><p class="muted small">Solo puedes enviar publicidad a estas cuentas: lo han aceptado con una casilla (la fecha queda guardada). <a href="?exportar=publicidad">Descargar la lista (CSV)</a></p><?php endif; ?>
     <?php if (!empty($_GET['eliminada'])): ?><p class="toast" role="status">Cuenta eliminada</p><?php endif; ?>
     <?php if (!$lista): ?>
       <div class="empty"><p><strong><?= $q ? 'Sin resultados' : 'Aún no hay cuentas' ?></strong></p><p class="muted"><?= $q ? 'Prueba con otra búsqueda.' : 'Aparecerán aquí cuando tus clientes se registren en la sección de pagos.' ?></p></div>
@@ -161,6 +184,8 @@ if ($vista === 'detalle') {
             <?php if (!$u['email_verificado']): ?><span class="pill pill--en_curso">Sin verificar</span><?php endif; ?>
             <?php if ($u['google_sub']): ?><span class="pill">Google</span><?php endif; ?>
             <?php if (!$u['usuario']): ?><span class="pill">Perfil incompleto</span><?php endif; ?>
+            <?php if ($u['perfil']): ?><span class="pill">Perfil guardado</span><?php endif; ?>
+            <?php if ($u['marketing']): ?><span class="pill pill--cerrada">Publicidad</span><?php endif; ?>
           </div>
         </div>
       </a>
@@ -189,6 +214,24 @@ if ($vista === 'detalle') {
           <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>"><button class="btn btn--ghost" name="accion" value="verificar">Marcar email como verificado</button></form>
         <?php endif; ?>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>Perfil de cliente y publicidad</h2>
+      <dl>
+        <dt>Publicidad</dt><dd><?= $pf['marketing'] ? 'Aceptada el ' . e(fecha($pf['marketing'])) : 'No aceptada: no le envíes publicidad' ?></dd>
+        <dt>Perfil</dt><dd><?= $pf['perfil'] ? 'Aceptado el ' . e(fecha($pf['perfil'])) : 'No aceptado: solo se guardan su acceso y sus pagos' ?></dd>
+        <?php if ($pf['perfil']): foreach (['nombre' => 'Nombre', 'empresa' => 'Empresa', 'nif' => 'NIF', 'direccion' => 'Dirección', 'telefono' => 'Teléfono'] as $k => $txt): ?>
+          <dt><?= $txt ?></dt><dd><?= e($pf[$k] ?: '—') ?></dd>
+        <?php endforeach; endif; ?>
+      </dl>
+      <?php if ($pf['perfil'] && !$pf['actualizado']): ?><p class="muted small">Los datos se rellenan solos con lo que escriba en la página de pago de Stripe en su próxima compra.</p><?php endif; ?>
+      <?php if ($pf['marketing'] || $pf['perfil']): ?>
+        <div class="actions">
+          <?php if ($pf['marketing']): ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>"><button class="btn btn--ghost" name="accion" value="publicidad_no">Dar de baja de la publicidad</button></form><?php endif; ?>
+          <?php if ($pf['perfil']): ?><form method="post" data-confirm="¿Borrar el perfil de cliente? Se quitan sus datos de facturación guardados."><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><input type="hidden" name="id" value="<?= (int)$u['id'] ?>"><button class="btn btn--ghost" name="accion" value="perfil_no">Borrar perfil</button></form><?php endif; ?>
+        </div>
+      <?php endif; ?>
     </section>
 
     <section class="card">

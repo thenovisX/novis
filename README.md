@@ -138,20 +138,41 @@ Configuración en Google Cloud: credenciales OAuth (aplicación web) con URI de 
 - Límites de intentos por IP (guardada solo como huella con clave), por cuenta y, en el panel, global; el login no delata si una cuenta existe.
 - Una cuenta con el email sin confirmar no puede ver, descargar ni borrar nada hasta confirmarlo.
 
-## Cumplimiento legal
+## Cumplimiento legal (RGPD, LOPDGDD, LSSI-CE)
 
-- Páginas: `aviso-legal.html`, `privacidad.html`, `cookies.html`, `accesibilidad.html`.
-- Rellenar titular, NIF y domicilio en el panel → Ajustes (mientras falten, las páginas legales muestran `[PENDIENTE]`).
+- Páginas: `aviso-legal.html`, `privacidad.html`, `cookies.html`, `condiciones.html`, `accesibilidad.html`.
+  Están adaptadas a partir de las plantillas CC0 de [General Legal](https://github.com/General-Legal/legal-templates),
+  copiadas en `legal/plantillas/` (bloqueada al público). Detalles y cómo añadir servicios: `legal/LEEME.md`.
+  **Son una base: conviene que las revise un abogado.**
+- Titular, NIF y domicilio en el panel → Ajustes (mientras falten, las páginas legales muestran `[PENDIENTE]`).
+- Panel → **Legal**: Registro Mercantil, delegado de protección de datos, juzgados, ID de Google Analytics (o desactivarlo)
+  y la lista de **servicios externos** que sale en la política de privacidad (marca `<!--d:proveedores-->`).
 - Formulario con consentimiento expreso; las solicitudes se borran solas a los 2 años.
-- Sin cookies de terceros ni Google Fonts externas: no hace falta banner de cookies.
 - Chat identificado como IA (Reglamento UE de IA, art. 50).
+
+### Perfil de cliente y publicidad (solo con permiso)
+
+- Al pagar (`pagos/`, resumen del pago) salen dos casillas **opcionales y sin marcar**: guardar el perfil de cliente y recibir publicidad.
+  Si no se marcan, solo se guarda el pago (obligación legal).
+- Tabla `perfiles` (una fila por cuenta, solo si aceptó algo): `marketing` y `perfil` son la fecha del permiso; nombre, empresa, NIF,
+  dirección y teléfono (cifrados) se copian de la página de pago de Stripe al confirmarse el pago, solo si `perfil` tiene fecha.
+- Cada permiso dado o retirado queda en `auditoria` (`publicidad_acepta`, `publicidad_retira`, `perfil_guardar_acepta`, `perfil_guardar_retira`)
+  con fecha, versión de la privacidad (`NV_PRIVACIDAD`, `lib/legal.php`), IP y navegador cifrados.
+- El cliente lo cambia en «Tu cuenta» o en `datos/` (sin cuenta, con enlace por email). Al eliminar la cuenta se borra todo.
+- Panel → Cuentas: insignias «Perfil guardado» y «Publicidad», pestaña **Publicidad** y descarga en CSV de quien la ha aceptado.
+  Envía publicidad solo a esa lista y con un enlace de baja en cada email (arts. 21 y 22 LSSI-CE).
 
 ## Cookies y Google Analytics
 
-- El aviso de cookies está en `js/consent.js` (todas las páginas públicas). «Rechazar todas» y «Aceptar todas» son iguales; hasta que el visitante elige no se carga nada de Google. Respeta la señal Global Privacy Control. Desde el pie, «Configurar cookies» permite cambiar la elección.
-- Para activar Google Analytics 4: crea una propiedad en analytics.google.com, copia el ID de medición (`G-XXXXXXXXXX`) y pégalo en `var GA_ID = '';` al principio de `js/consent.js`. En Analytics, pon la conservación de datos en 14 meses (o menos) y desactiva las señales de Google (publicidad). Mientras `GA_ID` esté vacío, no se carga nada.
+- El aviso de cookies está en `js/consent.js` (todas las páginas públicas): categorías **Necesarias** y **Analítica**, y una de
+  **Publicidad** preparada y oculta mientras no haya servicios. «Rechazar todas» y «Aceptar todas» son iguales; hasta que el visitante
+  elige no se carga nada de Google. Respeta Global Privacy Control. Desde el pie, «Configurar cookies» permite cambiar la elección.
+  Si se añade una categoría nueva, se vuelve a preguntar.
+- Google Analytics 4: el ID por defecto está en `GA_POR_DEFECTO` (`js/consent.js`); desde el panel → Legal se puede cambiar o
+  desactivar (llega como `<html data-ga="…">`). En Analytics, pon la conservación de datos en 14 meses (o menos) y desactiva las
+  señales de Google (publicidad).
 - El CSP de `.htaccess` ya permite `googletagmanager.com` y `google-analytics.com`.
 
 ## Registro de auditoría
 
-Tabla `auditoria` (solo se añaden filas): aceptación de condiciones y privacidad (con la versión `NV_CONDICIONES` de `lib/cuentas.php`), email verificado, contraseña cambiada, alta con Google y baja de cuenta. IP y navegador van cifrados; se borra a los 3 años y, al eliminar una cuenta, se desvincula de la persona. Al cambiar `condiciones.html`, actualiza la fecha de `NV_CONDICIONES`.
+Tabla `auditoria` (solo se añaden filas): aceptación de condiciones y privacidad (con la versión `NV_CONDICIONES` de `lib/cuentas.php`), email verificado, contraseña cambiada, alta con Google y baja de cuenta. IP y navegador van cifrados; se borra a los 3 años y, al eliminar una cuenta, se desvincula de la persona. Al cambiar `condiciones.html`, actualiza la fecha de `NV_CONDICIONES`; al cambiar `privacidad.html`, la de `NV_PRIVACIDAD`.

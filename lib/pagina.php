@@ -4,6 +4,7 @@
 // y aquí se cambian por lo guardado en la base de datos. Si algo falla, se sirve la página tal cual.
 // Esta carpeta está bloqueada al público con .htaccess.
 require_once __DIR__ . '/productos.php';
+require_once __DIR__ . '/legal.php';
 
 /** Datos del negocio que se pueden mostrar en la web. Los vacíos se quedan con el texto por defecto de la página. */
 function nv_datos_negocio(): array {
@@ -15,6 +16,10 @@ function nv_datos_negocio(): array {
         'domicilio' => (string)nv_ajuste('domicilio', ''),
         'localidad' => (string)nv_ajuste('localidad', ''),
         'email' => nv_email_negocio(),
+        // Panel → Legal
+        'registro' => (string)nv_ajuste('registro', ''),
+        'dpd' => (string)nv_ajuste('dpd', ''),
+        'fuero' => (string)nv_ajuste('fuero', ''),
         // El teléfono solo sale en la web si así lo has marcado
         'telefono' => nv_ajuste('telefono_publico') === '1' ? $tel : '',
     ];
@@ -37,9 +42,15 @@ function nv_pagina(string $html): string {
         return match ($m[1]) {
             'tel-legal' => $tel !== '' ? "\n        <dt>Teléfono</dt><dd>" . nv_tel_enlace($tel) . '</dd>' : '',
             'tel-contacto' => $tel !== '' ? '<div><dt>Teléfono</dt><dd>' . nv_tel_enlace($tel) . '</dd></div>' : '',
+            'registro-legal' => $d['registro'] !== '' ? "\n        <dt>Datos registrales</dt><dd>" . e($d['registro']) . '</dd>' : '',
+            'dpd-legal' => $d['dpd'] !== '' ? "\n        <dt>Delegado de protección de datos</dt><dd>" . e($d['dpd']) . '</dd>' : '',
+            'proveedores' => nv_html_proveedores(),
             default => ($d[$m[1]] ?? '') !== '' ? e($d[$m[1]]) : $m[2],
         };
     }, $html);
+    // Google Analytics: el ID del panel → Legal (o ninguno). js/consent.js lo lee de <html data-ga="…">
+    $ga = nv_ga_ajuste();
+    if ($ga !== '') $html = preg_replace('/<html\b/', '<html data-ga="' . ($ga === 'no' ? '' : e($ga)) . '"', $html, 1);
     // Tu correo en todos los enlaces y textos de la página
     if ($d['email'] !== 'hola@thenovis.com') $html = str_replace('hola@thenovis.com', e($d['email']), $html);
     // Datos estructurados para Google: teléfono si es público
