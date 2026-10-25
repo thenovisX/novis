@@ -202,7 +202,7 @@ if ($vista === 'inicio' && isset($_GET['t'])) {
         <a href="/privacidad.html">Privacidad</a>
         <a href="/cookies.html">Cookies</a>
       </nav>
-      <p class="footer__copy">¿Dudas? <a href="mailto:hola@thenovis.com">hola@thenovis.com</a></p>
+      <p class="footer__copy">¿Dudas? <a href="mailto:<?= e(nv_email_negocio()) ?>"><?= e(nv_email_negocio()) ?></a></p>
     </div>
   </footer>
 </body>

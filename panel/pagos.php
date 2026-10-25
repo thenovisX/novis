@@ -147,7 +147,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=19">
+<link rel="stylesheet" href="panel.css?v=20">
 </head>
 <body class="v-pagos">
 
@@ -157,7 +157,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
       <h1>Pagos</h1>
       <div class="top__actions"><a class="btn btn--small" href="?nuevo=1">Nuevo pago</a></div>
     </div>
-    <nav class="sw" aria-label="Secciones del panel"><a href="./">Solicitudes</a><a href="pagos.php" class="on" aria-current="page">Pagos</a><a href="cuentas.php">Cuentas</a></nav>
+    <?php $seccionActual = 'pagos'; include __DIR__ . '/nav.php'; ?>
     <div class="stats">
       <div><strong><?= e(nv_euros($mes)) ?></strong><span>cobrado este mes</span></div>
       <div><strong><?= e(nv_euros($pend)) ?></strong><span>pendiente</span></div>
@@ -290,6 +290,6 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=3" defer></script>
+<script src="panel.js?v=4" defer></script>
 </body>
 </html>

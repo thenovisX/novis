@@ -187,9 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 && ($p['email_cliente'] === null || $p['email_cliente'] === '' || strcasecmp($p['email_cliente'], $u['email']) === 0)
                 && ($p['usuario_id'] === null || (int)$p['usuario_id'] === (int)$u['id']);
             if (!$valido || $p['estado'] === 'cancelado') {
-                $errores['codigo'] = 'Este código no es válido. Revisa que esté bien escrito o escríbenos a hola@thenovis.com.';
+                $errores['codigo'] = 'Este código no es válido. Revisa que esté bien escrito o escríbenos a ' . nv_email_negocio() . '.';
             } elseif ($p['estado'] === 'pendiente' && $p['caduca'] && $p['caduca'] < date('Y-m-d')) {
-                $errores['codigo'] = 'Este código ha caducado. Escríbenos a hola@thenovis.com y te enviamos uno nuevo.';
+                $errores['codigo'] = 'Este código ha caducado. Escríbenos a ' . nv_email_negocio() . ' y te enviamos uno nuevo.';
             } else {
                 // El código queda asociado a esta cuenta
                 $db->prepare('UPDATE pagos SET usuario_id = ? WHERE id = ? AND usuario_id IS NULL')->execute([$u['id'], $p['id']]);
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $p = $st->fetch();
         if (!$p) ir();
         if ($p['estado'] !== 'pendiente') ir('a=resumen&id=' . $p['id']);
-        if (!nv_stripe_ok()) { aviso('Los pagos online aún no están activados. Escríbenos a hola@thenovis.com.', 'err'); ir('a=resumen&id=' . $p['id']); }
+        if (!nv_stripe_ok()) { aviso('Los pagos online aún no están activados. Escríbenos a ' . nv_email_negocio() . '.', 'err'); ir('a=resumen&id=' . $p['id']); }
         try {
             // Si ya hay una sesión de pago abierta, se reutiliza (evita cobrar dos veces)
             if ($p['stripe_session']) {
@@ -265,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : 'Perfecto, tu suscripción sigue activa.');
         } catch (Throwable $e) {
             aviso($accion === 'tarjeta'
-                ? 'Ahora mismo no podemos abrir la gestión de la tarjeta. Escríbenos a hola@thenovis.com y te ayudamos.'
+                ? 'Ahora mismo no podemos abrir la gestión de la tarjeta. Escríbenos a ' . nv_email_negocio() . ' y te ayudamos.'
                 : 'No hemos podido conectar con el sistema de pago. Inténtalo de nuevo en unos minutos.', 'err');
         }
         ir($volver);
@@ -274,8 +274,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Contratar un servicio del catálogo: se crea (o se reutiliza) un pago pendiente y se va a su resumen
     if ($accion === 'contratar' && $u) {
         $k = (string)($_POST['servicio'] ?? '');
-        if (!isset(NV_CATALOGO[$k])) ir('a=servicios');
-        $c = NV_CATALOGO[$k];
+        $catalogo = nv_catalogo();
+        if (!isset($catalogo[$k])) ir('a=servicios');
+        $c = $catalogo[$k];
         $st = $db->prepare("SELECT * FROM pagos WHERE usuario_id = ? AND servicio = ? AND estado = 'pagado'");
         $st->execute([$u['id'], $k]);
         foreach ($st->fetchAll() as $x) {
@@ -307,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare("INSERT INTO solicitudes (creado, nombre, empresa, email, email_idx, plan, mensaje, consentimiento) VALUES (?, ?, '', ?, ?, ?, ?, ?)")
                ->execute([date('c'), nv_cifrar($u['usuario']), nv_cifrar($u['email']), nv_indice($u['email']), 'Cliente · ' . NV_TEMAS[$tema], nv_cifrar($texto), date('c')]);
             $mid = (int)$db->lastInsertId();
-            novis_mail('hola@thenovis.com', 'Mensaje de cliente: ' . NV_TEMAS[$tema] . ' · ' . $u['usuario'],
+            novis_mail(nv_email_negocio(), 'Mensaje de cliente: ' . NV_TEMAS[$tema] . ' · ' . $u['usuario'],
                 "{$u['usuario']} ({$u['email']}, {$u['telefono']}) te ha escrito desde su área de cliente.\n\nTema: " . NV_TEMAS[$tema] . "\n\n$texto\n\nResponder en el panel: " . nv_url('panel/?id=' . $mid),
                 null, $u['email']);
             aviso('Mensaje enviado. Te responderemos aquí y por email, normalmente en menos de 24 horas laborables.');
@@ -328,7 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare("INSERT INTO respuestas (solicitud_id, autor, texto, fecha) VALUES (?, 'cliente', ?, ?)")->execute([$m['id'], nv_cifrar($texto), date('c')]);
         // Si estaba cerrado se vuelve a abrir, para que The Novis lo vea como pendiente
         $db->prepare("UPDATE solicitudes SET estado = CASE WHEN estado IN ('cerrada', 'descartada') THEN 'nueva' ELSE estado END, actualizado = ? WHERE id = ?")->execute([date('c'), $m['id']]);
-        novis_mail('hola@thenovis.com', 'Respuesta de cliente: ' . preg_replace('/^Cliente · /', '', (string)$m['plan']) . ' · ' . $u['usuario'],
+        novis_mail(nv_email_negocio(), 'Respuesta de cliente: ' . preg_replace('/^Cliente · /', '', (string)$m['plan']) . ' · ' . $u['usuario'],
             "{$u['usuario']} ha contestado:\n\n$texto\n\nVer la conversación: " . nv_url('panel/?id=' . $m['id']), null, $u['email']);
         ir('a=mensaje&id=' . $m['id']);
     }
@@ -645,7 +646,7 @@ $google = nv_google_ok();
       <section id="contratar" aria-labelledby="t-contratar">
         <h2 id="t-contratar" class="acc-h2">Contratar</h2>
         <div class="acc-catalogo">
-          <?php foreach (NV_CATALOGO as $k => $c): $tiene = isset($contratados[$k]); ?>
+          <?php foreach (nv_catalogo() as $k => $c): $tiene = isset($contratados[$k]); ?>
             <article class="acc-prod<?= $tiene ? ' is-tiene' : '' ?>">
               <h3><?= e($c['nombre']) ?></h3>
               <p class="acc-prod__precio"><strong><?= e(rtrim(rtrim(number_format($c['base'] / 100, 2, ',', '.'), '0'), ',')) ?> €</strong> + IVA / <?= e(NV_PERIODOS[$c['periodo']]) ?></p>
@@ -783,7 +784,7 @@ $google = nv_google_ok();
         </div>
       <?php endif; ?>
       <?php if ($p['estado'] === 'cancelado'): ?>
-        <p class="acc-flash acc-flash--err">Este pago se ha anulado. Si crees que es un error, escríbenos a hola@thenovis.com.</p>
+        <p class="acc-flash acc-flash--err">Este pago se ha anulado. Si crees que es un error, escríbenos a <?= e(nv_email_negocio()) ?>.</p>
       <?php else: ?>
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>">
@@ -835,7 +836,7 @@ $google = nv_google_ok();
       <?php if ($cl === 'error'): ?>
         <p class="acc-flash acc-flash--err">No hemos podido cobrar la última cuota. Actualiza tu tarjeta para que el servicio siga activo; Stripe lo volverá a intentar en los próximos días.</p>
       <?php elseif (!$viva): ?>
-        <p class="acc-flash acc-flash--info">Esta suscripción ha terminado y ya no se cobrará más. Si quieres volver, escríbenos a hola@thenovis.com.</p>
+        <p class="acc-flash acc-flash--info">Esta suscripción ha terminado y ya no se cobrará más. Si quieres volver, escríbenos a <?= e(nv_email_negocio()) ?>.</p>
       <?php elseif ($p['sub_cancela']): ?>
         <p class="acc-flash acc-flash--info">Te has dado de baja. Seguirá activa hasta el <?= e($fin) ?> y no se te cobrará nada más.</p>
       <?php endif; ?>
@@ -904,7 +905,7 @@ $google = nv_google_ok();
         <a href="../privacidad.html">Privacidad</a>
         <a href="../cookies.html">Cookies</a>
       </nav>
-      <p class="footer__copy">¿Dudas? <a href="mailto:hola@thenovis.com">hola@thenovis.com</a></p>
+      <p class="footer__copy">¿Dudas? <a href="mailto:<?= e(nv_email_negocio()) ?>"><?= e(nv_email_negocio()) ?></a></p>
     </div>
   </footer>
 </body>

@@ -9,13 +9,7 @@ header('Cache-Control: no-store');
 
 nv_panel_sesion();
 
-$config = novis_config();
-$clave  = (string)($config['panel_password'] ?? '');
-$hashClave = (string)($config['panel_password_hash'] ?? '');   // recomendado: solo el hash, nunca la contraseña
-// Si se pegó el hash (empieza por $2y$…) en panel_password por error, se trata igualmente como hash
-if ($hashClave === '' && password_get_info($clave)['algo'] !== null) { $hashClave = $clave; $clave = ''; }
-$hashClave = trim($hashClave);
-$usuario = (string)($config['panel_user'] ?? '');
+$usuario = nv_panel_credenciales()['usuario'];   // panel → Ajustes, o gemini-config.php si aún no hay
 $error  = '';
 $aviso  = '';
 
@@ -33,9 +27,10 @@ function volver(string $q = ''): void {
     exit;
 }
 
-// ---------- Sin contraseña configurada ----------
-if (($hashClave === '' && strlen($clave) < 8) || $usuario === '') {
-    $vista = 'sin_config';
+// ---------- Primera vez: sin usuario de administrador → asistente de instalación ----------
+if (!nv_panel_configurado()) {
+    header('Location: instalar.php');
+    exit;
 }
 // ---------- Login ----------
 elseif (empty($_SESSION['ok'])) {
@@ -54,14 +49,14 @@ elseif (empty($_SESSION['ok'])) {
             $error = 'Demasiados intentos. Espera un rato antes de volver a probar.';
         } elseif (
             hash_equals(mb_strtolower($usuario), mb_strtolower(trim((string)($_POST['usuario'] ?? '')))) &
-            // Con hash configurado se usa siempre password_verify; la contraseña en texto plano solo sirve si no hay hash
-            ($hashClave !== '' ? password_verify((string)($_POST['password'] ?? ''), $hashClave)
-                               : hash_equals($clave, (string)($_POST['password'] ?? '')))
+            nv_panel_clave_ok((string)($_POST['password'] ?? ''))
         ) {
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
             $_SESSION['desde'] = $_SESSION['visto'] = time();
             @unlink($f);
+            // La primera vez que se entra sin la base de datos MySQL conectada, se abre el asistente
+            if (!novis_db_config()) { header('Location: instalar.php'); exit; }
             volver();
         } else {
             $intentos[] = time();
@@ -75,6 +70,7 @@ elseif (empty($_SESSION['ok'])) {
 }
 // ---------- Panel ----------
 else {
+    if (!novis_db_config()) { header('Location: instalar.php'); exit; }
     $db = novis_db();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -106,7 +102,7 @@ else {
                 $parrafos = ['Hola' . ($sol['nombre'] ? ', ' . e($sol['nombre']) : '') . ':', nl2br(e($texto)),
                     $conCuenta ? 'Puedes contestar desde tu área de cliente.' : 'Puedes contestar respondiendo a este email.'];
                 $html = novis_email_html('Respuesta de The Novis', $parrafos, $conCuenta ? 'Ver la conversación' : 'Visitar thenovis.com', $url);
-                novis_mail($sol['email'], 'Respuesta de The Novis', "Hola,\n\n$texto\n\n" . ($conCuenta ? "Contesta desde tu área de cliente: $url" : 'Puedes contestar respondiendo a este email.') . "\n\nUn saludo,\nNovis", $html, 'hola@thenovis.com');
+                novis_mail($sol['email'], 'Respuesta de The Novis', "Hola,\n\n$texto\n\n" . ($conCuenta ? "Contesta desde tu área de cliente: $url" : 'Puedes contestar respondiendo a este email.') . "\n\nUn saludo,\nNovis", $html, nv_email_negocio());
             }
             volver('id=' . $id . '&respondido=1');
         }
@@ -206,26 +202,11 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="The Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=19">
+<link rel="stylesheet" href="panel.css?v=20">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
-<?php if ($vista === 'sin_config'): ?>
-  <main class="center">
-    <div class="box">
-      <span class="logo"></span>
-      <h1>Panel sin configurar</h1>
-      <p class="muted">Añade un usuario y una contraseña (mínimo 8 caracteres) en el archivo <code>gemini-config.php</code> que está fuera de <code>public_html</code>. Después, desde el panel, podrás sustituirla por su versión cifrada:</p>
-      <pre tabindex="0">&lt;?php
-return [
-  'key' =&gt; 'TU_CLAVE_DE_GEMINI',
-  'panel_user' =&gt; 'TU_USUARIO',
-  'panel_password' =&gt; 'TU_CONTRASEÑA',
-];</pre>
-    </div>
-  </main>
-
-<?php elseif ($vista === 'login'): ?>
+<?php if ($vista === 'login'): ?>
   <main class="center">
     <form class="box" method="post" autocomplete="on">
       <span class="logo"></span>
@@ -249,7 +230,7 @@ return [
         <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form>
       </div>
     </div>
-    <nav class="sw" aria-label="Secciones del panel"><a href="./" class="on" aria-current="page">Solicitudes</a><a href="pagos.php">Pagos</a><a href="cuentas.php">Cuentas</a></nav>
+    <?php $seccionActual = 'solicitudes'; include __DIR__ . '/nav.php'; ?>
     <div class="stats">
       <div><strong><?= $cuenta['nueva'] ?></strong><span>nuevas</span></div>
       <div><strong><?= $cuenta['en_curso'] ?></strong><span>en curso</span></div>
@@ -380,6 +361,6 @@ return [
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=3" defer></script>
+<script src="panel.js?v=4" defer></script>
 </body>
 </html>

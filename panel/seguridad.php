@@ -21,7 +21,9 @@ function csrf(): string {
 
 $config = novis_config();
 $db = nv_db();
-$yaHash = trim((string)($config['panel_password_hash'] ?? '')) !== '' || password_get_info((string)($config['panel_password'] ?? ''))['algo'] !== null;
+$credPanel = nv_panel_credenciales();
+$enBd = $credPanel['origen'] === 'bd';   // usuario y contraseña guardados en la base de datos (panel → Ajustes)
+$yaHash = $credPanel['hash'] !== '';
 $linea = null;          // línea cifrada de la contraseña
 $claveVista = null;     // clave de cifrado (solo tras escribir la contraseña)
 $sondeo = null;         // resultado de la comprobación de archivos
@@ -61,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'gemini-config.php' => 'Archivo de claves y contraseñas',
             'gemini-config.example.php' => 'Ejemplo de configuración',
             'novis-clave.key' => 'Clave de cifrado',
+            'novis-db.php' => 'Conexión a la base de datos MySQL',
             'novis-data/solicitudes.sqlite' => 'Base de datos',
             '.git/config' => 'Repositorio de código',
             'README.md' => 'Documentación interna',
@@ -80,9 +83,10 @@ $publica = rtrim((string)realpath(NOVIS_PUBLIC), '/');
 $raiz = rtrim((string)realpath((string)($_SERVER['DOCUMENT_ROOT'] ?? '')), '/');
 $datos = rtrim((string)realpath(novis_dir()), '/');
 $fueraDePublic = $datos !== '' && !str_starts_with($datos . '/', $publica . '/') && ($raiz === '' || !str_starts_with($datos . '/', $raiz . '/'));
-$archivoDb = $datos . '/solicitudes.sqlite';
+$mysql = novis_db_config();
+$archivoDb = $mysql ? novis_db_config_ruta() : $datos . '/solicitudes.sqlite';
 $permDir = (fileperms($datos) & 0077) === 0;
-$permDb = is_file($archivoDb) && (fileperms($archivoDb) & 0077) === 0;
+$permDb = is_file($archivoDb) ? (fileperms($archivoDb) & 0077) === 0 : (bool)$mysql;   // con 'db' en gemini-config.php no hay archivo aparte
 $sinCifrar = novis_sin_cifrar($db);
 $totalSin = array_sum(array_map(fn($n) => max(0, $n), $sinCifrar));
 $origen = nv_clave_origen();
@@ -109,10 +113,14 @@ $phpDetalle = $phpOk
 $phpDetalle .= $progresoOff ? ' Protección extra activa (barra de progreso de subidas desactivada).' : ' Falta la protección extra: la barra de progreso de subidas sigue activa.';
 
 $comprobaciones = [
-    [$fueraDePublic ? 'ok' : 'mal', 'La base de datos está fuera de la parte pública',
-        $fueraDePublic ? 'Nadie puede descargarla ni abrirla desde internet: no tiene dirección web.' : 'Está dentro de la carpeta pública. Mueve la carpeta public_html para que no contenga a novis-data.'],
+    $mysql
+        ? ['ok', 'Base de datos MySQL de Hostinger',
+            'Conectada a «' . $mysql['nombre'] . '». No tiene dirección web: solo se entra con su usuario y contraseña, que están en novis-db.php, fuera de la parte pública.']
+        : [$fueraDePublic ? 'ok' : 'mal', 'La base de datos está fuera de la parte pública',
+            $fueraDePublic ? 'Nadie puede descargarla ni abrirla desde internet: no tiene dirección web.' : 'Está dentro de la carpeta pública. Mueve la carpeta public_html para que no contenga a novis-data.'],
     [$permDir && $permDb ? 'ok' : 'aviso', 'Permisos privados',
-        $permDir && $permDb ? 'La carpeta de datos y la base de datos solo las puede leer la cuenta del servidor.' : 'Otros usuarios del servidor podrían leer la carpeta de datos. Si sigue así tras recargar, pon permisos 700 a novis-data en el Administrador de archivos.'],
+        $permDir && $permDb ? ($mysql ? 'La carpeta de datos y el archivo de conexión (novis-db.php) solo los puede leer la cuenta del servidor.' : 'La carpeta de datos y la base de datos solo las puede leer la cuenta del servidor.')
+            : ($mysql ? 'Otros usuarios del servidor podrían leer novis-db.php o la carpeta de datos. Ponles permisos 600 y 700 en el Administrador de archivos.' : 'Otros usuarios del servidor podrían leer la carpeta de datos. Si sigue así tras recargar, pon permisos 700 a novis-data en el Administrador de archivos.')],
     [$totalSin === 0 ? 'ok' : 'mal', 'Datos personales cifrados',
         $totalSin === 0 ? 'Nombres, emails, teléfonos, mensajes y notas están cifrados con ' . ($sodium ? 'XChaCha20-Poly1305' : 'AES-256-GCM') . '. En el archivo de la base de datos solo hay texto ilegible.'
                         : "Quedan $totalSin datos sin cifrar. Pulsa «Cifrar lo que falte»."],
@@ -120,7 +128,7 @@ $comprobaciones = [
         $origen === 'config' ? 'Está en gemini-config.php (data_key), separada de la base de datos.'
             : 'Está en el archivo novis-clave.key, fuera de la parte pública. Guarda una copia más abajo: si se pierde, los datos no se pueden recuperar.'],
     [$yaHash ? 'ok' : 'aviso', 'Contraseña del panel',
-        $yaHash ? 'Guardada cifrada (hash): ni viendo el archivo de configuración se puede deducir.' : 'Está escrita tal cual en gemini-config.php. Cámbiala por su versión cifrada más abajo.'],
+        $enBd ? 'Guardada cifrada (hash) en la base de datos. Se cambia en Ajustes.' : ($yaHash ? 'Guardada cifrada (hash): ni viendo el archivo de configuración se puede deducir.' : 'Está escrita tal cual en gemini-config.php. Cámbiala en Ajustes → Acceso al panel.')],
     [$cfgPrivado ? 'ok' : 'aviso', 'Permisos de gemini-config.php',
         $cfgPrivado ? 'Otros usuarios del servidor no pueden leerlo.' : 'Cualquier usuario del servidor podría leerlo. En el Administrador de archivos de hPanel ponle permisos 600 (si el sitio dejara de funcionar, vuelve a 644).'],
     [$phpOk ? ($progresoOff ? 'ok' : 'aviso') : 'mal', 'Versión de PHP', $phpDetalle],
@@ -135,10 +143,10 @@ $comprobaciones = [
 <title>Seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=19">
+<link rel="stylesheet" href="panel.css?v=20">
 </head>
 <body class="v-pagos">
-  <header class="top top--detail"><a href="./" class="back">‹ Solicitudes</a></header>
+  <header class="top top--detail"><a href="ajustes.php" class="back">‹ Ajustes</a></header>
   <main class="detail">
     <section class="card">
       <h1>Seguridad</h1>
@@ -203,6 +211,13 @@ $comprobaciones = [
       <?php endif; ?>
     </section>
 
+    <?php if ($enBd): ?>
+    <section class="card">
+      <h2>Contraseña del panel</h2>
+      <p class="toast" role="status">Guardada cifrada en la base de datos ✓</p>
+      <div class="actions"><a class="btn btn--ghost" href="ajustes.php#acceso">Cambiar usuario o contraseña</a></div>
+    </section>
+    <?php else: ?>
     <section class="card">
       <h2>Contraseña del panel</h2>
       <?php if ($yaHash): ?>
@@ -236,7 +251,8 @@ $comprobaciones = [
         </form>
       <?php endif; ?>
     </section>
+    <?php endif; ?>
   </main>
-  <script src="panel.js?v=3" defer></script>
+  <script src="panel.js?v=4" defer></script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 # ===== The Novis — configuración del servidor =====
 Options -Indexes
 ServerSignature Off
+# La portada es index.php: index.html con los planes y precios de la base de datos (panel → Planes)
+DirectoryIndex index.php index.html
 
 # Protección temporal frente a PHP2Shell (CVE-2026-109619). Solo en LiteSpeed (Hostinger),
 # para no dar error 500 en servidores que no aceptan php_flag. También está en .user.ini.
@@ -36,10 +38,10 @@ RedirectMatch 404 (?i)^/(CLAUDE\.md|\.claude|graphify-out)
 <FilesMatch "(?i)\.(sqlite3?|db|sql|key|pem|bak|old|orig|swp|log|ini|sh|zip|tar|gz|tgz)$">
   Require all denied
 </FilesMatch>
-<FilesMatch "(?i)^(novis-clave|gemini-config|solicitudes)">
+<FilesMatch "(?i)^(novis-clave|novis-db|novis-instalar|gemini-config|solicitudes)">
   Require all denied
 </FilesMatch>
-RedirectMatch 404 ^/novis-(data|clave)
+RedirectMatch 404 ^/novis-(data|clave|db|instalar)
 
 # Sin métodos que no se usan (TRACE/TRACK reflejan las cabeceras de la petición)
 RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DEBUG)$ [NC]

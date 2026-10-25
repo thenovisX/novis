@@ -982,3 +982,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .footer nav .foot-link:hover { color: var(--text); }
 .link-inline { background: none; border: 0; padding: 0; font: inherit; color: var(--blue); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .modal__x:focus-visible, .chat__fab:focus-visible, .acct:focus-visible { border-radius: 50%; }
+
+/* Etiqueta («El más pedido»…) en una tarjeta que no es la destacada */
+.plan:not(.plan--featured) .plan__tag { color: var(--ink); }

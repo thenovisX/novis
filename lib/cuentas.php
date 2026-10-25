@@ -3,6 +3,7 @@
 require_once __DIR__ . '/novis.php';
 require_once __DIR__ . '/correo.php';
 require_once __DIR__ . '/plantilla.php';
+require_once __DIR__ . '/productos.php';
 
 /* ================= Configuración ================= */
 
@@ -22,6 +23,9 @@ function nv_db(): PDO {
     static $listo = false;
     $db = novis_db();
     if ($listo) return $db;
+    // En MySQL todas las tablas ya se crean completas al conectar (lib/mysql.php)
+    $mysql = novis_es_mysql($db);
+    if (!$mysql) {
     $db->exec('CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -67,19 +71,19 @@ function nv_db(): PDO {
         usado INTEGER NOT NULL DEFAULT 0
     )');
     // Fecha del último cambio de contraseña (para cerrar sesiones abiertas)
-    $cols = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
+    $cols = novis_columnas($db, 'usuarios');
     if (!in_array('pass_cambiada', $cols, true)) novis_alter($db, 'ALTER TABLE usuarios ADD COLUMN pass_cambiada INTEGER');
     // Suscripciones (cobro recurrente mensual o anual)
-    $cols = array_column($db->query('PRAGMA table_info(pagos)')->fetchAll(), 'name');
+    $cols = novis_columnas($db, 'pagos');
     foreach (['periodo TEXT', 'stripe_sub TEXT', 'stripe_customer TEXT', 'sub_estado TEXT', 'sub_fin TEXT', 'sub_cancela INTEGER NOT NULL DEFAULT 0'] as $col) {
         if (!in_array(strtok($col, ' '), $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN ' . $col);
     }
     if (!in_array('servicio', $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN servicio TEXT');
     // Índices ciegos (huella con clave) para buscar por email o usuario sin guardarlos en claro
     if (!in_array('pagador_idx', $cols, true)) novis_alter($db, 'ALTER TABLE pagos ADD COLUMN pagador_idx TEXT');
-    $colsU = array_column($db->query('PRAGMA table_info(usuarios)')->fetchAll(), 'name');
+    $colsU = novis_columnas($db, 'usuarios');
     foreach (['email_idx', 'usuario_idx'] as $col) if (!in_array($col, $colsU, true)) novis_alter($db, "ALTER TABLE usuarios ADD COLUMN $col TEXT");
-    $colsT = array_column($db->query('PRAGMA table_info(datos_tokens)')->fetchAll(), 'name');
+    $colsT = novis_columnas($db, 'datos_tokens');
     if (!in_array('email_idx', $colsT, true)) novis_alter($db, 'ALTER TABLE datos_tokens ADD COLUMN email_idx TEXT');
     // Conversación de cada mensaje (solicitud) entre el cliente y Novis
     $db->exec('CREATE TABLE IF NOT EXISTS respuestas (
@@ -123,12 +127,16 @@ function nv_db(): PDO {
         agente TEXT
     )');
     $db->exec('CREATE INDEX IF NOT EXISTS auditoria_usuario ON auditoria(usuario_id)');
+    }
     // Datos personales cifrados: los que se guardaron antes sin cifrar se cifran ahora (una sola vez)
     foreach (['usuarios', 'pagos', 'respuestas', 'datos_tokens'] as $t) novis_cifrar_tabla($db, $t);
-    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
-    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_usuario_idx ON usuarios(usuario_idx)');
-    $db->exec('CREATE INDEX IF NOT EXISTS pagos_pagador_idx ON pagos(pagador_idx)');
-    $db->exec('CREATE INDEX IF NOT EXISTS datos_tokens_email_idx ON datos_tokens(email_idx)');
+    if (!$mysql) {
+        $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_idx ON usuarios(email_idx)');
+        $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_usuario_idx ON usuarios(usuario_idx)');
+        $db->exec('CREATE INDEX IF NOT EXISTS pagos_pagador_idx ON pagos(pagador_idx)');
+        $db->exec('CREATE INDEX IF NOT EXISTS datos_tokens_email_idx ON datos_tokens(email_idx)');
+    }
+    nv_productos_preparar($db);
     $listo = true;
     return $db;
 }
@@ -167,18 +175,7 @@ function nv_euros(int $centimos): string {
 }
 
 /* ================= Catálogo (lo que el cliente puede contratar él solo) ================= */
-
-const NV_IVA = 0.21;
-/** Precios sin IVA, en céntimos. El cliente paga el precio con IVA. */
-const NV_CATALOGO = [
-    'mantenimiento' => ['nombre' => 'Mantenimiento web', 'periodo' => 'month', 'base' => 2900,
-        'desc' => 'Cambios pequeños (textos, fotos, precios u horarios; hasta 2 h al mes), actualizaciones y revisiones de seguridad. Respuesta en 48 h laborables. Sin permanencia.'],
-    'alojamiento' => ['nombre' => 'Alojamiento y dominio (1 año)', 'periodo' => 'year', 'base' => 12000,
-        'desc' => 'Tu web publicada con su dominio, certificado de seguridad (https) y copias de seguridad. Se renueva cada año.'],
-    'alojamiento3' => ['nombre' => 'Alojamiento y dominio (3 años)', 'periodo' => 'year3', 'base' => 28800,
-        'desc' => 'Lo mismo que el anual con un 20 % de descuento (96 € al año). Se renueva cada 3 años.'],
-];
-function nv_con_iva(int $base): int { return (int)round($base * (1 + NV_IVA)); }
+// Sale de los productos que se editan en el panel → Planes: ver nv_catalogo() en lib/productos.php.
 
 /* ================= Mensajes del cliente ================= */
 
@@ -246,7 +243,7 @@ function nv_borrar_datos(string $email, string $desde): array {
     }
     novis_compactar();
     // Aviso a Novis para borrar también los emails del buzón
-    novis_mail('hola@thenovis.com', 'Solicitud de supresión de datos completada',
+    novis_mail(nv_email_negocio(), 'Solicitud de supresión de datos completada',
         "Una persona ha eliminado sus datos desde $desde.\n\nEmail: $email\nMensajes borrados: " . count($d['solicitudes'])
         . "\nCuenta borrada: " . ($d['cuenta'] ? 'sí' : 'no') . "\nPagos conservados por obligación legal: " . count($d['pagos'])
         . "\n\nPendiente (máximo 30 días): borra del buzón los emails de esta persona.");
@@ -363,7 +360,7 @@ function nv_email_restablecer(array $u): bool {
 }
 
 function nv_emails_pago(array $p): void {
-    $destino = 'hola@thenovis.com';
+    $destino = nv_email_negocio();
     $importe = nv_importe_txt($p);
     $sub = nv_es_sub($p);
     $email = (string)($p['pagador_email'] ?? '');
@@ -435,7 +432,7 @@ function nv_marcar_pagado(int $pagoId, array $sesion): void {
 /** Renovación cobrada (factura de un ciclo nuevo). Idempotente: cada factura se registra una sola vez. */
 function nv_renovacion(array $p, array $factura): void {
     $db = nv_db();
-    $st = $db->prepare('INSERT OR IGNORE INTO renovaciones (pago_id, importe, fecha, stripe_invoice) VALUES (?, ?, ?, ?)');
+    $st = $db->prepare(novis_sql_ignorar($db) . ' INTO renovaciones (pago_id, importe, fecha, stripe_invoice) VALUES (?, ?, ?, ?)');
     $st->execute([$p['id'], (int)($factura['amount_paid'] ?? $p['importe']), date('c'), (string)$factura['id']]);
     if ($st->rowCount() !== 1) return;
     nv_sub_sincronizar($p);
@@ -449,9 +446,9 @@ function nv_renovacion(array $p, array $factura): void {
                 'Puedes cancelarla cuando quieras desde tu área de cliente, sin permanencia ni penalización.',
             ], 'Gestionar mi suscripción', nv_url('pagos/?a=resumen&id=' . $p['id']));
             $texto = "Hemos cobrado la renovación de tu suscripción.\n\nConcepto: {$p['concepto']}\nImporte: $importe\n\nPuedes cancelarla cuando quieras: " . nv_url('pagos/?a=resumen&id=' . $p['id']);
-            novis_mail($email, 'Suscripción renovada · Novis', $texto, $html, 'hola@thenovis.com');
+            novis_mail($email, 'Suscripción renovada · Novis', $texto, $html, nv_email_negocio());
         }
-        novis_mail('hola@thenovis.com', "Renovación cobrada: $importe · {$p['concepto']}",
+        novis_mail(nv_email_negocio(), "Renovación cobrada: $importe · {$p['concepto']}",
             "Se ha renovado una suscripción.\n\nConcepto: {$p['concepto']}\nImporte: $importe\nCliente: $email\n\n" . nv_url('panel/pagos.php?id=' . $p['id']));
     } catch (Throwable $e) { error_log('Novis email renovación: ' . $e->getMessage()); }
 }
@@ -468,14 +465,14 @@ function nv_aviso_sub(array $p, string $que): void {
                     'Actualiza tu tarjeta para que el servicio siga activo. Stripe volverá a intentarlo en los próximos días.',
                 ], 'Actualizar mi tarjeta', $url);
                 novis_mail($email, 'No hemos podido cobrar tu suscripción · Novis',
-                    "El cobro de «{$p['concepto']}» no se ha podido completar. Actualiza tu tarjeta aquí: $url", $html, 'hola@thenovis.com');
+                    "El cobro de «{$p['concepto']}» no se ha podido completar. Actualiza tu tarjeta aquí: $url", $html, nv_email_negocio());
             }
-            novis_mail('hola@thenovis.com', "Cobro fallido: {$p['concepto']}", "Stripe no ha podido cobrar la suscripción.\nCliente: $email\n\n" . nv_url('panel/pagos.php?id=' . $p['id']));
+            novis_mail(nv_email_negocio(), "Cobro fallido: {$p['concepto']}", "Stripe no ha podido cobrar la suscripción.\nCliente: $email\n\n" . nv_url('panel/pagos.php?id=' . $p['id']));
         } else {
             $txt = ['baja' => 'El cliente ha pedido la baja: la suscripción terminará al final del periodo pagado.',
                     'reanuda' => 'El cliente ha anulado la baja: la suscripción sigue activa.',
                     'fin' => 'La suscripción ha terminado y ya no se cobrará más.'][$que] ?? $que;
-            novis_mail('hola@thenovis.com', "Suscripción: {$p['concepto']}", "$txt\n\nCliente: $email\n" . nv_url('panel/pagos.php?id=' . $p['id']));
+            novis_mail(nv_email_negocio(), "Suscripción: {$p['concepto']}", "$txt\n\nCliente: $email\n" . nv_url('panel/pagos.php?id=' . $p['id']));
         }
     } catch (Throwable $e) { error_log('Novis aviso suscripción: ' . $e->getMessage()); }
 }
@@ -541,14 +538,34 @@ function nv_google_usuario(string $code, string $nonce): ?array {
 
 /* ================= Sesión del cliente ================= */
 
-/** ¿Es correcta esta contraseña de administrador? (con hash configurado se usa siempre password_verify) */
-function nv_panel_clave_ok(string $pass): bool {
+/**
+ * Usuario y contraseña del panel. Primero los guardados en la base de datos (panel → Ajustes, siempre como hash);
+ * si aún no hay, los de gemini-config.php (panel_user + panel_password_hash o panel_password).
+ * @return array{usuario:string,hash:string,clave:string,origen:string}
+ */
+function nv_panel_credenciales(): array {
+    $u = (string)nv_ajuste('panel_usuario', '');
+    $h = (string)nv_ajuste('panel_hash', '');
+    if ($u !== '' && $h !== '') return ['usuario' => $u, 'hash' => $h, 'clave' => '', 'origen' => 'bd'];
     $c = novis_config();
     $clave = (string)($c['panel_password'] ?? '');
     $hash = trim((string)($c['panel_password_hash'] ?? ''));
+    // Si se pegó el hash (empieza por $2y$…) en panel_password por error, se trata igualmente como hash
     if ($hash === '' && password_get_info($clave)['algo'] !== null) { $hash = $clave; $clave = ''; }
-    if ($hash !== '') return password_verify($pass, $hash);
-    return $clave !== '' && hash_equals($clave, $pass);
+    return ['usuario' => (string)($c['panel_user'] ?? ''), 'hash' => $hash, 'clave' => $clave, 'origen' => 'config'];
+}
+
+/** ¿Hay usuario y contraseña de administrador? */
+function nv_panel_configurado(): bool {
+    $c = nv_panel_credenciales();
+    return $c['usuario'] !== '' && ($c['hash'] !== '' || strlen($c['clave']) >= 8);
+}
+
+/** ¿Es correcta esta contraseña de administrador? (con hash configurado se usa siempre password_verify) */
+function nv_panel_clave_ok(string $pass): bool {
+    $c = nv_panel_credenciales();
+    if ($c['hash'] !== '') return password_verify($pass, $c['hash']);
+    return $c['clave'] !== '' && hash_equals($c['clave'], $pass);
 }
 
 /** ¿La visita llegó por HTTPS? (también si hay un proxy o CDN delante) */
@@ -602,7 +619,9 @@ function nv_panel_sesion(): void {
     session_start();
     if (!empty($_SESSION['ok'])) {
         $ahora = time();
-        if (($_SESSION['visto'] ?? 0) < $ahora - 86400 * 7 || ($_SESSION['desde'] ?? 0) < $ahora - 86400 * 30) {
+        // También se cierra si la contraseña del panel se cambió después de entrar (en otro dispositivo)
+        if (($_SESSION['visto'] ?? 0) < $ahora - 86400 * 7 || ($_SESSION['desde'] ?? 0) < $ahora - 86400 * 30
+            || (int)nv_ajuste('panel_cambio', '0') > (int)($_SESSION['desde'] ?? 0)) {
             $_SESSION = [];
             session_regenerate_id(true);
         } else {

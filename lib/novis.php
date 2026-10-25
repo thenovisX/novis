@@ -14,6 +14,7 @@ define('NOVIS_PUBLIC', dirname(__DIR__));          // public_html
 define('NOVIS_PRIVATE', dirname(NOVIS_PUBLIC));    // carpeta que contiene public_html
 
 require_once __DIR__ . '/cifrado.php';
+require_once __DIR__ . '/mysql.php';
 
 /**
  * Si algo falla sin control, el visitante ve un aviso sencillo (nunca una página en blanco ni detalles internos)
@@ -72,43 +73,65 @@ function novis_dir(string $sub = ''): string {
     return $sub === '' ? $base : $base . '/' . $sub;
 }
 
+/** ¿La conexión es MySQL? (si no, es la base de datos SQLite de antes) */
+function novis_es_mysql(PDO $db): bool { return $db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql'; }
+
+/** «INSERT IGNORE» en MySQL, «INSERT OR IGNORE» en SQLite. */
+function novis_sql_ignorar(PDO $db): string { return novis_es_mysql($db) ? 'INSERT IGNORE' : 'INSERT OR IGNORE'; }
+
+/** Nombres de las columnas de una tabla (sirve igual para MySQL y SQLite). */
+function novis_columnas(PDO $db, string $tabla): array {
+    if (novis_es_mysql($db)) return array_column($db->query("SHOW COLUMNS FROM `$tabla`")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+    return array_column($db->query("PRAGMA table_info($tabla)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+}
+
 /** ALTER TABLE que no falla si otra visita añadió la misma columna justo antes (pasa con dos primeras visitas a la vez). */
 function novis_alter(PDO $db, string $sql): void {
     try { $db->exec($sql); }
-    catch (PDOException $e) { if (!str_contains($e->getMessage(), 'duplicate column')) throw $e; }
+    catch (PDOException $e) { if (stripos($e->getMessage(), 'duplicate column') === false) throw $e; }
 }
 
-/** Conexión a la base de datos de solicitudes (SQLite, fuera de public_html, con los datos personales cifrados). */
+/**
+ * Conexión a la base de datos (con los datos personales cifrados).
+ * Si el asistente del panel ya guardó los datos de MySQL (novis-db.php), se usa la base de datos MySQL de Hostinger;
+ * si no, la base de datos SQLite de siempre, fuera de public_html.
+ */
 function novis_db(): PDO {
     static $db = null;
     if ($db) return $db;
-    $dir = novis_dir();
-    $archivo = $dir . '/solicitudes.sqlite';
-    $nueva = !is_file($archivo);
-    $conn = new PDO('sqlite:' . $archivo);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $conn->setAttribute(PDO::ATTR_TIMEOUT, 10);          // espera si otra visita está escribiendo
-    if ($nueva) @chmod($archivo, 0600);
-    $conn->exec('PRAGMA journal_mode = WAL');
-    $conn->exec('PRAGMA secure_delete = ON');              // lo borrado se sobrescribe con ceros, no se queda en el archivo
-    $conn->exec('CREATE TABLE IF NOT EXISTS ajustes (clave TEXT PRIMARY KEY, valor TEXT)');
-    $conn->exec('CREATE TABLE IF NOT EXISTS solicitudes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        creado TEXT NOT NULL,
-        nombre TEXT NOT NULL,
-        empresa TEXT,
-        email TEXT NOT NULL,
-        plan TEXT,
-        mensaje TEXT NOT NULL,
-        estado TEXT NOT NULL DEFAULT "nueva",
-        notas TEXT DEFAULT "",
-        actualizado TEXT
-    )');
-    // Columna con la fecha en que el usuario aceptó la política de privacidad
-    $cols = array_column($conn->query('PRAGMA table_info(solicitudes)')->fetchAll(), 'name');
-    if (!in_array('consentimiento', $cols, true)) novis_alter($conn, 'ALTER TABLE solicitudes ADD COLUMN consentimiento TEXT');
-    if (!in_array('email_idx', $cols, true)) novis_alter($conn, 'ALTER TABLE solicitudes ADD COLUMN email_idx TEXT');
+    $archivo = null;
+    if ($cfg = novis_db_config()) {
+        $conn = novis_mysql_conectar($cfg);
+        novis_esquema_mysql($conn);
+    } else {
+        $dir = novis_dir();
+        $archivo = $dir . '/solicitudes.sqlite';
+        $nueva = !is_file($archivo);
+        $conn = new PDO('sqlite:' . $archivo);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $conn->setAttribute(PDO::ATTR_TIMEOUT, 10);          // espera si otra visita está escribiendo
+        if ($nueva) @chmod($archivo, 0600);
+        $conn->exec('PRAGMA journal_mode = WAL');
+        $conn->exec('PRAGMA secure_delete = ON');              // lo borrado se sobrescribe con ceros, no se queda en el archivo
+        $conn->exec('CREATE TABLE IF NOT EXISTS ajustes (clave TEXT PRIMARY KEY, valor TEXT)');
+        $conn->exec('CREATE TABLE IF NOT EXISTS solicitudes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            creado TEXT NOT NULL,
+            nombre TEXT NOT NULL,
+            empresa TEXT,
+            email TEXT NOT NULL,
+            plan TEXT,
+            mensaje TEXT NOT NULL,
+            estado TEXT NOT NULL DEFAULT "nueva",
+            notas TEXT DEFAULT "",
+            actualizado TEXT
+        )');
+        // Columna con la fecha en que el usuario aceptó la política de privacidad
+        $cols = novis_columnas($conn, 'solicitudes');
+        if (!in_array('consentimiento', $cols, true)) novis_alter($conn, 'ALTER TABLE solicitudes ADD COLUMN consentimiento TEXT');
+        if (!in_array('email_idx', $cols, true)) novis_alter($conn, 'ALTER TABLE solicitudes ADD COLUMN email_idx TEXT');
+    }
 
     // ---- Clave de cifrado ----
     // Si la base de datos ya tiene datos cifrados, la clave tiene que existir: nunca se crea una nueva
@@ -121,17 +144,58 @@ function novis_db(): PDO {
     if ($centinela) {
         if (nv_descifrar($centinela) !== 'novis-ok') throw new RuntimeException('La clave de cifrado no corresponde a esta base de datos.');
     } else {
-        $conn->prepare("INSERT OR IGNORE INTO ajustes (clave, valor) VALUES ('centinela', ?)")->execute([nv_cifrar('novis-ok')]);
+        $conn->prepare(novis_sql_ignorar($conn) . " INTO ajustes (clave, valor) VALUES ('centinela', ?)")->execute([nv_cifrar('novis-ok')]);
     }
-    if (is_file($archivo) && (fileperms($archivo) & 0077) !== 0) @chmod($archivo, 0600);
+    if ($archivo && is_file($archivo) && (fileperms($archivo) & 0077) !== 0) @chmod($archivo, 0600);
 
     // ---- Cifrar los datos que se guardaron antes sin cifrar (una sola vez) ----
     novis_cifrar_tabla($conn, 'solicitudes');
-    $conn->exec('CREATE INDEX IF NOT EXISTS solicitudes_email_idx ON solicitudes(email_idx)');
+    if (!novis_es_mysql($conn)) $conn->exec('CREATE INDEX IF NOT EXISTS solicitudes_email_idx ON solicitudes(email_idx)');
 
     // A partir de aquí las consultas descifran solas lo que devuelven
     $conn->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['NvStmt']);
     return $db = $conn;
+}
+
+/* ================= Ajustes guardados en la base de datos (tu información, correo, acceso al panel) ================= */
+
+/** Lee un ajuste. Si la base de datos no responde, devuelve el valor por defecto (la web nunca se cae por esto). */
+function nv_ajuste(string $clave, ?string $def = null): ?string {
+    $todos = nv_ajustes();
+    $v = $todos[$clave] ?? null;
+    return ($v === null || $v === '') ? $def : $v;
+}
+
+/** Todos los ajustes (descifrados). */
+function nv_ajustes(bool $recargar = false): array {
+    static $cache = null;
+    if ($cache !== null && !$recargar) return $cache;
+    try {
+        $cache = [];
+        foreach (novis_db()->query('SELECT clave, valor FROM ajustes') as $f) $cache[$f['clave']] = $f['valor'];
+    } catch (Throwable $e) {
+        error_log('Novis ajustes: ' . $e->getMessage());
+        $cache = [];
+    }
+    return $cache;
+}
+
+/** Guarda varios ajustes. Los que están en $cifrar se guardan cifrados (p. ej. la contraseña del correo). */
+function nv_ajustes_guardar(array $valores, array $cifrar = []): void {
+    $db = novis_db();
+    $st = $db->prepare('REPLACE INTO ajustes (clave, valor) VALUES (?, ?)');
+    foreach ($valores as $k => $v) {
+        if ($v === null) { $db->prepare('DELETE FROM ajustes WHERE clave = ?')->execute([$k]); continue; }
+        $st->execute([$k, in_array($k, $cifrar, true) ? nv_cifrar((string)$v) : (string)$v]);
+    }
+    nv_ajustes(true);
+}
+
+/** Tu correo: donde llegan los avisos y el que ven los clientes. Se cambia en el panel → Ajustes. */
+function nv_email_negocio(): string {
+    $e = nv_ajuste('email');
+    if ($e && filter_var($e, FILTER_VALIDATE_EMAIL)) return $e;
+    return 'hola@thenovis.com';
 }
 
 /**
@@ -163,15 +227,16 @@ function novis_cifrar_tabla(PDO $db, string $tabla, bool $forzar = false): int {
     $marca->closeCursor();
 
     $cambiadas = 0;
-    $db->exec('BEGIN IMMEDIATE');
+    $mysql = novis_es_mysql($db);
+    $mysql ? $db->beginTransaction() : $db->exec('BEGIN IMMEDIATE');
     try {
         // Otra visita pudo hacerlo mientras esperábamos
         $marca->execute(['cifrado:' . $tabla]);
         $hecho = (bool)$marca->fetchColumn();
         $marca->closeCursor();
-        if ($hecho && !$forzar) { $db->exec('COMMIT'); return 0; }
+        if ($hecho && !$forzar) { $mysql ? $db->commit() : $db->exec('COMMIT'); return 0; }
 
-        foreach ($db->query("SELECT rowid AS _rid, $tabla.* FROM $tabla")->fetchAll() as $f) {
+        foreach ($db->query("SELECT id AS _rid, $tabla.* FROM $tabla")->fetchAll() as $f) {
             $nuevo = [];
             $claro = [];
             foreach ($cols as $c) {
@@ -190,17 +255,17 @@ function novis_cifrar_tabla(PDO $db, string $tabla, bool $forzar = false): int {
             }
             if (!$nuevo) continue;
             $set = implode(', ', array_map(fn($c) => "$c = ?", array_keys($nuevo)));
-            $db->prepare("UPDATE $tabla SET $set WHERE rowid = ?")->execute([...array_values($nuevo), $f['_rid']]);
+            $db->prepare("UPDATE $tabla SET $set WHERE id = ?")->execute([...array_values($nuevo), $f['_rid']]);
             $cambiadas++;
         }
-        $db->prepare("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES (?, ?)")->execute(['cifrado:' . $tabla, date('c')]);
-        $db->exec('COMMIT');
+        $db->prepare("REPLACE INTO ajustes (clave, valor) VALUES (?, ?)")->execute(['cifrado:' . $tabla, date('c')]);
+        $mysql ? $db->commit() : $db->exec('COMMIT');
     } catch (Throwable $e) {
-        if ($db->inTransaction()) $db->exec('ROLLBACK');
+        if ($db->inTransaction()) $mysql ? $db->rollBack() : $db->exec('ROLLBACK');
         error_log("Novis: no se pudo cifrar la tabla $tabla: " . $e->getMessage());
         throw $e;
     }
-    if ($cambiadas) {
+    if ($cambiadas && !$mysql) {
         // Que no quede ningún resto del texto antiguo en el archivo ni en el registro de escritura
         try { $db->exec('PRAGMA wal_checkpoint(TRUNCATE)'); $db->exec('VACUUM'); } catch (Throwable $e) { error_log('Novis cifrado (compactar): ' . $e->getMessage()); }
     }
@@ -240,6 +305,7 @@ function novis_compactar(): void {
         $db = novis_db();
         // Respuestas de mensajes que ya no existen (p. ej. borrados desde el panel)
         try { $db->exec('DELETE FROM respuestas WHERE solicitud_id NOT IN (SELECT id FROM solicitudes)'); } catch (Throwable $e) {}
+        if (novis_es_mysql($db)) return;   // MySQL reaprovecha el espacio por sí solo
         $db->exec('PRAGMA wal_checkpoint(TRUNCATE)');
         $db->exec('VACUUM');
     } catch (Throwable $e) {
@@ -249,9 +315,14 @@ function novis_compactar(): void {
 
 /** Espacio que ocupa la base de datos, en formato legible. */
 function novis_tamano(): string {
-    $base = NOVIS_PRIVATE . '/novis-data/solicitudes.sqlite';
     $bytes = 0;
-    foreach (['', '-wal', '-shm'] as $suf) if (is_file($base . $suf)) $bytes += filesize($base . $suf);
+    if (novis_db_config()) {
+        try { $bytes = (int)novis_db()->query('SELECT COALESCE(SUM(data_length + index_length), 0) FROM information_schema.tables WHERE table_schema = DATABASE()')->fetchColumn(); }
+        catch (Throwable $e) { return '—'; }
+    } else {
+        $base = NOVIS_PRIVATE . '/novis-data/solicitudes.sqlite';
+        foreach (['', '-wal', '-shm'] as $suf) if (is_file($base . $suf)) $bytes += filesize($base . $suf);
+    }
     if ($bytes < 1024) return $bytes . ' B';
     if ($bytes < 1048576) return round($bytes / 1024) . ' KB';
     return round($bytes / 1048576, 1) . ' MB';

@@ -1,4 +1,6 @@
 gemini-config.php
+novis-db.php
+novis-instalar.txt
 novis-clave.key
 novis-data/
 *.sqlite

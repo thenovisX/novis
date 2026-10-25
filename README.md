@@ -35,6 +35,34 @@ Los mensajes llegan a `hola@thenovis.com` (variable `$destino` en `contact.php`)
 Los emails se envían por SMTP con el buzón `hola@thenovis.com` (smtp.hostinger.com:465)
 usando `smtp_user` y `smtp_password` de la configuración privada.
 
+## Base de datos MySQL de Hostinger (asistente de instalación)
+
+1. En hPanel → **Bases de datos → Administración** crea una base de datos MySQL (nombre, usuario y contraseña).
+2. Entra en `thenovis.com/panel/`. La primera vez se abre el **asistente** (`panel/instalar.php`): escribe el nombre de la base de datos,
+   el usuario, la contraseña, el servidor (`localhost`) y el puerto (`3306`).
+3. El asistente comprueba la conexión, crea las tablas y **copia todo lo que había** en la base de datos SQLite anterior
+   (cuentas, pagos, mensajes, renovaciones…), sin descifrar nada. Si algo falla, no cambia nada.
+4. Los datos de conexión se guardan en `novis-db.php`, **fuera de `public_html`**, con permisos 600. Está en `.gitignore`
+   y el `.htaccess` prohíbe servirlo. Si el servidor no deja crearlo, el asistente enseña el texto para crearlo a mano.
+5. Después pide tu información (correo para avisos) y el usuario y la contraseña del panel, que se guardan en la base de datos (hash bcrypt).
+
+Mientras no exista `novis-db.php`, la web sigue usando `novis-data/solicitudes.sqlite`. En una instalación nueva sin usuario de panel,
+el asistente pide el código del archivo `novis-instalar.txt` (se crea solo fuera de `public_html`), para que nadie de fuera pueda adelantarse.
+También vale poner la conexión en `gemini-config.php`: `'db' => ['host' => 'localhost', 'puerto' => 3306, 'nombre' => '…', 'usuario' => '…', 'clave' => '…']`.
+
+En phpMyAdmin los datos personales se ven cifrados (`nv1:…`): es a propósito. La clave de cifrado sigue en `novis-clave.key` (o `data_key`).
+
+## Panel: Planes y Ajustes
+
+- **Planes** (`panel/planes.php`): crear, editar, ordenar, ocultar y borrar planes web y servicios, con precio sin IVA,
+  «desde», periodo de cobro, lo que incluye, nota, etiqueta y destacado. La portada (`index.php` = `index.html` con los bloques
+  `<!-- planes:… -->`, `<!-- servicios:… -->` y `<!-- opciones:… -->` sustituidos), los datos estructurados, el chat y el formulario
+  los leen de la tabla `productos`. Los servicios marcados como «se contrata online» forman el catálogo del área de cliente
+  (antes `NV_CATALOGO`). La versión gallega (`gl/index.html`) sigue con sus precios escritos.
+- **Ajustes** (`panel/ajustes.php`): nombre del negocio, tu correo (avisos y el que ven los clientes), teléfono, buzón de envío
+  (SMTP; la contraseña se guarda cifrada), usuario y contraseña del panel (cambiarla cierra las demás sesiones) y datos de la base de datos.
+  Lo guardado aquí manda sobre `gemini-config.php`.
+
 ## Configuración privada (`gemini-config.php`, fuera de `public_html`)
 
 ```php
