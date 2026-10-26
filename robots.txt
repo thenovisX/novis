@@ -1,7 +1,7 @@
 User-agent: *
+# El panel y el código interno no se rastrean.
+# /pagos/ y /datos/ sí: llevan «noindex», y Google solo puede leerlo si puede entrar.
 Disallow: /panel/
-Disallow: /pagos/
-Disallow: /datos/
 Disallow: /lib/
 Allow: /
 
