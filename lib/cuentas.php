@@ -342,8 +342,10 @@ function nv_token_usar(string $t, string $tipo): ?int {
     $st->execute([hash('sha256', $t), $tipo, time()]);
     $fila = $st->fetch();
     if (!$fila) return null;
-    $db->prepare('UPDATE tokens SET usado = 1 WHERE id = ?')->execute([$fila['id']]);
-    return (int)$fila['usuario_id'];
+    // Solo gana una de dos peticiones a la vez con el mismo enlace: la otra ya no encuentra el token sin usar
+    $up = $db->prepare('UPDATE tokens SET usado = 1 WHERE id = ? AND usado = 0');
+    $up->execute([$fila['id']]);
+    return $up->rowCount() === 1 ? (int)$fila['usuario_id'] : null;
 }
 
 /* ================= Emails ================= */
@@ -587,6 +589,30 @@ function nv_https(): bool {
     return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 }
 
+/** Las cookies de sesión solo viajan por HTTPS. Únicamente en pruebas en el propio ordenador (localhost) se permite HTTP. */
+function nv_cookie_segura(): bool {
+    $host = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
+    return nv_https() || !in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
+}
+
+/**
+ * Hash de contraseñas: Argon2id si el PHP del servidor lo trae (recomendación de OWASP), si no bcrypt con coste 12.
+ * Las contraseñas guardadas con el método anterior se rehacen solas la próxima vez que la persona entra.
+ */
+function nv_hash_algo(): array {
+    return defined('PASSWORD_ARGON2ID')
+        ? [PASSWORD_ARGON2ID, ['memory_cost' => 19456, 'time_cost' => 2, 'threads' => 1]]
+        : [PASSWORD_BCRYPT, ['cost' => 12]];
+}
+function nv_hash(string $pass): string {
+    [$algo, $opc] = nv_hash_algo();
+    return password_hash($pass, $algo, $opc);
+}
+function nv_hash_viejo(string $hash): bool {
+    [$algo, $opc] = nv_hash_algo();
+    return password_needs_rehash($hash, $algo, $opc);
+}
+
 /**
  * Ajustes comunes de las sesiones: se guardan en una carpeta privada propia (no en la carpeta temporal
  * compartida del servidor), solo se aceptan identificadores que creó este servidor y se limpian solas.
@@ -607,7 +633,7 @@ function nv_sesion(): void {
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/pagos/',
-        'secure' => nv_https(),
+        'secure' => nv_cookie_segura(),
         'httponly' => true,
         'samesite' => 'Lax',   // Lax para poder volver desde Stripe y Google con la sesión iniciada
     ]);
@@ -625,7 +651,7 @@ function nv_panel_sesion(): void {
     session_set_cookie_params([
         'lifetime' => 60 * 60 * 24 * 30,
         'path' => '/panel/',
-        'secure' => nv_https(),
+        'secure' => nv_cookie_segura(),
         'httponly' => true,
         'samesite' => 'Strict',
     ]);
