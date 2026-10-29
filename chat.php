@@ -6,6 +6,7 @@ header('X-Robots-Tag: noindex');
 // ====== CONFIGURACIÓN ======
 $MODELO          = 'gemini-3.1-flash-lite';
 $MAX_POR_HORA    = 30;    // mensajes por visitante y hora
+$MAX_GLOBAL_HORA = 600;   // mensajes por hora entre todos los visitantes (tope de gasto en Gemini)
 $MAX_CARACTERES  = 800;   // longitud máxima de cada mensaje
 $MAX_HISTORIAL   = 12;    // mensajes anteriores que se envían a Gemini
 // ===========================
@@ -27,9 +28,10 @@ if (!$clave && is_readable($archivoClave)) {
 }
 if (!$clave) responder(['error' => 'El asistente no está configurado todavía.'], 503);
 
-// --- Límite de uso por visitante ---
+// --- Solo desde thenovis.com y con límite de uso por visitante y en total ---
 require_once __DIR__ . '/lib/novis.php';
-if (!novis_limite('chat', $MAX_POR_HORA, 3600)) {
+if (!novis_mismo_origen()) responder(['error' => 'Origen no permitido'], 403);
+if (!novis_limite('chat', $MAX_POR_HORA, 3600) || !novis_limite('chat-global', $MAX_GLOBAL_HORA, 3600, 'todos')) {
     responder(['reply' => 'Has enviado muchos mensajes seguidos. Si quieres, escríbenos a hola@thenovis.com o usa el formulario de contacto y te respondemos en menos de 24 horas.']);
 }
 

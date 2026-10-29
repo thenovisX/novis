@@ -338,18 +338,42 @@ function novis_tamano(): string {
 function novis_limite(string $clave, int $max, int $segundos, ?string $sujeto = null): bool {
     $dir = novis_dir();
     $f = $dir . '/lim-' . preg_replace('/[^a-z0-9-]/i', '', $clave) . '-' . nv_huella($sujeto ?? ($_SERVER['REMOTE_ADDR'] ?? 'x')) . '.json';
-    $t = is_readable($f) ? (json_decode((string)@file_get_contents($f), true) ?: []) : [];
-    $t = array_values(array_filter($t, fn($x) => $x > time() - $segundos));
+    // Leer, contar y apuntar con el archivo bloqueado: si llegan muchas peticiones a la vez, no se cuelan por encima del límite
+    $h = @fopen($f, 'c+');
+    if ($h) flock($h, LOCK_EX);
+    $t = $h ? (json_decode((string)stream_get_contents($h), true) ?: []) : [];
+    $t = array_values(array_filter(is_array($t) ? $t : [], fn($x) => is_int($x) && $x > time() - $segundos));
     // Limpieza: borra registros de más de 1 hora (política de privacidad)
     if (mt_rand(1, 20) === 1) {
         foreach (glob($dir . '/{lim,intentos}-*.json', GLOB_BRACE) ?: [] as $viejo) {
             if (filemtime($viejo) < time() - 3600) @unlink($viejo);
         }
     }
-    if (count($t) >= $max) return false;
-    $t[] = time();
-    @file_put_contents($f, json_encode($t), LOCK_EX);
-    return true;
+    $ok = count($t) < $max;
+    if ($ok) $t[] = time();
+    if ($h) {
+        ftruncate($h, 0);
+        rewind($h);
+        fwrite($h, json_encode($t));
+        fflush($h);
+        flock($h, LOCK_UN);
+        fclose($h);
+    }
+    return $ok;
+}
+
+/**
+ * ¿La petición viene de una página de esta misma web? Los navegadores envían Sec-Fetch-Site u Origin;
+ * así otra web no puede usar el chat o el formulario desde sus páginas (ni gastar la cuota de Gemini).
+ * Si el navegador no manda ninguna de las dos (muy antiguo), se deja pasar: los límites de intentos siguen aplicándose.
+ */
+function novis_mismo_origen(): bool {
+    $sitio = $_SERVER['HTTP_SEC_FETCH_SITE'] ?? '';
+    if ($sitio !== '') return in_array($sitio, ['same-origin', 'none'], true);
+    $origen = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origen === '') return true;
+    $host = parse_url($origen, PHP_URL_HOST);
+    return is_string($host) && strcasecmp($host, preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? ''))) === 0;
 }
 
 function e($v): string {

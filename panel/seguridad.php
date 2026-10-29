@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $p1 = (string)($_POST['password'] ?? '');
         if (mb_strlen($p1) < 12) $error = 'Usa al menos 12 caracteres (mejor una frase larga).';
         elseif ($p1 !== (string)($_POST['password2'] ?? '')) $error = 'Las contraseñas no coinciden.';
-        else $linea = "'panel_password_hash' => '" . password_hash($p1, PASSWORD_DEFAULT) . "',";
+        else $linea = "'panel_password_hash' => '" . nv_hash($p1) . "',";
     } elseif ($accion === 'clave') {
         $seccionError = 'clave';
         if (!novis_limite('clave-panel', 5, 900)) $error = 'Demasiados intentos. Espera un rato.';

@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errores) {
             // Cambiarla cierra cualquier sesión que el cliente tuviera abierta
             $db->prepare('UPDATE usuarios SET password_hash = ?, pass_cambiada = ? WHERE id = ?')
-               ->execute([password_hash($pass, PASSWORD_DEFAULT), time(), $id]);
+               ->execute([nv_hash($pass), time(), $id]);
             $db->prepare("UPDATE tokens SET usado = 1 WHERE usuario_id = ? AND tipo = 'reset'")->execute([$id]);
             volver('id=' . $id . '&ok=pass');
         }
