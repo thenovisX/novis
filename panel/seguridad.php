@@ -142,11 +142,11 @@ $comprobaciones = [
 <meta name="robots" content="noindex, nofollow">
 <title>Seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-pagos">
-  <header class="top top--detail"><a href="ajustes.php" class="back">‹ Ajustes</a></header>
+  <header class="top top--detail"><a href="ajustes.php" class="back">‹ Ajustes</a> <?php $seccionActual = 'seguridad'; include __DIR__ . '/nav.php'; ?></header>
   <main class="detail">
     <section class="card">
       <h1>Seguridad</h1>
@@ -253,6 +253,6 @@ $comprobaciones = [
     </section>
     <?php endif; ?>
   </main>
-  <script src="panel.js?v=4" defer></script>
+  <script src="panel.js?v=5" defer></script>
 </body>
 </html>

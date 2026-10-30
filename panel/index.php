@@ -57,7 +57,8 @@ elseif (empty($_SESSION['ok'])) {
             @unlink($f);
             // La primera vez que se entra sin la base de datos MySQL conectada, se abre el asistente
             if (!novis_db_config()) { header('Location: instalar.php'); exit; }
-            volver();
+            header('Location: resumen.php');
+            exit;
         } else {
             $intentos[] = time();
             $globales[] = time();
@@ -201,8 +202,8 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="The Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -227,7 +228,6 @@ function hace(string $fecha): string {
       <h1>Solicitudes</h1>
       <div class="top__actions">
         <?php if ($lista): ?><button type="button" class="link" id="btnSeleccionar">Seleccionar</button><?php endif; ?>
-        <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form>
       </div>
     </div>
     <?php $seccionActual = 'solicitudes'; include __DIR__ . '/nav.php'; ?>
@@ -292,6 +292,7 @@ function hace(string $fecha): string {
 <?php elseif ($vista === 'detalle'): ?>
   <header class="top top--detail">
     <a href="./" class="back">‹ Solicitudes</a>
+    <?php $seccionActual = 'solicitudes'; include __DIR__ . '/nav.php'; ?>
   </header>
   <main class="detail">
     <section class="card">
@@ -361,6 +362,6 @@ function hace(string $fecha): string {
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=4" defer></script>
+<script src="panel.js?v=5" defer></script>
 </body>
 </html>

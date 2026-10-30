@@ -158,8 +158,8 @@ const NOMBRES_TABLA = ['usuarios' => 'cuentas de clientes', 'pagos' => 'pagos', 
 <meta name="robots" content="noindex, nofollow">
 <title>Instalación · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-pagos">
   <header class="top top--detail"><?php if (!empty($_SESSION['ok']) && $instalado): ?><a href="ajustes.php" class="back">‹ Ajustes</a><?php else: ?><span class="back muted">The Novis · instalación</span><?php endif; ?></header>
@@ -270,6 +270,6 @@ const NOMBRES_TABLA = ['usuarios' => 'cuentas de clientes', 'pagos' => 'pagos', 
     </section>
 <?php endif; ?>
   </main>
-  <script src="panel.js?v=4" defer></script>
+  <script src="panel.js?v=5" defer></script>
 </body>
 </html>
