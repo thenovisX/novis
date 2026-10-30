@@ -118,14 +118,13 @@ $cred = nv_panel_credenciales();
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-pagos">
   <header class="top">
     <div class="top__row">
       <h1>Ajustes</h1>
-      <div class="top__actions"><form method="post" action="./"><input type="hidden" name="csrf" value="<?= e(nv_csrf()) ?>"><button class="link" name="accion" value="salir">Salir</button></form></div>
     </div>
     <?php $seccionActual = 'ajustes'; include __DIR__ . '/nav.php'; ?>
     <div class="pad"></div>
@@ -207,6 +206,6 @@ $cred = nv_panel_credenciales();
       <div class="actions"><a class="btn btn--ghost" href="instalar.php?cambiar=1">Cambiar datos de conexión</a><a class="btn btn--ghost" href="seguridad.php">Seguridad</a></div>
     </section>
   </main>
-  <script src="panel.js?v=4" defer></script>
+  <script src="panel.js?v=5" defer></script>
 </body>
 </html>

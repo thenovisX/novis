@@ -116,11 +116,11 @@ $plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
 <meta name="robots" content="noindex, nofollow">
 <title>Brecha de seguridad · The Novis</title>
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-pagos">
-  <header class="top top--detail"><a href="seguridad.php" class="back">‹ Seguridad</a></header>
+  <header class="top top--detail"><a href="seguridad.php" class="back">‹ Seguridad</a> <?php $seccionActual = 'seguridad'; include __DIR__ . '/nav.php'; ?></header>
   <main class="detail">
     <section class="card">
       <h1>Protocolo ante una brecha</h1>
@@ -243,6 +243,6 @@ $plantilla = "Asunto: Información importante sobre tus datos en The Novis\n\n"
       <?php endif; ?>
     </section>
   </main>
-  <script src="panel.js?v=4" defer></script>
+  <script src="panel.js?v=5" defer></script>
 </body>
 </html>

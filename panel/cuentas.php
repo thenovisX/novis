@@ -125,6 +125,21 @@ if ($vista === 'detalle') {
     $st = $db->prepare('SELECT * FROM pagos WHERE usuario_id = ? ORDER BY id DESC');
     $st->execute([$u['id']]);
     $pagos = $st->fetchAll();
+    // Ficha: lo que ha pagado en total (renovaciones incluidas), suscripciones vivas y último cobro
+    $r = $db->prepare('SELECT r.importe, r.fecha FROM renovaciones r JOIN pagos p ON p.id = r.pago_id WHERE p.usuario_id = ?');
+    $r->execute([$u['id']]);
+    $renovs = $r->fetchAll();
+    $ficha = ['total' => 0, 'cobros' => 0, 'ultimo' => null, 'subs' => 0, 'alMes' => 0];
+    foreach ($pagos as $p) {
+        if ($p['estado'] !== 'pagado') continue;
+        $ficha['total'] += (int)$p['importe']; $ficha['cobros']++;
+        if ($p['pagado_en'] > $ficha['ultimo']) $ficha['ultimo'] = $p['pagado_en'];
+        if (nv_sub_viva($p)) { $ficha['subs']++; if (!$p['sub_cancela']) $ficha['alMes'] += intdiv((int)$p['importe'], NV_PERIODOS_MESES[$p['periodo']] ?? 1); }
+    }
+    foreach ($renovs as $rv) {
+        $ficha['total'] += (int)$rv['importe']; $ficha['cobros']++;
+        if ($rv['fecha'] > $ficha['ultimo']) $ficha['ultimo'] = $rv['fecha'];
+    }
     $st = $db->prepare('SELECT id, creado, plan, estado, mensaje FROM solicitudes WHERE email_idx = ? ORDER BY id DESC');
     $st->execute([nv_indice($u['email'])]);
     $msgs = $st->fetchAll();
@@ -177,18 +192,18 @@ if ($vista === 'detalle') {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Cuentas · The Novis</title>
+<title>Clientes · The Novis</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
-<meta name="theme-color" content="#f5f5f7">
-<link rel="stylesheet" href="panel.css?v=21">
+<meta name="theme-color" content="#f5f6f8">
+<link rel="stylesheet" href="panel.css?v=22">
 </head>
 <body class="v-cuentas">
 
 <?php if ($vista === 'lista'): ?>
   <header class="top">
-    <div class="top__row"><h1>Cuentas</h1></div>
+    <div class="top__row"><h1>Clientes</h1></div>
     <?php $seccionActual = 'cuentas'; include __DIR__ . '/nav.php'; ?>
     <div class="stats">
       <div><strong><?= $c['total'] ?></strong><span>cuentas</span></div>
@@ -197,7 +212,7 @@ if ($vista === 'detalle') {
     </div>
     <form class="search" method="get">
       <input type="hidden" name="f" value="<?= e($f) ?>">
-      <label for="q" class="sr">Buscar cuentas</label>
+      <label for="q" class="vh">Buscar clientes</label>
       <input type="search" id="q" name="q" value="<?= e($q) ?>" placeholder="Buscar usuario, email o teléfono">
     </form>
     <nav class="tabs">
@@ -243,7 +258,7 @@ if ($vista === 'detalle') {
   </main>
 
 <?php elseif ($vista === 'contacto'): ?>
-  <header class="top top--detail"><a href="cuentas.php?f=contactos" class="back">‹ Contactos</a></header>
+  <header class="top top--detail"><a href="cuentas.php?f=contactos" class="back">‹ Contactos</a> <?php $seccionActual = 'cuentas'; include __DIR__ . '/nav.php'; ?></header>
   <main class="detail">
     <section class="card">
       <div class="person">
@@ -284,13 +299,21 @@ if ($vista === 'detalle') {
   </main>
 
 <?php else: ?>
-  <header class="top top--detail"><a href="cuentas.php" class="back">‹ Cuentas</a></header>
+  <header class="top top--detail"><a href="cuentas.php" class="back">‹ Clientes</a> <?php $seccionActual = 'cuentas'; include __DIR__ . '/nav.php'; ?></header>
   <main class="detail">
     <?php if ($aviso): ?><p class="toast" role="status"><?= e($aviso) ?></p><?php endif; ?>
     <section class="card">
       <div class="person">
         <span class="avatar avatar--big" aria-hidden="true"><?= e(mb_strtoupper(mb_substr($u['usuario'] ?: $u['email'], 0, 1))) ?></span>
         <div><h1><?= e($u['usuario'] ?: 'Sin usuario') ?></h1><p class="muted"><?= e($u['email']) ?></p></div>
+      </div>
+      <div class="ficha">
+        <div><strong><?= e(nv_euros($ficha['total'])) ?></strong><span>pagado en total</span></div>
+        <div><strong><?= $ficha['cobros'] ?></strong><span><?= $ficha['cobros'] === 1 ? 'cobro' : 'cobros' ?></span></div>
+        <div><strong><?= $ficha['subs'] ? e(nv_euros($ficha['alMes'])) : '—' ?></strong><span><?= $ficha['subs'] ? 'al mes · ' . $ficha['subs'] . ($ficha['subs'] === 1 ? ' suscripción' : ' suscripciones') : 'sin suscripciones' ?></span></div>
+        <div><strong><?= $ficha['ultimo'] ? e(date('d/m/Y', strtotime($ficha['ultimo']))) : '—' ?></strong><span>último pago</span></div>
+        <div><strong><?= count($msgs) ?></strong><span><?= count($msgs) === 1 ? 'mensaje' : 'mensajes' ?></span></div>
+        <div><strong><?= e(date('d/m/Y', strtotime($u['creado']))) ?></strong><span>cliente desde</span></div>
       </div>
       <dl>
         <dt>Teléfono</dt><dd><?= $u['telefono'] ? '<a href="tel:' . e($u['telefono']) . '">' . e($u['telefono']) . '</a>' : '—' ?></dd>
@@ -387,6 +410,6 @@ if ($vista === 'detalle') {
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=4" defer></script>
+<script src="panel.js?v=5" defer></script>
 </body>
 </html>
