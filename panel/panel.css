@@ -417,3 +417,108 @@ body:has(.tabbar) .space { margin-bottom: 30px; }
 .card h2, .grupo { text-transform: none; letter-spacing: -0.01em; font-size: 15px; color: var(--text); font-weight: 650; }
 .tabs--periodo { max-width: 100%; min-width: 0; }
 .side > a.side__logo .logo { flex: none; }
+
+/* ================= v23: versión ordenador y versión móvil ================= */
+/* Buscador del menú lateral */
+.side__buscar { position: relative; margin: 0 0 14px; }
+.side__buscar svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+.side__buscar input { width: 100%; font: inherit; font-size: 14px; padding: 9px 12px 9px 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); outline: none; }
+.side__buscar input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(11,37,69,.12); }
+
+/* Secciones dentro de Estadísticas y enlace a ellas */
+.dash__sec { font-size: 18px; margin: 10px 2px 12px; }
+.dash__main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.dash__lado { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; min-width: 0; }
+.dash__mas { justify-self: start; font-weight: 600; padding: 4px 2px; }
+.embudo { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 14px; }
+.embudo__txt { display: flex; align-items: baseline; gap: 10px; font-size: 15px; margin-bottom: 6px; }
+.embudo__txt span { flex: 1; }
+.embudo__txt small { color: var(--muted); min-width: 44px; text-align: right; }
+.embudo .hbarras__bar { height: 12px; border-radius: 6px; }
+.embudo .hbarras__bar span { border-radius: 6px; }
+
+/* Tablas (estadísticas) */
+.tabla { overflow-x: auto; margin: 0 -4px; }
+.tabla table { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.tabla th, .tabla td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tabla thead th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.tabla tbody th { font-weight: 500; white-space: normal; }
+.tabla .num { text-align: right; }
+.tabla tr:last-child th, .tabla tr:last-child td { border-bottom: 0; }
+.tabla--compacta th, .tabla--compacta td { padding: 7px 8px; }
+.tabla tr.ya th, .tabla tr.ya td { font-weight: 700; }
+
+/* Gráficas: líneas de guía al 25 / 50 / 75 % */
+.barras { gap: 0; }
+.barra__col { background: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), var(--niebla) calc(25% - 1px) 25%); }
+.barra__col span { width: min(70%, 26px); position: relative; }
+
+/* ---------- Móvil (hasta 959 px): cabecera compacta, cifras deslizables ---------- */
+@media (max-width: 959px) {
+  .top { padding-top: calc(10px + env(safe-area-inset-top)); }
+  .top h1 { font-size: 28px; }
+  .top__sub { font-size: 14px; }
+  .kpis { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(150px, 46%); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -14px; padding: 0 14px 2px; scroll-padding: 14px; }
+  .kpis::-webkit-scrollbar { display: none; }
+  .kpi { scroll-snap-align: start; }
+  .kpi strong { font-size: 22px; }
+  .dash .card { padding: 18px 16px; border-radius: 18px; }
+  .item:active, .kpi:active { background: var(--niebla); }
+  .tabs--periodo { margin: 0 -14px; padding: 0 14px; }
+}
+@media (max-width: 420px) { .kpis { grid-auto-columns: 72%; } }
+
+/* ---------- Ordenador (desde 960 px): más ancho, resumen en dos columnas y listas como tabla ---------- */
+@media (min-width: 960px) {
+  .top { padding-left: 28px; padding-right: 28px; }
+  .top__row, .stats, .search, .tabs, .back, .list, .detail { max-width: 1080px; }
+  .top--detail { padding-left: 28px; padding-right: 28px; }
+  .detail { padding: 22px 28px 48px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .detail > *:first-child, .detail > .toast, .detail > .danger, .detail > form { grid-column: 1 / -1; }
+  .detail .card { border: 1px solid var(--line); }
+  .stats { grid-template-columns: repeat(3, minmax(0, 220px)); }
+  .stats div { border: 1px solid var(--line); }
+  .search { max-width: 1080px; }
+  .search input { max-width: 420px; background: #fff; border: 1px solid var(--line); }
+  .dash { padding: 22px 28px 48px; }
+
+  /* Listas: una tabla limpia en una sola tarjeta */
+  .list { padding: 18px 28px 40px; gap: 0; }
+  .list > .item, #seleccion .row, .list > .prod { border: 1px solid var(--line); border-top-width: 0; }
+  .list > .item:first-of-type, #seleccion .row:first-of-type { border-top-width: 1px; border-radius: 14px 14px 0 0; }
+  .list > .item:last-of-type, #seleccion .row:last-of-type { border-radius: 0 0 14px 14px; }
+  .list > .item:only-of-type, #seleccion .row:only-of-type { border-radius: 14px; }
+  #seleccion { gap: 0; }
+  #seleccion .row { background: var(--card); }
+  .list .item { border-radius: 0; padding: 12px 18px; align-items: center; }
+  #seleccion .item { border: 0; background: transparent; }
+  .list .item:hover { background: #fafbfc; }
+  .list .item:active { transform: none; }
+  .list .item .dot { margin-top: 0; }
+  .list .item__main { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(140px, 1fr) minmax(0, 2fr) auto; gap: 4px 20px; align-items: center; }
+  .list .item__row { display: contents; }
+  .list .item__row strong { order: 1; font-size: 15.5px; }
+  .list .item__sub { order: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .item p, .list .item .badges { order: 3; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--muted); }
+  .list .item .badges { flex-wrap: nowrap; }
+  .list .item time, .list .item .amount { order: 4; text-align: right; }
+  .list .grupo { margin: 22px 4px 8px; }
+  .list .toast, .list .warn, .list .empty, .list > .muted, .list .vaciar, .list .space { margin-bottom: 12px; }
+  .list .space { margin-top: 18px; }
+  .v-planes .list .item__main, .v-buscar .list .item__main { grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr) auto; }
+
+  /* Resumen: lo principal a la izquierda; lo pendiente y lo último a la derecha */
+  .dash--resumen { grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "main hoy" "main lado"; align-items: start; column-gap: 20px; }
+  .dash--resumen > .hoy { grid-area: hoy; }
+  .dash--resumen > .dash__main { grid-area: main; }
+  .dash--resumen > .dash__lado { grid-area: lado; }
+  .dash--resumen .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash--resumen .kpis--fijos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dash--resumen .dash__cab { margin-top: 0; }
+  .hoy__lista a { padding: 10px 0; font-size: 14.5px; }
+}
+@media (min-width: 1440px) {
+  .dash--resumen .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.kpi strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 960px) { .dash--resumen .kpi strong { font-size: clamp(20px, 1.7vw, 26px); } .dash--resumen { grid-template-columns: minmax(0, 1fr) 320px; } }

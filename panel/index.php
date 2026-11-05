@@ -203,7 +203,7 @@ function hace(string $fecha): string {
 <meta name="apple-mobile-web-app-title" content="The Novis">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f6f8">
-<link rel="stylesheet" href="panel.css?v=22">
+<link rel="stylesheet" href="panel.css?v=23">
 </head>
 <body class="v-<?= e($vista) ?>"<?= ($vista ?? '') === 'lista' ? ' data-autorefresh="1"' : '' ?>>
 
@@ -362,6 +362,6 @@ function hace(string $fecha): string {
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=5" defer></script>
+<script src="panel.js?v=6" defer></script>
 </body>
 </html>

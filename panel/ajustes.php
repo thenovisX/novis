@@ -119,7 +119,7 @@ $cred = nv_panel_credenciales();
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f6f8">
-<link rel="stylesheet" href="panel.css?v=22">
+<link rel="stylesheet" href="panel.css?v=23">
 </head>
 <body class="v-pagos">
   <header class="top">
@@ -206,6 +206,6 @@ $cred = nv_panel_credenciales();
       <div class="actions"><a class="btn btn--ghost" href="instalar.php?cambiar=1">Cambiar datos de conexión</a><a class="btn btn--ghost" href="seguridad.php">Seguridad</a></div>
     </section>
   </main>
-  <script src="panel.js?v=5" defer></script>
+  <script src="panel.js?v=6" defer></script>
 </body>
 </html>

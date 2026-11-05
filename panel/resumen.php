@@ -153,7 +153,7 @@ $vsTxt = ['7' => 'frente a los 7 días anteriores', '30' => 'frente a los 30 dí
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="The Novis">
 <meta name="theme-color" content="#f5f6f8">
-<link rel="stylesheet" href="panel.css?v=22">
+<link rel="stylesheet" href="panel.css?v=23">
 </head>
 <body class="v-resumen" data-autorefresh="1">
   <header class="top">
@@ -163,7 +163,7 @@ $vsTxt = ['7' => 'frente a los 7 días anteriores', '30' => 'frente a los 30 dí
     <?php $seccionActual = 'resumen'; include __DIR__ . '/nav.php'; ?>
   </header>
 
-  <main class="dash">
+  <main class="dash dash--resumen">
     <section class="card hoy" aria-labelledby="t-hoy">
       <h2 id="t-hoy">Para hoy</h2>
       <?php if (!$tareas): ?>
@@ -177,6 +177,7 @@ $vsTxt = ['7' => 'frente a los 7 días anteriores', '30' => 'frente a los 30 dí
       <?php endif; ?>
     </section>
 
+    <div class="dash__main">
     <div class="dash__cab">
       <h2>Cómo va el negocio</h2>
       <nav class="tabs tabs--periodo" aria-label="Periodo">
@@ -271,7 +272,10 @@ $vsTxt = ['7' => 'frente a los 7 días anteriores', '30' => 'frente a los 30 dí
       </section>
     </div>
 
-    <div class="dash__dos">
+    <a class="dash__mas" href="estadisticas.php">Ver todas las estadísticas <span aria-hidden="true">›</span></a>
+    </div>
+
+    <div class="dash__lado">
       <section class="card" aria-labelledby="t-top">
         <h2 id="t-top">Mejores clientes</h2>
         <?php if (!$top): ?>
@@ -303,6 +307,6 @@ $vsTxt = ['7' => 'frente a los 7 días anteriores', '30' => 'frente a los 30 dí
     </div>
   </main>
 
-<script src="panel.js?v=5" defer></script>
+<script src="panel.js?v=6" defer></script>
 </body>
 </html>

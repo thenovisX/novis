@@ -147,7 +147,7 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
 <link rel="icon" href="../assets/favicon.svg?v=10" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=10">
 <meta name="theme-color" content="#f5f6f8">
-<link rel="stylesheet" href="panel.css?v=22">
+<link rel="stylesheet" href="panel.css?v=23">
 </head>
 <body class="v-pagos">
 
@@ -290,6 +290,6 @@ $err = fn($k) => isset($errores[$k]) ? '<p class="f-err">' . e($errores[$k]) . '
   </main>
 <?php endif; ?>
 
-<script src="panel.js?v=5" defer></script>
+<script src="panel.js?v=6" defer></script>
 </body>
 </html>
