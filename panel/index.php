@@ -20,7 +20,7 @@ function csrf(): string {
     return $_SESSION['csrf'];
 }
 function csrf_ok(): bool {
-    return isset($_POST['csrf'], $_SESSION['csrf']) && hash_equals($_SESSION['csrf'], $_POST['csrf']);
+    return isset($_POST['csrf'], $_SESSION['csrf']) && hash_equals($_SESSION['csrf'], (string)$_POST['csrf']);
 }
 function volver(string $q = ''): void {
     header('Location: ./' . ($q ? '?' . $q : ''));
@@ -51,6 +51,11 @@ elseif (empty($_SESSION['ok'])) {
             hash_equals(mb_strtolower($usuario), mb_strtolower(trim((string)($_POST['usuario'] ?? '')))) &
             nv_panel_clave_ok((string)($_POST['password'] ?? ''))
         ) {
+            // Contraseña guardada con el método anterior: se rehace con el actual (Argon2id o bcrypt 12)
+            $cred = nv_panel_credenciales();
+            if ($cred['origen'] === 'bd' && nv_hash_viejo($cred['hash'])) {
+                nv_ajustes_guardar(['panel_hash' => nv_hash((string)$_POST['password'])]);
+            }
             session_regenerate_id(true);
             $_SESSION['ok'] = true;
             $_SESSION['desde'] = $_SESSION['visto'] = time();

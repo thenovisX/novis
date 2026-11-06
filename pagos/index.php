@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!preg_match('/^[a-z0-9._-]{3,30}$/', $usuario)) $errores['usuario'] = 'Entre 3 y 30 caracteres: letras, números, punto, guion o guion bajo.';
         if ($tel !== '' && !preg_match('/^\+?\d{9,15}$/', $tel)) $errores['telefono'] = 'Escribe un teléfono válido, por ejemplo 612 345 678, o déjalo vacío.';
         if (mb_strlen($pass) < 10) $errores['password'] = 'La contraseña debe tener al menos 10 caracteres.';
+        elseif (strlen($pass) > 256) $errores['password'] = 'La contraseña es demasiado larga (máximo 256 caracteres).';
         elseif ($pass !== (string)($_POST['password2'] ?? '')) $errores['password2'] = 'Las contraseñas no coinciden.';
         if (empty($_POST['acepto'])) $errores['acepto'] = 'Debes aceptar las condiciones de contratación y la política de privacidad.';
         // El límite va antes de comprobar si el email o el usuario existen (si no, el formulario serviría para averiguar quién tiene cuenta)
@@ -74,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if (!$errores) {
             $db->prepare('INSERT INTO usuarios (email, email_idx, usuario, usuario_idx, telefono, password_hash, creado) VALUES (?, ?, ?, ?, ?, ?, ?)')
-               ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), password_hash($pass, PASSWORD_DEFAULT), date('c')]);
+               ->execute([nv_cifrar($email), nv_indice($email), nv_cifrar($usuario), nv_indice($usuario), $tel === '' ? null : nv_cifrar($tel), nv_hash($pass), date('c')]);
             $id = (int)$db->lastInsertId();
             nv_auditar('registro_acepta', $id, 'condiciones ' . NV_CONDICIONES . ' + privacidad ' . NV_PRIVACIDAD);
             if (!empty($_POST['publicidad'])) nv_marketing($id, true, 'registro');
@@ -101,8 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($f && !$f['password_hash'] && $f['google_sub']) {
                 $errores['general'] = 'Esta cuenta se creó con Google. Usa el botón «Continuar con Google».';
             } elseif ($f && password_verify($pass, (string)$f['password_hash'])) {
-                if (password_needs_rehash($f['password_hash'], PASSWORD_DEFAULT)) {
-                    $db->prepare('UPDATE usuarios SET password_hash = ? WHERE id = ?')->execute([password_hash($pass, PASSWORD_DEFAULT), $f['id']]);
+                if (nv_hash_viejo($f['password_hash'])) {
+                    $db->prepare('UPDATE usuarios SET password_hash = ? WHERE id = ?')->execute([nv_hash($pass), $f['id']]);
                 }
                 nv_entrar((int)$f['id']);
                 ir();
@@ -130,13 +131,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pass = (string)($_POST['password'] ?? '');
         $t = (string)($_POST['t'] ?? '');
         if (mb_strlen($pass) < 10) $errores['password'] = 'La contraseña debe tener al menos 10 caracteres.';
+        elseif (strlen($pass) > 256) $errores['password'] = 'La contraseña es demasiado larga (máximo 256 caracteres).';
         elseif ($pass !== (string)($_POST['password2'] ?? '')) $errores['password2'] = 'Las contraseñas no coinciden.';
         if (!$errores) {
             $id = nv_token_usar($t, 'reset');
             if (!$id) { aviso('El enlace no es válido o ha caducado. Pide uno nuevo.', 'err'); ir('a=olvide'); }
             // Si ha llegado desde el email, el email queda verificado
             $db->prepare('UPDATE usuarios SET password_hash = ?, email_verificado = COALESCE(email_verificado, ?), pass_cambiada = ? WHERE id = ?')
-               ->execute([password_hash($pass, PASSWORD_DEFAULT), date('c'), time() - 1, $id]);
+               ->execute([nv_hash($pass), date('c'), time() - 1, $id]);
             nv_auditar('password_cambiada', (int)$id);
             nv_entrar($id);
             aviso('Contraseña actualizada.');

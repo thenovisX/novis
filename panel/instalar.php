@@ -126,7 +126,7 @@ if ($paso === 'admin') {
         if ($p1 === '' && $haySinBd && mb_strtolower($usuario) !== mb_strtolower($cred['usuario'])) $errores['password'] = 'Para cambiar el usuario, elige también la contraseña.';
         if (!$error && !$errores) {
             $guardar = ['nombre' => $nombre, 'email' => $email, 'negocio' => nv_ajuste('negocio', 'The Novis')];
-            if ($p1 !== '') $guardar += ['panel_usuario' => $usuario, 'panel_hash' => password_hash($p1, PASSWORD_DEFAULT), 'panel_cambio' => (string)time()];
+            if ($p1 !== '') $guardar += ['panel_usuario' => $usuario, 'panel_hash' => nv_hash($p1), 'panel_cambio' => (string)time()];
             nv_ajustes_guardar($guardar);
             session_regenerate_id(true);
             $_SESSION['ok'] = true;

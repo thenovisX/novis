@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($p1 !== $p2) $errores['password2'] = 'Las contraseñas no coinciden.';
         if (!$errores) {
             // Si no cambia la contraseña, se guarda la de siempre ya como hash (así el usuario vive en la base de datos)
-            nv_ajustes_guardar(['panel_usuario' => $usuario, 'panel_hash' => password_hash($p1 !== '' ? $p1 : $actual, PASSWORD_DEFAULT), 'panel_cambio' => (string)time()]);
+            nv_ajustes_guardar(['panel_usuario' => $usuario, 'panel_hash' => nv_hash($p1 !== '' ? $p1 : $actual), 'panel_cambio' => (string)time()]);
             // Esta sesión sigue abierta; las demás (otros dispositivos) se cierran
             session_regenerate_id(true);
             $_SESSION['desde'] = time() + 1;

@@ -36,6 +36,11 @@ if (empty($_POST['acepto'])) {
 }
 
 require_once __DIR__ . '/lib/cuentas.php';   // incluye correo, plantillas y los perfiles de contacto (lib/legal.php)
+if (!novis_mismo_origen()) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'Origen no permitido']);
+    exit;
+}
 $destino = nv_email_negocio();   // Email donde recibes los mensajes
 if (!novis_limite('form', 5, 3600)) {
     http_response_code(429);
